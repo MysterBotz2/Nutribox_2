@@ -1,18 +1,27 @@
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
+from app.core.constants import MAXIMUM_PROTOTYPE_WEIGHT_GRAMS
 from app.models.food import Food
 
 
-class NutritionPer100g(BaseModel):
-    """Nutrient reference values, all expressed per 100 grams."""
+class NutrientValues(BaseModel):
+    """A shared collection of nutrient values expressed in a stated context."""
 
     calories: Decimal
     protein_g: Decimal
     carbohydrates_g: Decimal
     fat_g: Decimal
     fiber_g: Decimal
+
+
+class NutritionPer100g(NutrientValues):
+    """Nutrient reference values, all expressed per 100 grams."""
+
+
+class PortionNutrition(NutrientValues):
+    """Deterministically calculated nutrient values for one measured portion."""
 
 
 class FoodSource(BaseModel):
@@ -61,3 +70,30 @@ class FoodListResponse(BaseModel):
     """Collection response for food reference searches."""
 
     foods: list[FoodResponse]
+
+
+class PortionCalculationRequest(BaseModel):
+    """A food reference identifier and measured portion weight."""
+
+    food_id: int = Field(gt=0)
+    weight_grams: Decimal = Field(
+        ge=0,
+        le=MAXIMUM_PROTOTYPE_WEIGHT_GRAMS,
+        allow_inf_nan=False,
+        description="Measured portion weight in grams, from 0 to 5000.",
+    )
+
+
+class CalculatedFood(BaseModel):
+    """The canonical food reference used for a portion calculation."""
+
+    id: int
+    name: str
+
+
+class PortionCalculationResponse(BaseModel):
+    """A deterministic calculation result for a food reference and portion."""
+
+    food: CalculatedFood
+    weight_grams: Decimal
+    nutrition: PortionNutrition

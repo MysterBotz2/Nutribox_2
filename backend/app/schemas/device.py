@@ -2,7 +2,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-MAXIMUM_WEIGHT_GRAMS = 5000.0
+from app.core.constants import MAXIMUM_PROTOTYPE_WEIGHT_GRAMS
+
 MINIMUM_TEMPERATURE_CELSIUS = -50.0
 MAXIMUM_TEMPERATURE_CELSIUS = 150.0
 
@@ -12,7 +13,7 @@ class DeviceSimulationRequest(BaseModel):
 
     weight_grams: float = Field(
         ge=0,
-        le=MAXIMUM_WEIGHT_GRAMS,
+        le=MAXIMUM_PROTOTYPE_WEIGHT_GRAMS,
         allow_inf_nan=False,
         description="Development prototype weight in grams, from 0 to 5000.",
     )

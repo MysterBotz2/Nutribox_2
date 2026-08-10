@@ -45,6 +45,7 @@ The API will be available at `http://127.0.0.1:8000`.
 - `POST /api/ai/recognize-food` accepts JPEG, PNG, or WEBP uploads and returns a simulated food-recognition result. It uses `MockFoodRecognitionProvider`; the image is validated but is not analyzed by an external AI service.
 - `GET /api/nutrition/search?q=...` searches canonical food reference data.
 - `GET /api/nutrition/{food_id}` returns one canonical food reference record.
+- `POST /api/nutrition/calculate` calculates a measured food portion from stored per-100g reference values without saving a meal.
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
 
@@ -52,14 +53,17 @@ The API will be available at `http://127.0.0.1:8000`.
 
 ## Nutrition reference data
 
-Food nutrition reference data is stored in PostgreSQL on a per-100-gram basis. No external nutrition provider is connected and the application does not seed unverified nutrition data. Real food records must include validated source provenance. Portion-based nutrient calculations will be added in Phase 6.
+Food nutrition reference data is stored in PostgreSQL on a per-100-gram basis. No external nutrition provider is connected and the application does not seed unverified nutrition data. Real food records must include validated source provenance. Deterministic portion-based nutrient calculations are available in Phase 6.
 
 The public nutrition endpoints are read-only in this phase:
 
 ```text
 GET /api/nutrition/search?q=rice
 GET /api/nutrition/{food_id}
+POST /api/nutrition/calculate
 ```
+
+Portion calculation uses Python `Decimal`, never binary float conversion of stored nutrition data. Each calculated nutrient is rounded once to three decimal places with round-half-up behavior. A `0 g` portion is valid and returns zero values. The calculation does not create a meal or persist any result.
 
 ## Run tests
 

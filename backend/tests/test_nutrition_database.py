@@ -137,3 +137,39 @@ def test_unknown_food_id_returns_404(client: TestClient) -> None:
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Food record was not found."}
+
+
+def test_calculate_food_returns_portion_nutrition(
+    database_session: Session, client: TestClient
+) -> None:
+    food = create_test_food("Test Food")
+    database_session.add(food)
+    database_session.flush()
+
+    response = client.post(
+        "/api/nutrition/calculate",
+        json={"food_id": food.id, "weight_grams": "180"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "food": {"id": food.id, "name": "Test Food"},
+        "weight_grams": "180",
+        "nutrition": {
+            "calories": "180.000",
+            "protein_g": "18.000",
+            "carbohydrates_g": "36.000",
+            "fat_g": "5.400",
+            "fiber_g": "3.600",
+        },
+    }
+
+
+def test_calculate_unknown_food_returns_404(client: TestClient) -> None:
+    response = client.post(
+        "/api/nutrition/calculate",
+        json={"food_id": 999999, "weight_grams": "180"},
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Food record was not found."}

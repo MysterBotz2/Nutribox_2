@@ -1,5 +1,6 @@
 import math
 from collections.abc import Mapping
+from decimal import Decimal
 from typing import Any
 
 from fastapi import FastAPI, Request, status
@@ -21,6 +22,8 @@ app.include_router(nutrition_router)
 def _json_safe_validation_detail(value: Any) -> Any:
     """Replace non-finite floats before returning request validation errors."""
     if isinstance(value, float) and not math.isfinite(value):
+        return str(value)
+    if isinstance(value, Decimal) and not value.is_finite():
         return str(value)
     if isinstance(value, Mapping):
         return {key: _json_safe_validation_detail(item) for key, item in value.items()}

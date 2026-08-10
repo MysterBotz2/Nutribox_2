@@ -1,12 +1,21 @@
+from decimal import Decimal
+
 from app.models.food import Food, normalize_food_name
 from app.repositories.food_repository import FoodRepository
+from app.schemas.nutrition import NutritionPer100g, PortionNutrition
+from app.services.nutrient_calculator import NutrientCalculator
 
 
 class NutritionService:
     """Application-level lookup behavior for food nutrition reference data."""
 
-    def __init__(self, food_repository: FoodRepository) -> None:
+    def __init__(
+        self,
+        food_repository: FoodRepository,
+        nutrient_calculator: NutrientCalculator | None = None,
+    ) -> None:
         self._food_repository = food_repository
+        self._nutrient_calculator = nutrient_calculator or NutrientCalculator()
 
     def get_food(self, food_id: int) -> Food | None:
         return self._food_repository.get_by_id(food_id)
@@ -15,3 +24,22 @@ class NutritionService:
         if not query.strip():
             return []
         return self._food_repository.search(normalize_food_name(query))
+
+    def calculate_portion(
+        self, food_id: int, weight_grams: Decimal
+    ) -> tuple[Food, PortionNutrition] | None:
+        """Look up reference nutrients and calculate a measured portion."""
+        food = self.get_food(food_id)
+        if food is None:
+            return None
+
+        nutrition_per_100g = NutritionPer100g(
+            calories=food.calories_per_100g,
+            protein_g=food.protein_g_per_100g,
+            carbohydrates_g=food.carbohydrates_g_per_100g,
+            fat_g=food.fat_g_per_100g,
+            fiber_g=food.fiber_g_per_100g,
+        )
+        return food, self._nutrient_calculator.calculate(
+            nutrition_per_100g, weight_grams
+        )
