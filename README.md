@@ -43,10 +43,23 @@ The API will be available at `http://127.0.0.1:8000`.
 - `GET /api/health` verifies database connectivity. It returns `200` with `{"status": "healthy", "database": "connected"}` when PostgreSQL is available, otherwise a safe `503` response.
 - `POST /api/device/simulate` accepts validated development-only simulated weight and temperature readings. Raspberry Pi sensor integration will be added in a later phase.
 - `POST /api/ai/recognize-food` accepts JPEG, PNG, or WEBP uploads and returns a simulated food-recognition result. It uses `MockFoodRecognitionProvider`; the image is validated but is not analyzed by an external AI service.
+- `GET /api/nutrition/search?q=...` searches canonical food reference data.
+- `GET /api/nutrition/{food_id}` returns one canonical food reference record.
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
 
 `FOOD_RECOGNITION_PROVIDER` currently supports `mock` only. Future provider adapters will use the same provider-neutral endpoint and response schema.
+
+## Nutrition reference data
+
+Food nutrition reference data is stored in PostgreSQL on a per-100-gram basis. No external nutrition provider is connected and the application does not seed unverified nutrition data. Real food records must include validated source provenance. Portion-based nutrient calculations will be added in Phase 6.
+
+The public nutrition endpoints are read-only in this phase:
+
+```text
+GET /api/nutrition/search?q=rice
+GET /api/nutrition/{food_id}
+```
 
 ## Run tests
 
@@ -65,3 +78,7 @@ alembic -c alembic.ini current
 # Display the migration history (there are no Nutri-Box migrations in Phase 2).
 alembic -c alembic.ini history
 ```
+
+## Database integration tests
+
+Database integration tests require a separate PostgreSQL database configured through `TEST_DATABASE_URL`. They will skip when it is absent, and refuse to run if it matches `DATABASE_URL`. Test data runs inside transactions that are rolled back after each test.

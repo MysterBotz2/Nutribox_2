@@ -10,6 +10,7 @@ sys.path.insert(0, str(BACKEND_DIRECTORY))
 
 from app.core.config import settings  # noqa: E402
 from app.database.base import Base  # noqa: E402
+from app.models.food import Food  # noqa: F401, E402
 
 config = context.config
 

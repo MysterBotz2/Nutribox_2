@@ -9,11 +9,13 @@ from fastapi.responses import JSONResponse
 from app.routers.ai import router as ai_router
 from app.routers.device import router as device_router
 from app.routers.health import router as health_router
+from app.routers.nutrition import router as nutrition_router
 
 app = FastAPI(title="Nutri-Box API")
 app.include_router(health_router)
 app.include_router(device_router)
 app.include_router(ai_router)
+app.include_router(nutrition_router)
 
 
 def _json_safe_validation_detail(value: Any) -> Any:

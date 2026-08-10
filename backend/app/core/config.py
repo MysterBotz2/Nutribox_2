@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     """Configuration loaded from OS environment variables and backend/.env."""
 
     database_url: str | None = None
+    test_database_url: str | None = None
     food_recognition_provider: str = "mock"
     food_recognition_max_upload_bytes: int = Field(default=5 * 1024 * 1024, gt=0)
 
