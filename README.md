@@ -46,6 +46,7 @@ The API will be available at `http://127.0.0.1:8000`.
 - `GET /api/nutrition/search?q=...` searches canonical food reference data.
 - `GET /api/nutrition/{food_id}` returns one canonical food reference record.
 - `POST /api/nutrition/calculate` calculates a measured food portion from stored per-100g reference values without saving a meal.
+- `POST /api/meals/analyze` combines a validated image, a manual development weight, canonical food lookup, and deterministic nutrient calculation without saving a meal.
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
 
@@ -64,6 +65,8 @@ POST /api/nutrition/calculate
 ```
 
 Portion calculation uses Python `Decimal`, never binary float conversion of stored nutrition data. Each calculated nutrient is rounded once to three decimal places with round-half-up behavior. A `0 g` portion is valid and returns zero values. The calculation does not create a meal or persist any result.
+
+Meal analysis uses the configured provider-neutral food-recognition provider and manually supplied weight during hardware-free development. Nutrition always comes from canonical PostgreSQL Food records, not AI output. Multiple recognized foods require user selection; their shared plate weight is never divided automatically. Analysis results are transient and are not persisted.
 
 ## Run tests
 

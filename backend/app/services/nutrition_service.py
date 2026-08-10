@@ -20,6 +20,23 @@ class NutritionService:
     def get_food(self, food_id: int) -> Food | None:
         return self._food_repository.get_by_id(food_id)
 
+    def get_food_by_recognized_name(self, recognized_name: str) -> Food | None:
+        """Find an exact canonical food match using deterministic normalization."""
+        return self._food_repository.get_by_normalized_name(
+            normalize_food_name(recognized_name)
+        )
+
+    @staticmethod
+    def get_nutrition_per_100g(food: Food) -> NutritionPer100g:
+        """Convert a canonical food record into calculator input values."""
+        return NutritionPer100g(
+            calories=food.calories_per_100g,
+            protein_g=food.protein_g_per_100g,
+            carbohydrates_g=food.carbohydrates_g_per_100g,
+            fat_g=food.fat_g_per_100g,
+            fiber_g=food.fiber_g_per_100g,
+        )
+
     def search_foods(self, query: str) -> list[Food]:
         if not query.strip():
             return []
@@ -33,13 +50,7 @@ class NutritionService:
         if food is None:
             return None
 
-        nutrition_per_100g = NutritionPer100g(
-            calories=food.calories_per_100g,
-            protein_g=food.protein_g_per_100g,
-            carbohydrates_g=food.carbohydrates_g_per_100g,
-            fat_g=food.fat_g_per_100g,
-            fiber_g=food.fiber_g_per_100g,
-        )
+        nutrition_per_100g = self.get_nutrition_per_100g(food)
         return food, self._nutrient_calculator.calculate(
             nutrition_per_100g, weight_grams
         )

@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from app.routers.ai import router as ai_router
 from app.routers.device import router as device_router
 from app.routers.health import router as health_router
+from app.routers.meals import router as meals_router
 from app.routers.nutrition import router as nutrition_router
 
 app = FastAPI(title="Nutri-Box API")
@@ -17,13 +18,14 @@ app.include_router(health_router)
 app.include_router(device_router)
 app.include_router(ai_router)
 app.include_router(nutrition_router)
+app.include_router(meals_router)
 
 
 def _json_safe_validation_detail(value: Any) -> Any:
     """Replace non-finite floats before returning request validation errors."""
     if isinstance(value, float) and not math.isfinite(value):
         return str(value)
-    if isinstance(value, Decimal) and not value.is_finite():
+    if isinstance(value, Decimal):
         return str(value)
     if isinstance(value, Mapping):
         return {key: _json_safe_validation_detail(item) for key, item in value.items()}
