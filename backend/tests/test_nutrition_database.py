@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,7 @@ from app.database.base import Base
 from app.database.database import get_db
 from app.main import app
 from app.models.food import Food
+from app.models.meal import Meal
 
 
 def create_test_food(name: str = "Test White Rice") -> Food:
@@ -173,3 +174,79 @@ def test_calculate_unknown_food_returns_404(client: TestClient) -> None:
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Food record was not found."}
+
+
+def test_create_one_item_meal_and_return_snapshots(database_session: Session, client: TestClient) -> None:
+    food = create_test_food("Test Food")
+    database_session.add(food)
+    database_session.flush()
+
+    response = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "180"}]})
+
+    assert response.status_code == 201
+    assert response.json()["items"][0]["food"]["name"] == "Test Food"
+    assert response.json()["items"][0]["nutrition"]["calories"] == "180.000"
+    assert response.json()["totals"]["calories"] == "180.000"
+
+
+def test_create_multi_item_meal_allows_duplicate_food_ids(database_session: Session, client: TestClient) -> None:
+    food = create_test_food("Test Food")
+    database_session.add(food)
+    database_session.flush()
+
+    response = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "100"}, {"food_id": food.id, "weight_grams": "50"}]})
+
+    assert response.status_code == 201
+    assert len(response.json()["items"]) == 2
+    assert response.json()["totals"]["calories"] == "150.000"
+
+
+def test_unknown_food_rolls_back_entire_meal(database_session: Session, client: TestClient) -> None:
+    food = create_test_food("Test Food")
+    database_session.add(food)
+    database_session.flush()
+
+    response = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "100"}, {"food_id": 999999, "weight_grams": "100"}]})
+
+    assert response.status_code == 404
+    assert database_session.scalar(select(func.count()).select_from(Meal)) == 0
+
+
+@pytest.mark.parametrize("items", [[], [{"food_id": 1, "weight_grams": "0"}], [{"food_id": 1, "weight_grams": "-1"}], [{"food_id": 1, "weight_grams": "5000.1"}]])
+def test_meal_creation_rejects_invalid_items(client: TestClient, items: list[dict[str, object]]) -> None:
+    response = client.post("/api/meals", json={"items": items})
+
+    assert response.status_code == 422
+
+
+def test_get_and_list_meals_newest_first_with_pagination(database_session: Session, client: TestClient) -> None:
+    food = create_test_food("Test Food")
+    database_session.add(food)
+    database_session.flush()
+    first = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "100"}]}).json()
+    second = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "200"}]}).json()
+
+    detail = client.get(f"/api/meals/{first['id']}")
+    listed = client.get("/api/meals", params={"limit": 1, "offset": 0})
+
+    assert detail.status_code == 200
+    assert detail.json()["items"][0]["nutrition"]["calories"] == "100.000"
+    assert listed.status_code == 200
+    assert listed.json()["meals"][0]["id"] == second["id"]
+    assert client.get("/api/meals/999999").status_code == 404
+
+
+def test_meal_detail_uses_stored_snapshot_after_food_reference_changes(database_session: Session, client: TestClient) -> None:
+    food = create_test_food("Test Food")
+    database_session.add(food)
+    database_session.flush()
+    created = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "100"}]}).json()
+
+    food.name = "Changed Test Food"
+    food.calories_per_100g = Decimal("999.00")
+    database_session.flush()
+    response = client.get(f"/api/meals/{created['id']}")
+
+    assert response.status_code == 200
+    assert response.json()["items"][0]["food"]["name"] == "Test Food"
+    assert response.json()["items"][0]["nutrition"]["calories"] == "100.000"

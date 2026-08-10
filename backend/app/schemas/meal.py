@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Literal
@@ -6,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from app.schemas.ai import RecognizedFood
 from app.schemas.nutrition import CalculatedFood, PortionNutrition
+from app.core.constants import MAXIMUM_PROTOTYPE_WEIGHT_GRAMS
 
 
 class MealAnalysisStatus(str, Enum):
@@ -47,3 +49,36 @@ MealAnalysisResponse = Annotated[
     | RequiresFoodSelectionMealAnalysis,
     Field(discriminator="status"),
 ]
+
+
+class MealItemCreateRequest(BaseModel):
+    food_id: int = Field(gt=0)
+    weight_grams: Decimal = Field(gt=0, le=MAXIMUM_PROTOTYPE_WEIGHT_GRAMS, allow_inf_nan=False)
+
+
+class MealCreateRequest(BaseModel):
+    items: list[MealItemCreateRequest] = Field(min_length=1, max_length=50)
+
+
+class MealItemResponse(BaseModel):
+    id: int
+    food: CalculatedFood
+    weight_grams: Decimal
+    nutrition: PortionNutrition
+
+
+class MealTotals(PortionNutrition):
+    pass
+
+
+class MealResponse(BaseModel):
+    id: int
+    recorded_at: datetime
+    items: list[MealItemResponse]
+    totals: MealTotals
+
+
+class MealListResponse(BaseModel):
+    meals: list[MealResponse]
+    limit: int
+    offset: int

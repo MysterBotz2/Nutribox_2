@@ -1,43 +1,82 @@
 from decimal import Decimal
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from sqlalchemy.orm import Session
 
 from app.core.constants import MAXIMUM_PROTOTYPE_WEIGHT_GRAMS
+from app.database.database import get_db
+from app.repositories.food_repository import FoodRepository
+from app.repositories.meal_repository import MealRepository
 from app.routers.nutrition import get_nutrition_service
-from app.schemas.meal import MealAnalysisResponse
+from app.schemas.meal import (
+    MealAnalysisResponse,
+    MealCreateRequest,
+    MealItemResponse,
+    MealListResponse,
+    MealResponse,
+    MealTotals,
+)
+from app.schemas.nutrition import CalculatedFood, PortionNutrition
 from app.services.food_recognition_provider import FoodRecognitionProvider
 from app.services.food_recognition_selector import get_food_recognition_provider
 from app.services.image_validation import read_validated_image
 from app.services.meal_analysis_service import MealAnalysisService
+from app.services.meal_service import MealFoodNotFoundError, MealService
 from app.services.nutrition_service import NutritionService
 
-router = APIRouter(prefix="/api/meals", tags=["meal analysis"])
+router = APIRouter(prefix="/api/meals", tags=["meals"])
 
 
 def get_meal_analysis_service(
     provider: Annotated[FoodRecognitionProvider, Depends(get_food_recognition_provider)],
     nutrition_service: Annotated[NutritionService, Depends(get_nutrition_service)],
 ) -> MealAnalysisService:
-    """Provide the vendor-neutral transient meal analysis orchestration service."""
     return MealAnalysisService(provider, nutrition_service)
+
+
+def get_meal_service(database_session: Annotated[Session, Depends(get_db)]) -> MealService:
+    return MealService(
+        NutritionService(FoodRepository(database_session)),
+        MealRepository(database_session),
+    )
 
 
 @router.post("/analyze", response_model=MealAnalysisResponse)
 async def analyze_meal(
     file: UploadFile = File(description="JPEG, PNG, or WEBP meal image."),
-    weight_grams: Decimal = Form(
-        ge=0,
-        le=MAXIMUM_PROTOTYPE_WEIGHT_GRAMS,
-        allow_inf_nan=False,
-        description="Manual portion weight in grams, from 0 to 5000.",
-    ),
+    weight_grams: Decimal = Form(ge=0, le=MAXIMUM_PROTOTYPE_WEIGHT_GRAMS, allow_inf_nan=False),
     meal_analysis_service: MealAnalysisService = Depends(get_meal_analysis_service),
 ) -> MealAnalysisResponse:
-    """Analyze a transient meal image and full portion weight without saving a meal."""
     image_bytes, content_type = await read_validated_image(file)
-    return meal_analysis_service.analyze(
-        image_bytes=image_bytes,
-        content_type=content_type,
-        weight_grams=weight_grams,
+    return meal_analysis_service.analyze(image_bytes=image_bytes, content_type=content_type, weight_grams=weight_grams)
+
+
+def meal_response_from_model(meal) -> MealResponse:
+    return MealResponse(
+        id=meal.id,
+        recorded_at=meal.recorded_at,
+        items=[MealItemResponse(id=item.id, food=CalculatedFood(id=item.food_id, name=item.food_name_snapshot), weight_grams=item.weight_grams, nutrition=PortionNutrition(calories=item.calculated_calories, protein_g=item.calculated_protein_g, carbohydrates_g=item.calculated_carbohydrates_g, fat_g=item.calculated_fat_g, fiber_g=item.calculated_fiber_g)) for item in meal.items],
+        totals=MealTotals(calories=meal.total_calories, protein_g=meal.total_protein_g, carbohydrates_g=meal.total_carbohydrates_g, fat_g=meal.total_fat_g, fiber_g=meal.total_fiber_g),
     )
+
+
+@router.post("", response_model=MealResponse, status_code=status.HTTP_201_CREATED)
+def create_meal(meal_request: MealCreateRequest, meal_service: Annotated[MealService, Depends(get_meal_service)]) -> MealResponse:
+    try:
+        return meal_response_from_model(meal_service.create_meal(meal_request.items))
+    except MealFoodNotFoundError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from None
+
+
+@router.get("", response_model=MealListResponse)
+def list_meals(meal_service: Annotated[MealService, Depends(get_meal_service)], limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0)) -> MealListResponse:
+    return MealListResponse(meals=[meal_response_from_model(meal) for meal in meal_service.list_meals(limit, offset)], limit=limit, offset=offset)
+
+
+@router.get("/{meal_id}", response_model=MealResponse)
+def get_meal(meal_id: int, meal_service: Annotated[MealService, Depends(get_meal_service)]) -> MealResponse:
+    meal = meal_service.get_meal(meal_id)
+    if meal is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal was not found.")
+    return meal_response_from_model(meal)

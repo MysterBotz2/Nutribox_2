@@ -1,6 +1,6 @@
 # Nutri-Box API
 
-Phase 4 provides the FastAPI, PostgreSQL, mock-device, and mock food-recognition foundations for Nutri-Box. External AI providers, application tables, hardware, authentication, Docker, and Flutter are intentionally deferred.
+Phase 8 provides the FastAPI, PostgreSQL, mock-device, provider-neutral mock food-recognition, canonical nutrition, meal analysis, and local meal-persistence foundations for Nutri-Box. External AI providers, hardware, authentication, Docker, and Flutter are intentionally deferred.
 
 ## Prerequisites
 
@@ -47,6 +47,9 @@ The API will be available at `http://127.0.0.1:8000`.
 - `GET /api/nutrition/{food_id}` returns one canonical food reference record.
 - `POST /api/nutrition/calculate` calculates a measured food portion from stored per-100g reference values without saving a meal.
 - `POST /api/meals/analyze` combines a validated image, a manual development weight, canonical food lookup, and deterministic nutrient calculation without saving a meal.
+- `POST /api/meals` saves a confirmed, server-calculated meal from canonical food IDs and positive manual weights.
+- `GET /api/meals` lists persisted local prototype meals, newest first, with pagination.
+- `GET /api/meals/{meal_id}` returns one persisted meal and its immutable food and nutrition snapshots.
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
 
@@ -68,6 +71,8 @@ Portion calculation uses Python `Decimal`, never binary float conversion of stor
 
 Meal analysis uses the configured provider-neutral food-recognition provider and manually supplied weight during hardware-free development. Nutrition always comes from canonical PostgreSQL Food records, not AI output. Multiple recognized foods require user selection; their shared plate weight is never divided automatically. Analysis results are transient and are not persisted.
 
+Confirmed meals are persisted only through `POST /api/meals`. The backend resolves every requested food, calculates all item nutrients and totals, and stores snapshots so later food-reference updates do not change recorded history. These endpoints are for local prototype records only; user accounts, authentication, and user-scoped history remain future work.
+
 ## Run tests
 
 ```powershell
@@ -82,7 +87,7 @@ Alembic uses the same `DATABASE_URL` from `backend/.env`; no credentials are sto
 # Check that Alembic can load the migration environment and show the current revision.
 alembic -c alembic.ini current
 
-# Display the migration history (there are no Nutri-Box migrations in Phase 2).
+# Display the migration history.
 alembic -c alembic.ini history
 ```
 
