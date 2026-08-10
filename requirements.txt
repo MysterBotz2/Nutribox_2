@@ -8,3 +8,6 @@ alembic==1.14.0
 pydantic-settings==2.7.0
 python-multipart==0.0.20
 Pillow==11.0.0
+pwdlib[argon2]==0.3.0
+PyJWT==2.10.1
+email-validator==2.2.0

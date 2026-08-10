@@ -8,13 +8,17 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.routers.ai import router as ai_router
+from app.routers.auth import router as auth_router
 from app.routers.device import router as device_router
 from app.routers.health import router as health_router
 from app.routers.meals import router as meals_router
 from app.routers.nutrition import router as nutrition_router
+from app.routers.users import router as users_router
 
 app = FastAPI(title="Nutri-Box API")
 app.include_router(health_router)
+app.include_router(auth_router)
+app.include_router(users_router)
 app.include_router(device_router)
 app.include_router(ai_router)
 app.include_router(nutrition_router)

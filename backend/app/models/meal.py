@@ -28,10 +28,16 @@ class Meal(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", name="fk_meals_user_id_users", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     items: Mapped[list["MealItem"]] = relationship(
         back_populates="meal", cascade="all, delete-orphan", passive_deletes=True
     )
+    user: Mapped["User | None"] = relationship(back_populates="meals")
 
 
 class MealItem(Base):

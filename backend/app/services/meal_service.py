@@ -24,7 +24,7 @@ class MealService:
         self._meal_repository = meal_repository
         self._nutrient_calculator = nutrient_calculator or NutrientCalculator()
 
-    def create_meal(self, items: list[MealItemCreateRequest]) -> Meal:
+    def create_meal(self, items: list[MealItemCreateRequest], user_id: int) -> Meal:
         session = self._meal_repository.session
         transaction = session.begin_nested() if session.in_transaction() else session.begin()
         with transaction:
@@ -51,6 +51,7 @@ class MealService:
                     )
                 )
             meal = Meal(
+                user_id=user_id,
                 total_calories=self._total(item.calculated_calories for item in meal_items),
                 total_protein_g=self._total(item.calculated_protein_g for item in meal_items),
                 total_carbohydrates_g=self._total(item.calculated_carbohydrates_g for item in meal_items),
@@ -62,11 +63,11 @@ class MealService:
             session.flush()
         return meal
 
-    def get_meal(self, meal_id: int) -> Meal | None:
-        return self._meal_repository.get_by_id(meal_id)
+    def get_meal(self, meal_id: int, user_id: int) -> Meal | None:
+        return self._meal_repository.get_by_id_for_user(meal_id, user_id)
 
-    def list_meals(self, limit: int, offset: int) -> list[Meal]:
-        return self._meal_repository.list(limit, offset)
+    def list_meals(self, user_id: int, limit: int, offset: int) -> list[Meal]:
+        return self._meal_repository.list_for_user(user_id, limit, offset)
 
     @staticmethod
     def _total(values: object) -> Decimal:

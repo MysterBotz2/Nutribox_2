@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     test_database_url: str | None = None
     food_recognition_provider: str = "mock"
     food_recognition_max_upload_bytes: int = Field(default=5 * 1024 * 1024, gt=0)
+    jwt_secret_key: str | None = None
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = Field(default=30, gt=0, le=1440)
 
     model_config = SettingsConfigDict(env_file=ENV_FILE, extra="ignore")
 

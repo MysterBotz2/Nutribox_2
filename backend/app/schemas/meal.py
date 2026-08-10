@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.ai import RecognizedFood
 from app.schemas.nutrition import CalculatedFood, PortionNutrition
@@ -57,6 +57,8 @@ class MealItemCreateRequest(BaseModel):
 
 
 class MealCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     items: list[MealItemCreateRequest] = Field(min_length=1, max_length=50)
 
 

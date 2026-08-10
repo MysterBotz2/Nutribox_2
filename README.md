@@ -1,6 +1,6 @@
 # Nutri-Box API
 
-Phase 8 provides the FastAPI, PostgreSQL, mock-device, provider-neutral mock food-recognition, canonical nutrition, meal analysis, and local meal-persistence foundations for Nutri-Box. External AI providers, hardware, authentication, Docker, and Flutter are intentionally deferred.
+Phase 9 provides the FastAPI, PostgreSQL, mock-device, provider-neutral mock food recognition, canonical nutrition, meal analysis, local meal persistence, and local account foundations for Nutri-Box. External AI providers, hardware, Docker, and Flutter are intentionally deferred.
 
 ## Prerequisites
 
@@ -25,6 +25,18 @@ Edit `backend/.env` and replace all `DATABASE_URL` placeholders with the databas
 DATABASE_URL=postgresql+psycopg://YOUR_USERNAME:YOUR_PASSWORD@YOUR_HOST:YOUR_PORT/YOUR_DATABASE
 ```
 
+Generate a development JWT secret locally and put it in `backend/.env`; never commit it or reuse it for production:
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+```text
+JWT_SECRET_KEY=PASTE_THE_GENERATED_VALUE_HERE
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+```
+
 If PowerShell prevents activation for your user account, run this once in a PowerShell window:
 
 ```powershell
@@ -47,9 +59,10 @@ The API will be available at `http://127.0.0.1:8000`.
 - `GET /api/nutrition/{food_id}` returns one canonical food reference record.
 - `POST /api/nutrition/calculate` calculates a measured food portion from stored per-100g reference values without saving a meal.
 - `POST /api/meals/analyze` combines a validated image, a manual development weight, canonical food lookup, and deterministic nutrient calculation without saving a meal.
-- `POST /api/meals` saves a confirmed, server-calculated meal from canonical food IDs and positive manual weights.
-- `GET /api/meals` lists persisted local prototype meals, newest first, with pagination.
-- `GET /api/meals/{meal_id}` returns one persisted meal and its immutable food and nutrition snapshots.
+- `POST /api/auth/register` creates a local account with an Argon2 password hash.
+- `POST /api/auth/token` accepts OAuth2 form fields; its `username` field is the account email and it returns an expiring bearer access token.
+- `GET /api/users/me`, `GET /api/users/me/profile`, and `PUT /api/users/me/profile` require bearer authentication.
+- `POST /api/meals`, `GET /api/meals`, and `GET /api/meals/{meal_id}` require bearer authentication and are scoped to the current user.
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
 
@@ -71,7 +84,18 @@ Portion calculation uses Python `Decimal`, never binary float conversion of stor
 
 Meal analysis uses the configured provider-neutral food-recognition provider and manually supplied weight during hardware-free development. Nutrition always comes from canonical PostgreSQL Food records, not AI output. Multiple recognized foods require user selection; their shared plate weight is never divided automatically. Analysis results are transient and are not persisted.
 
-Confirmed meals are persisted only through `POST /api/meals`. The backend resolves every requested food, calculates all item nutrients and totals, and stores snapshots so later food-reference updates do not change recorded history. These endpoints are for local prototype records only; user accounts, authentication, and user-scoped history remain future work.
+Confirmed meals are persisted only through `POST /api/meals`. The backend resolves every requested food, calculates all item nutrients and totals, and stores snapshots so later food-reference updates do not change recorded history. These endpoints are local prototype records scoped to the authenticated account.
+
+Passwords are stored only as Argon2 hashes. Access tokens are signed JWTs that contain only a user identifier and expiry; they expire after `ACCESS_TOKEN_EXPIRE_MINUTES` (30 by default). Do not place JWT secrets in source control. Legacy meals created before Phase 9 remain valid with `user_id = NULL`; new persisted meals always use the authenticated user. The foreign key is `ON DELETE SET NULL`, so a future user deletion would preserve historical prototype/research meals. Nutrition profiles store optional preferences only; they do not calculate calorie targets, BMR, TDEE, or medical guidance.
+
+## Swagger authentication workflow
+
+1. Start the API and open `http://127.0.0.1:8000/docs`.
+2. Use `POST /api/auth/register` to create an account. The password must be 12–128 characters.
+3. Use `POST /api/auth/token` with form data: put the email in `username` and the password in `password` if you need a token outside Swagger.
+4. In Swagger, click **Authorize**, enter the email as `username` and the password, then authorize; Swagger obtains the bearer token through `/api/auth/token`.
+5. Call `GET /api/users/me`, then create or replace the optional profile with `PUT /api/users/me/profile`.
+6. Call `POST /api/meals` with canonical food IDs and positive weights. `GET /api/meals` returns only the authorized account's meals.
 
 ## Run tests
 

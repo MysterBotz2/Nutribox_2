@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.core.constants import MAXIMUM_PROTOTYPE_WEIGHT_GRAMS
 from app.database.database import get_db
+from app.dependencies.auth import get_current_user
+from app.models.user import User
 from app.repositories.food_repository import FoodRepository
 from app.repositories.meal_repository import MealRepository
 from app.routers.nutrition import get_nutrition_service
@@ -62,21 +64,21 @@ def meal_response_from_model(meal) -> MealResponse:
 
 
 @router.post("", response_model=MealResponse, status_code=status.HTTP_201_CREATED)
-def create_meal(meal_request: MealCreateRequest, meal_service: Annotated[MealService, Depends(get_meal_service)]) -> MealResponse:
+def create_meal(meal_request: MealCreateRequest, current_user: Annotated[User, Depends(get_current_user)], meal_service: Annotated[MealService, Depends(get_meal_service)]) -> MealResponse:
     try:
-        return meal_response_from_model(meal_service.create_meal(meal_request.items))
+        return meal_response_from_model(meal_service.create_meal(meal_request.items, current_user.id))
     except MealFoodNotFoundError as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from None
 
 
 @router.get("", response_model=MealListResponse)
-def list_meals(meal_service: Annotated[MealService, Depends(get_meal_service)], limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0)) -> MealListResponse:
-    return MealListResponse(meals=[meal_response_from_model(meal) for meal in meal_service.list_meals(limit, offset)], limit=limit, offset=offset)
+def list_meals(current_user: Annotated[User, Depends(get_current_user)], meal_service: Annotated[MealService, Depends(get_meal_service)], limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0)) -> MealListResponse:
+    return MealListResponse(meals=[meal_response_from_model(meal) for meal in meal_service.list_meals(current_user.id, limit, offset)], limit=limit, offset=offset)
 
 
 @router.get("/{meal_id}", response_model=MealResponse)
-def get_meal(meal_id: int, meal_service: Annotated[MealService, Depends(get_meal_service)]) -> MealResponse:
-    meal = meal_service.get_meal(meal_id)
+def get_meal(meal_id: int, current_user: Annotated[User, Depends(get_current_user)], meal_service: Annotated[MealService, Depends(get_meal_service)]) -> MealResponse:
+    meal = meal_service.get_meal(meal_id, current_user.id)
     if meal is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal was not found.")
     return meal_response_from_model(meal)

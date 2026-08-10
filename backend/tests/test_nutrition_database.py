@@ -42,7 +42,11 @@ def database_session() -> Generator[Session, None, None]:
     with test_engine.connect() as connection:
         transaction = connection.begin()
         Base.metadata.create_all(connection)
-        session = Session(bind=connection, expire_on_commit=False)
+        session = Session(
+            bind=connection,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        )
         try:
             yield session
         finally:
@@ -176,12 +180,12 @@ def test_calculate_unknown_food_returns_404(client: TestClient) -> None:
     assert response.json() == {"detail": "Food record was not found."}
 
 
-def test_create_one_item_meal_and_return_snapshots(database_session: Session, client: TestClient) -> None:
+def test_create_one_item_meal_and_return_snapshots(database_session: Session, client: TestClient, auth_headers: dict[str, str]) -> None:
     food = create_test_food("Test Food")
     database_session.add(food)
     database_session.flush()
 
-    response = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "180"}]})
+    response = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "180"}]}, headers=auth_headers)
 
     assert response.status_code == 201
     assert response.json()["items"][0]["food"]["name"] == "Test Food"
@@ -189,63 +193,63 @@ def test_create_one_item_meal_and_return_snapshots(database_session: Session, cl
     assert response.json()["totals"]["calories"] == "180.000"
 
 
-def test_create_multi_item_meal_allows_duplicate_food_ids(database_session: Session, client: TestClient) -> None:
+def test_create_multi_item_meal_allows_duplicate_food_ids(database_session: Session, client: TestClient, auth_headers: dict[str, str]) -> None:
     food = create_test_food("Test Food")
     database_session.add(food)
     database_session.flush()
 
-    response = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "100"}, {"food_id": food.id, "weight_grams": "50"}]})
+    response = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "100"}, {"food_id": food.id, "weight_grams": "50"}]}, headers=auth_headers)
 
     assert response.status_code == 201
     assert len(response.json()["items"]) == 2
     assert response.json()["totals"]["calories"] == "150.000"
 
 
-def test_unknown_food_rolls_back_entire_meal(database_session: Session, client: TestClient) -> None:
+def test_unknown_food_rolls_back_entire_meal(database_session: Session, client: TestClient, auth_headers: dict[str, str]) -> None:
     food = create_test_food("Test Food")
     database_session.add(food)
     database_session.flush()
 
-    response = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "100"}, {"food_id": 999999, "weight_grams": "100"}]})
+    response = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "100"}, {"food_id": 999999, "weight_grams": "100"}]}, headers=auth_headers)
 
     assert response.status_code == 404
     assert database_session.scalar(select(func.count()).select_from(Meal)) == 0
 
 
 @pytest.mark.parametrize("items", [[], [{"food_id": 1, "weight_grams": "0"}], [{"food_id": 1, "weight_grams": "-1"}], [{"food_id": 1, "weight_grams": "5000.1"}]])
-def test_meal_creation_rejects_invalid_items(client: TestClient, items: list[dict[str, object]]) -> None:
-    response = client.post("/api/meals", json={"items": items})
+def test_meal_creation_rejects_invalid_items(client: TestClient, auth_headers: dict[str, str], items: list[dict[str, object]]) -> None:
+    response = client.post("/api/meals", json={"items": items}, headers=auth_headers)
 
     assert response.status_code == 422
 
 
-def test_get_and_list_meals_newest_first_with_pagination(database_session: Session, client: TestClient) -> None:
+def test_get_and_list_meals_newest_first_with_pagination(database_session: Session, client: TestClient, auth_headers: dict[str, str]) -> None:
     food = create_test_food("Test Food")
     database_session.add(food)
     database_session.flush()
-    first = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "100"}]}).json()
-    second = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "200"}]}).json()
+    first = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "100"}]}, headers=auth_headers).json()
+    second = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "200"}]}, headers=auth_headers).json()
 
-    detail = client.get(f"/api/meals/{first['id']}")
-    listed = client.get("/api/meals", params={"limit": 1, "offset": 0})
+    detail = client.get(f"/api/meals/{first['id']}", headers=auth_headers)
+    listed = client.get("/api/meals", params={"limit": 1, "offset": 0}, headers=auth_headers)
 
     assert detail.status_code == 200
     assert detail.json()["items"][0]["nutrition"]["calories"] == "100.000"
     assert listed.status_code == 200
     assert listed.json()["meals"][0]["id"] == second["id"]
-    assert client.get("/api/meals/999999").status_code == 404
+    assert client.get("/api/meals/999999", headers=auth_headers).status_code == 404
 
 
-def test_meal_detail_uses_stored_snapshot_after_food_reference_changes(database_session: Session, client: TestClient) -> None:
+def test_meal_detail_uses_stored_snapshot_after_food_reference_changes(database_session: Session, client: TestClient, auth_headers: dict[str, str]) -> None:
     food = create_test_food("Test Food")
     database_session.add(food)
     database_session.flush()
-    created = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "100"}]}).json()
+    created = client.post("/api/meals", json={"items": [{"food_id": food.id, "weight_grams": "100"}]}, headers=auth_headers).json()
 
     food.name = "Changed Test Food"
     food.calories_per_100g = Decimal("999.00")
     database_session.flush()
-    response = client.get(f"/api/meals/{created['id']}")
+    response = client.get(f"/api/meals/{created['id']}", headers=auth_headers)
 
     assert response.status_code == 200
     assert response.json()["items"][0]["food"]["name"] == "Test Food"
