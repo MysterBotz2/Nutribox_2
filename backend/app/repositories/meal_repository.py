@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -29,5 +31,20 @@ class MealRepository:
             .order_by(Meal.recorded_at.desc(), Meal.id.desc())
             .limit(limit)
             .offset(offset)
+        )
+        return list(self.session.scalars(statement))
+
+    def list_for_user_between(
+        self, user_id: int, start_datetime_utc: datetime, end_datetime_utc: datetime
+    ) -> list[Meal]:
+        """Return only one user's stored meals in a bounded UTC half-open range."""
+        statement = (
+            select(Meal)
+            .where(
+                Meal.user_id == user_id,
+                Meal.recorded_at >= start_datetime_utc,
+                Meal.recorded_at < end_datetime_utc,
+            )
+            .order_by(Meal.recorded_at.asc(), Meal.id.asc())
         )
         return list(self.session.scalars(statement))

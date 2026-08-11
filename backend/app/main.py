@@ -13,6 +13,7 @@ from app.routers.device import router as device_router
 from app.routers.health import router as health_router
 from app.routers.meals import router as meals_router
 from app.routers.nutrition import router as nutrition_router
+from app.routers.progress import router as progress_router
 from app.routers.users import router as users_router
 
 app = FastAPI(title="Nutri-Box API")
@@ -23,6 +24,7 @@ app.include_router(device_router)
 app.include_router(ai_router)
 app.include_router(nutrition_router)
 app.include_router(meals_router)
+app.include_router(progress_router)
 
 
 def _json_safe_validation_detail(value: Any) -> Any:

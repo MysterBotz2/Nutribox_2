@@ -1,6 +1,6 @@
 # Nutri-Box API
 
-Phase 9 provides the FastAPI, PostgreSQL, mock-device, provider-neutral mock food recognition, canonical nutrition, meal analysis, local meal persistence, and local account foundations for Nutri-Box. External AI providers, hardware, Docker, and Flutter are intentionally deferred.
+Phase 10 provides the FastAPI, PostgreSQL, mock-device, provider-neutral mock food recognition, canonical nutrition, meal analysis, local meal persistence, local accounts, and deterministic progress analytics foundations for Nutri-Box. External AI providers, hardware, Docker, and Flutter are intentionally deferred.
 
 ## Prerequisites
 
@@ -63,6 +63,7 @@ The API will be available at `http://127.0.0.1:8000`.
 - `POST /api/auth/token` accepts OAuth2 form fields; its `username` field is the account email and it returns an expiring bearer access token.
 - `GET /api/users/me`, `GET /api/users/me/profile`, and `PUT /api/users/me/profile` require bearer authentication.
 - `POST /api/meals`, `GET /api/meals`, and `GET /api/meals/{meal_id}` require bearer authentication and are scoped to the current user.
+- `GET /api/progress/today`, `GET /api/progress/daily`, `GET /api/progress/weekly`, and `GET /api/progress/summary` require bearer authentication and return deterministic analytics from stored meal snapshots.
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
 
@@ -86,6 +87,17 @@ Meal analysis uses the configured provider-neutral food-recognition provider and
 
 Confirmed meals are persisted only through `POST /api/meals`. The backend resolves every requested food, calculates all item nutrients and totals, and stores snapshots so later food-reference updates do not change recorded history. These endpoints are local prototype records scoped to the authenticated account.
 
+## Progress analytics
+
+Progress is derived from the authenticated user's stored `Meal.total_*` snapshots; it does not recalculate food nutrition, call an AI provider, or use an external nutrition API. Legacy meals with no owner and meals belonging to other users are excluded. Dates use an IANA `timezone` query parameter and default to `UTC`.
+
+- `GET /api/progress/today?timezone=Asia/Manila`
+- `GET /api/progress/daily?date=2026-08-10&timezone=Asia/Manila`
+- `GET /api/progress/weekly?week_start=2026-08-10&timezone=Asia/Manila`
+- `GET /api/progress/summary?days=30&timezone=Asia/Manila`
+
+Weekly periods are Monday through Sunday, and `week_start` must be a Monday. Weekly and summary responses contain zero-filled daily entries for charting. Summary `daily_average` divides totals by every requested calendar day, including days without meals. Values use `Decimal` and are presented to three decimal places. This phase does not calculate BMR, TDEE, calorie targets, macro targets, or medical recommendations.
+
 Passwords are stored only as Argon2 hashes. Access tokens are signed JWTs that contain only a user identifier and expiry; they expire after `ACCESS_TOKEN_EXPIRE_MINUTES` (30 by default). Do not place JWT secrets in source control. Legacy meals created before Phase 9 remain valid with `user_id = NULL`; new persisted meals always use the authenticated user. The foreign key is `ON DELETE SET NULL`, so a future user deletion would preserve historical prototype/research meals. Nutrition profiles store optional preferences only; they do not calculate calorie targets, BMR, TDEE, or medical guidance.
 
 ## Swagger authentication workflow
@@ -96,6 +108,7 @@ Passwords are stored only as Argon2 hashes. Access tokens are signed JWTs that c
 4. In Swagger, click **Authorize**, enter the email as `username` and the password, then authorize; Swagger obtains the bearer token through `/api/auth/token`.
 5. Call `GET /api/users/me`, then create or replace the optional profile with `PUT /api/users/me/profile`.
 6. Call `POST /api/meals` with canonical food IDs and positive weights. `GET /api/meals` returns only the authorized account's meals.
+7. Call an authenticated progress endpoint, for example `GET /api/progress/weekly?week_start=2026-08-10&timezone=UTC`.
 
 ## Run tests
 

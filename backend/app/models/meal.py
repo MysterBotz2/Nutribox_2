@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.constants import MAXIMUM_PROTOTYPE_WEIGHT_GRAMS
@@ -12,6 +12,7 @@ class Meal(Base):
     """One locally recorded meal with server-derived nutrient totals."""
 
     __tablename__ = "meals"
+    __table_args__ = (Index("ix_meals_user_id_recorded_at", "user_id", "recorded_at"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     recorded_at: Mapped[datetime] = mapped_column(
