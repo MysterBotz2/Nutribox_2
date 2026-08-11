@@ -1,6 +1,6 @@
-const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
+export function resolveApiBaseUrl(configuredValue: string | undefined): string {
+  return configuredValue?.trim().replace(/\/$/, '') ?? ''
+}
 
-export const API_BASE_URL = (configuredBaseUrl || 'http://127.0.0.1:8000').replace(
-  /\/$/,
-  '',
-)
+// Empty means same-origin requests such as /api/users/me.
+export const API_BASE_URL = resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL)

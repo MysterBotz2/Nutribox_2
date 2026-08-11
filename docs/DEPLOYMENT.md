@@ -8,7 +8,9 @@ Nutri-Box runs natively with Python and PostgreSQL; Docker is not required for t
 4. Run `scripts\setup.ps1`, then `scripts\migrate.ps1`.
 5. Run `scripts\start.ps1` and verify `GET /api/health`.
 
-The local default bind address is `127.0.0.1`. For a LAN client, use `scripts\start.ps1 -HostAddress 0.0.0.0 -Port 8000`, configure the client base URL to the host's LAN address, and manually allow the port through Windows Firewall if needed.
+The development default bind address is `0.0.0.0:8000`; command-line overrides remain available. For web-companion development, open `http://<server-lan-ip>:5173`: the browser uses relative `/api/...` requests and Vite proxies them locally to FastAPI at `127.0.0.1:8000`. The browser therefore does not need a compiled LAN API address. Allow development access only through Windows Firewall Private networks when needed.
+
+For a client installation, use a router DHCP reservation to give the Nutri-Box server PC a stable LAN identity rather than editing source code with an address. Backend secrets and provider settings remain private installation-specific environment configuration. Future Raspberry Pi software will use one private backend-base setting, not a hard-coded address.
 
 ## Configuration
 

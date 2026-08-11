@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { apiClient, ApiError } from './client'
-import { API_BASE_URL } from './config'
+import { API_BASE_URL, resolveApiBaseUrl } from './config'
 import { clearSessionToken, storeSessionToken } from '../auth/token-storage'
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -14,9 +14,14 @@ afterEach(() => {
 })
 
 describe('API client', () => {
-  it('centralizes the API base URL', () => {
-    const configuredUrl = import.meta.env.VITE_API_BASE_URL?.trim()
-    expect(API_BASE_URL).toBe((configuredUrl || 'http://127.0.0.1:8000').replace(/\/$/, ''))
+  it('uses same-origin relative requests when the API base is missing or blank', () => {
+    expect(resolveApiBaseUrl(undefined)).toBe('')
+    expect(resolveApiBaseUrl('   ')).toBe('')
+    expect(API_BASE_URL).toBe('')
+  })
+
+  it('preserves an explicit API-origin override without a trailing slash', () => {
+    expect(resolveApiBaseUrl('https://api.example.test/')).toBe('https://api.example.test')
   })
 
   it('sends registration as JSON', async () => {

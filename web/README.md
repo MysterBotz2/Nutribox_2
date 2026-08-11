@@ -16,11 +16,13 @@ npm install
 npm run generate:api
 ```
 
-Set only the browser-visible backend address in the private, ignored `web/.env` file. For this development PC's current LAN address:
+`VITE_*` variables are browser-visible. Normal Vite development uses same-origin relative API requests, so leave the private, ignored `web/.env` setting blank:
 
 ```text
-VITE_API_BASE_URL=http://192.168.8.35:8000
+VITE_API_BASE_URL=
 ```
+
+An explicit origin is optional only for a deliberately separate web/API deployment. Never put backend secrets in a Vite environment file.
 
 Never put database URLs, JWT secrets, Gemini keys, or other backend secrets in Vite environment files. `VITE_*` values are included in browser JavaScript.
 
@@ -38,21 +40,25 @@ For browser development in `web/`:
 npm run dev
 ```
 
-The standard development scripts listen on all local network interfaces. Use these addresses while both devices are on the same Wi-Fi network:
+The standard development scripts listen on all local network interfaces. During Vite development, the browser requests `/api/...` from the same browser origin and Vite proxies only `/api` internally to `http://127.0.0.1:8000`. The browser never needs a compiled server LAN IP or a direct `:8000` API URL.
+
+Use these addresses while both devices are on the same Wi-Fi network:
 
 - On this PC: `http://localhost:5173` (or `http://127.0.0.1:5173`)
-- From a phone or another LAN device: `http://192.168.8.35:5173`
-- FastAPI on the LAN: `http://192.168.8.35:8000` (Swagger: `http://192.168.8.35:8000/docs`)
+- From a phone or another LAN device: `http://<server-lan-ip>:5173`
+- FastAPI on the LAN: `http://<server-lan-ip>:8000` (Swagger: `http://<server-lan-ip>:8000/docs`)
 
-The backend must allow every browser origin used through the private, ignored `backend/.env` file:
+The normal proxied flow does not require a LAN origin in backend CORS because FastAPI receives the Vite server's local proxy request. CORS remains explicit/configurable for separately hosted browser clients:
 
 ```text
-CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://192.168.8.35:5173
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
-The backend allows only explicitly configured origins. It does not use wildcard CORS or cookie credentials; browser requests send bearer tokens in the `Authorization` header.
+The backend allows only explicitly configured origins. It does not use wildcard CORS or cookie credentials; browser requests send bearer tokens in the `Authorization` header. If Windows Firewall prompts for Python or Node/Vite access, allow it on **Private networks** only for this trusted development workflow. Ensure the PC and test device are connected to the same Wi-Fi network; guest Wi-Fi and client isolation can prevent LAN access.
 
-If Windows Firewall prompts for Python or Node/Vite access, allow it on **Private networks** only for this development workflow. Ensure the PC and test device are connected to the same Wi-Fi network; guest Wi-Fi and client isolation can prevent LAN access. `192.168.8.35` is the current DHCP address and may change after reconnecting or restarting the router unless a DHCP reservation is configured. If it changes, update the private `web/.env` API URL and the private `backend/.env` CORS allowlist, then restart both servers.
+For a client installation, reserve a stable LAN address for the Nutri-Box server PC through the router's DHCP reservation feature. Do not embed that numeric address in source code. Installation-specific backend values—such as `DATABASE_URL`, `JWT_SECRET_KEY`, Gemini credentials, and provider configuration—remain private configuration. A future Raspberry Pi controller will similarly use one private deployment setting such as `NUTRIBOX_API_BASE_URL=http://<nutribox-server>:8000`; no Pi code is included here.
+
+Future production hosting should preferably serve the web companion and `/api` under the same browser origin where practical. Static production hosting is not implemented in this development checkpoint.
 
 ## Commands
 
