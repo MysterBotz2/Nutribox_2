@@ -1,0 +1,81 @@
+@baseUrl = http://127.0.0.1:8000
+@token = PASTE_ACCESS_TOKEN_HERE
+
+### Health
+GET {{baseUrl}}/api/health
+
+### Register
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "developer@example.test",
+  "password": "replace-with-12-or-more-characters",
+  "first_name": "Developer",
+  "last_name": "Example"
+}
+
+### Login (username is email)
+POST {{baseUrl}}/api/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username=developer%40example.test&password=replace-with-12-or-more-characters
+
+### Current user
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+
+### Nutrition search
+GET {{baseUrl}}/api/nutrition/search?q=rice
+
+### Recognition multipart (replace path)
+POST {{baseUrl}}/api/ai/recognize-food
+Content-Type: multipart/form-data; boundary=NutriBoxBoundary
+
+--NutriBoxBoundary
+Content-Disposition: form-data; name="file"; filename="meal.png"
+Content-Type: image/png
+
+< ./meal.png
+--NutriBoxBoundary--
+
+### Meal analysis multipart (replace path)
+POST {{baseUrl}}/api/meals/analyze
+Content-Type: multipart/form-data; boundary=NutriBoxBoundary
+
+--NutriBoxBoundary
+Content-Disposition: form-data; name="weight_grams"
+
+180
+--NutriBoxBoundary
+Content-Disposition: form-data; name="file"; filename="meal.png"
+Content-Type: image/png
+
+< ./meal.png
+--NutriBoxBoundary--
+
+### Create meal
+POST {{baseUrl}}/api/meals
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"items":[{"food_id":1,"weight_grams":"180"}]}
+
+### Meal history
+GET {{baseUrl}}/api/meals?limit=20&offset=0
+Authorization: Bearer {{token}}
+
+### Progress
+GET {{baseUrl}}/api/progress/weekly?week_start=2026-08-10&timezone=Asia%2FManila
+Authorization: Bearer {{token}}
+
+### Targets
+GET {{baseUrl}}/api/users/me/targets
+Authorization: Bearer {{token}}
+
+### Mock coach
+POST {{baseUrl}}/api/ai/coach?timezone=Asia%2FManila
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"question":"How am I doing today?"}

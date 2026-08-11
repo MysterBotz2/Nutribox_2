@@ -16,7 +16,11 @@ from app.routers.nutrition import router as nutrition_router
 from app.routers.progress import router as progress_router
 from app.routers.users import router as users_router
 
-app = FastAPI(title="Nutri-Box API")
+app = FastAPI(
+    title="Nutri-Box API",
+    version="1.0.0",
+    description="Nutri-Box v1 integration API. Existing /api routes are the stable v1 contract.",
+)
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(users_router)

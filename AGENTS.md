@@ -153,20 +153,11 @@ When debugging:
 - make the smallest appropriate fix
 - preserve unrelated working code
 
-## Current Development Sequence
-1. FastAPI foundation
-2. PostgreSQL integration
-3. Mock device
-4. OpenAI food recognition
-5. Nutrition database
-6. Nutrient calculation
-7. Meal analysis
-8. Meal persistence
-9. User accounts
-10. Progress tracking
-11. AI Coach
-12. Dockerization
-13. Flutter app
-14. Raspberry Pi integration
+## Remaining Development Roadmap
+15. API Integration Hardening & Native Deployment Readiness
+16. Raspberry Pi / Physical Device Integration
+17. Full-System Integration, Calibration, Research Validation & Client Handoff
+
+Mobile development is external to this repository/team. Do not implement React Native, Expo, or Flutter source here unless explicitly requested.
 
 Do not skip major prerequisites unless explicitly instructed.

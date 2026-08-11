@@ -1,301 +1,64 @@
 # Nutri-Box API
 
-Phase 15 provides the FastAPI, PostgreSQL, provider-neutral food recognition (mock and Gemini), canonical nutrition, validated local food-data ingestion, meal analysis, local meal persistence, authentication, progress analytics, nutrition targets, a mock nutrition coach, and portable Docker Compose deployment packaging. Flutter and Raspberry Pi hardware integration remain deferred.
+Nutri-Box is a FastAPI and PostgreSQL backend for authenticated meal persistence, deterministic nutrient calculation, progress analytics, food recognition, and nutrition-data administration. The existing `/api/...` routes are the documented v1 integration contract.
 
-## Prerequisites
+## Integration and deployment
 
-- Python 3.11 or newer
-- Windows PowerShell
+- [API integration contract](docs/API_INTEGRATION.md)
+- [Native Windows deployment](docs/DEPLOYMENT.md)
+- [Integration checklist](docs/INTEGRATION_CHECKLIST.md)
+- [Generated OpenAPI schema](docs/openapi.json)
+- [REST Client examples](docs/http/nutribox.http)
 
-## Setup (Windows PowerShell)
+React Native/Expo and physical-device software are separate clients of this backend. They submit inputs and display results; the backend remains authoritative for authentication, ownership, food resolution, nutrients, totals, and progress.
 
-From the repository root:
+## Native setup (Windows PowerShell)
 
 ```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+.\scripts\setup.ps1
 Copy-Item .env.example backend\.env
+notepad backend\.env
+.\scripts\migrate.ps1
+.\scripts\start.ps1
 ```
 
-Edit `backend/.env` and replace all `DATABASE_URL` placeholders with the database, user, and password you created manually. Use the Psycopg 3-compatible format:
-
-```text
-DATABASE_URL=postgresql+psycopg://YOUR_USERNAME:YOUR_PASSWORD@YOUR_HOST:YOUR_PORT/YOUR_DATABASE
-```
-
-Generate a development JWT secret locally and put it in `backend/.env`; never commit it or reuse it for production:
+Configure `DATABASE_URL` and `JWT_SECRET_KEY` in the ignored `backend/.env` file. Generate a local JWT secret with:
 
 ```powershell
-python -c "import secrets; print(secrets.token_urlsafe(48))"
+.\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-```text
-JWT_SECRET_KEY=PASTE_THE_GENERATED_VALUE_HERE
-JWT_ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
-
-If PowerShell prevents activation for your user account, run this once in a PowerShell window:
+For LAN development, use a configured client base URL and start the backend explicitly on all interfaces:
 
 ```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+.\scripts\start.ps1 -HostAddress 0.0.0.0 -Port 8000
 ```
 
-## Run the API
+Open `http://127.0.0.1:8000/docs` on the host computer. A physical phone must use the host computer's LAN address; Windows Firewall may require a manual inbound TCP rule. Do not hard-code an address in source code.
+
+## Checks and contract export
 
 ```powershell
-uvicorn app.main:app --app-dir backend --reload
-```
-
-The API will be available at `http://127.0.0.1:8000`.
-
-- `GET /` returns the API name and running status.
-- `GET /api/health` verifies database connectivity. It returns `200` with `{"status": "healthy", "database": "connected"}` when PostgreSQL is available, otherwise a safe `503` response.
-- `POST /api/device/simulate` accepts validated development-only simulated weight and temperature readings. Raspberry Pi sensor integration will be added in a later phase.
-- `POST /api/ai/recognize-food` accepts JPEG, PNG, or WEBP uploads and returns a simulated food-recognition result. It uses `MockFoodRecognitionProvider`; the image is validated but is not analyzed by an external AI service.
-- `POST /api/ai/coach` requires bearer authentication and returns a transient simulated coaching response assembled from trusted Nutri-Box data.
-- `GET /api/nutrition/search?q=...` searches canonical food reference data and exact/partial aliases, returning canonical foods without duplicates.
-- `GET /api/nutrition/{food_id}` returns one canonical food reference record.
-- `POST /api/nutrition/calculate` calculates a measured food portion from stored per-100g reference values without saving a meal.
-- `POST /api/meals/analyze` combines a validated image, a manual development weight, canonical food lookup, and deterministic nutrient calculation without saving a meal.
-- `POST /api/auth/register` creates a local account with an Argon2 password hash.
-- `POST /api/auth/token` accepts OAuth2 form fields; its `username` field is the account email and it returns an expiring bearer access token.
-- `GET /api/users/me`, `GET /api/users/me/profile`, and `PUT /api/users/me/profile` require bearer authentication.
-- `GET /api/users/me/targets` and `PUT /api/users/me/targets` require bearer authentication and manage one explicit target set for the current user.
-- `POST /api/meals`, `GET /api/meals`, and `GET /api/meals/{meal_id}` require bearer authentication and are scoped to the current user.
-- `GET /api/progress/today`, `GET /api/progress/daily`, `GET /api/progress/weekly`, and `GET /api/progress/summary` require bearer authentication and return deterministic analytics from stored meal snapshots.
-- `GET /api/progress/target-status` requires bearer authentication and compares today's stored totals with configured targets.
-- Swagger UI: `http://127.0.0.1:8000/docs`
-- ReDoc: `http://127.0.0.1:8000/redoc`
-
-`FOOD_RECOGNITION_PROVIDER` supports `mock` (the default) and `gemini`. The Gemini option performs food identification only: Nutri-Box sends the validated food image and a food-identification instruction, never a profile, target, progress record, meal history, account data, or JWT. Gemini labels are resolved later against canonical Food names and aliases; nutrient values remain deterministic and backend-controlled. The AI Coach remains `mock` in this phase.
-
-To opt in to one real Gemini recognition request, add these values only to your uncommitted `backend/.env` file:
-
-```text
-FOOD_RECOGNITION_PROVIDER=gemini
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-GEMINI_MODEL=YOUR_SELECTED_GEMINI_MODEL
-```
-
-The model is intentionally configuration-driven rather than fixed in source code. Gemini usage is subject to its applicable quotas, policies, and data-handling terms. If configuration is incomplete or Gemini cannot be reached, the API returns a safe provider error and never silently falls back to mock. Set `FOOD_RECOGNITION_PROVIDER=mock` and restart the application to return to simulated recognition.
-
-`NUTRITION_COACH_PROVIDER` currently supports `mock` only. Food recognition and nutrition coaching are separate provider capabilities and can be configured independently in a future deployment.
-
-## Nutrition reference data
-
-Food nutrition reference data is stored in PostgreSQL on a per-100-gram basis. No external nutrition provider is connected and the application does not seed unverified nutrition data. Real food records must include validated source provenance. Deterministic portion-based nutrient calculations are available in Phase 6.
-
-The public nutrition endpoints are read-only in this phase:
-
-```text
-GET /api/nutrition/search?q=rice
-GET /api/nutrition/{food_id}
-POST /api/nutrition/calculate
-```
-
-Portion calculation uses Python `Decimal`, never binary float conversion of stored nutrition data. Each calculated nutrient is rounded once to three decimal places with round-half-up behavior. A `0 g` portion is valid and returns zero values. The calculation does not create a meal or persist any result.
-
-Meal analysis uses the configured provider-neutral food-recognition provider and manually supplied weight during hardware-free development. Nutrition always comes from canonical PostgreSQL Food records, not AI output. Multiple recognized foods require user selection; their shared plate weight is never divided automatically. Analysis results are transient and are not persisted.
-
-## Validated food-data ingestion
-
-Food reference data is imported only through a local administrative CSV workflow; there is no public import API and no web scraping, AI, or external API call. Start from [the CSV template](data/templates/foods_import_template.csv). It has these headers:
-
-```text
-name,category,calories_per_100g,protein_g_per_100g,carbohydrates_g_per_100g,fat_g_per_100g,fiber_g_per_100g,source_name,source_reference,is_verified,aliases
-```
-
-`category` and `aliases` may be empty. All nutrient fields, `name`, `source_name`, `source_reference`, and explicit `is_verified` (`true` or `false`) are required. Nutrients are parsed as `Decimal` directly from the CSV and must fit the existing database precision and be finite and non-negative. `aliases` are separated with `|` and resolve exactly, after trimming, whitespace collapsing, and case folding, to one canonical Food. A canonical name is always checked before an alias.
-
-Review the dataset's source, license/terms, record mapping, and scientific suitability before import. The importer checks syntax and database consistency only: `is_verified=true` is never inferred merely because a row imports successfully. Source name and source reference are retained for provenance. A source reference is not globally unique because a dataset/report reference can legitimately cover several foods.
-
-From the repository root, validate a curated CSV without writing to PostgreSQL:
-
-```powershell
+.\scripts\check.ps1 -RunTests
 Push-Location backend
-..\.venv\Scripts\python.exe -m app.cli.import_foods ..\data\import\foods.csv --dry-run
+..\.venv\Scripts\python.exe -m app.cli.export_openapi
 Pop-Location
 ```
 
-Perform the actual atomic import only after a clean dry-run:
+The export is generated from the FastAPI application and does not require Gemini or a running server.
+
+## Providers
+
+Food recognition defaults to `mock`; Gemini is opt-in through the ignored `backend/.env` file. The AI Coach remains mock-only. See the API integration document for provider-neutral response behavior and safe provider errors.
+
+## Nutrition ingestion
+
+Curated nutrition imports are explicit, validated, transactional administrative commands. See [deployment documentation](docs/DEPLOYMENT.md#curated-nutrition-import) for dry-run and real-import steps. No food data is seeded automatically.
+
+## Tests
 
 ```powershell
-Push-Location backend
-..\.venv\Scripts\python.exe -m app.cli.import_foods ..\data\import\foods.csv
-Pop-Location
+.\.venv\Scripts\python.exe -m pytest backend/tests -q
 ```
 
-The importer rejects the entire file if it finds a malformed row, duplicate normalized canonical name, canonical/alias collision, or a name/alias already resolving to a stored Food. It never overwrites existing records and does not partially import a file. Dry runs perform the same checks and report planned inserts but make no database changes. Store private curated files under `data/import/` (ignored by Git); do not commit unreviewed or licensed datasets.
-
-Confirmed meals are persisted only through `POST /api/meals`. The backend resolves every requested food, calculates all item nutrients and totals, and stores snapshots so later food-reference updates do not change recorded history. These endpoints are local prototype records scoped to the authenticated account.
-
-## Progress analytics
-
-Progress is derived from the authenticated user's stored `Meal.total_*` snapshots; it does not recalculate food nutrition, call an AI provider, or use an external nutrition API. Legacy meals with no owner and meals belonging to other users are excluded. Dates use an IANA `timezone` query parameter and default to `UTC`.
-
-- `GET /api/progress/today?timezone=Asia/Manila`
-- `GET /api/progress/daily?date=2026-08-10&timezone=Asia/Manila`
-- `GET /api/progress/weekly?week_start=2026-08-10&timezone=Asia/Manila`
-- `GET /api/progress/summary?days=30&timezone=Asia/Manila`
-
-Weekly periods are Monday through Sunday, and `week_start` must be a Monday. Weekly and summary responses contain zero-filled daily entries for charting. Summary `daily_average` divides totals by every requested calendar day, including days without meals. Values use `Decimal` and are presented to three decimal places. This phase does not calculate BMR, TDEE, calorie targets, macro targets, or medical recommendations.
-
-## Nutrition targets
-
-Nutrition targets are explicit configured values, not automatically calculated recommendations. Each target set stores a required provenance type (`manual`, `researcher_assigned`, or `professional_assigned`) and may optionally store a protocol/plan reference and short notes. Individual calorie, protein, carbohydrate, fat, and fiber targets may be omitted, but at least one positive target is required when saving a set.
-
-Use authenticated endpoints:
-
-- `GET /api/users/me/targets`
-- `PUT /api/users/me/targets`
-- `GET /api/progress/target-status?timezone=Asia/Manila`
-
-Target status uses the stored historical Meal totals. For every configured nutrient, `remaining = target - consumed`, so it can be negative when consumption exceeds the configured target. `percent_of_target = consumed / target * 100`; absent individual targets produce `null` comparison values. No target record produces `null` target/comparison sections. These are neutral numeric values only: Nutri-Box does not prescribe medical diets, generate targets with AI, or calculate BMR/TDEE/calorie needs in this phase. A later validated methodology may introduce calculated targets explicitly.
-
-## AI Coach
-
-`POST /api/ai/coach?timezone=Asia/Manila` is authenticated and currently uses `MockNutritionCoachProvider`. Its response is explicitly simulated; no external AI API is configured or called. The client may provide only an optional bounded question, for example `{"question": "How am I doing today?"}`. Authoritative nutrition values are assembled by Nutri-Box from the current user's stored profile preferences, explicit targets, stored progress snapshots, and deterministic target comparison.
-
-The coach cannot modify targets, meals, progress, or nutrition records. It receives no email, name, password data, JWT, user ID, or database session. It is not a medical service and does not diagnose, treat, or prescribe; medical questions receive a simulated prompt to consult a qualified healthcare professional. Future external providers can be selected through `NUTRITION_COACH_PROVIDER` while retaining the same provider-neutral endpoint and response schema.
-
-Passwords are stored only as Argon2 hashes. Access tokens are signed JWTs that contain only a user identifier and expiry; they expire after `ACCESS_TOKEN_EXPIRE_MINUTES` (30 by default). Do not place JWT secrets in source control. Legacy meals created before Phase 9 remain valid with `user_id = NULL`; new persisted meals always use the authenticated user. The foreign key is `ON DELETE SET NULL`, so a future user deletion would preserve historical prototype/research meals. Nutrition profiles store optional preferences only; they do not calculate calorie targets, BMR, TDEE, or medical guidance.
-
-## Swagger authentication workflow
-
-1. Start the API and open `http://127.0.0.1:8000/docs`.
-2. Use `POST /api/auth/register` to create an account. The password must be 12–128 characters.
-3. Use `POST /api/auth/token` with form data: put the email in `username` and the password in `password` if you need a token outside Swagger.
-4. In Swagger, click **Authorize**, enter the email as `username` and the password, then authorize; Swagger obtains the bearer token through `/api/auth/token`.
-5. Call `GET /api/users/me`, then create or replace the optional profile with `PUT /api/users/me/profile`.
-6. Call `POST /api/meals` with canonical food IDs and positive weights. `GET /api/meals` returns only the authorized account's meals.
-7. Call an authenticated progress endpoint, for example `GET /api/progress/weekly?week_start=2026-08-10&timezone=UTC`.
-8. Configure targets with `PUT /api/users/me/targets`, then call `GET /api/progress/target-status` for neutral target comparisons.
-9. Call `POST /api/ai/coach` with `{}` or a short optional question. The returned provider is currently `mock` and the response is simulated.
-
-## Run tests
-
-```powershell
-pytest backend/tests
-```
-
-## Docker Compose deployment
-
-Docker Compose is an optional portable deployment path. The existing Windows virtual-environment workflow above remains supported. Install Docker Desktop (including Docker Compose) first, then from the repository root create the private deployment environment file:
-
-```powershell
-Copy-Item .env.docker.example .env.docker
-notepad .env.docker
-```
-
-Set `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `DATABASE_URL`, and `JWT_SECRET_KEY` in `.env.docker`. Generate secrets locally; do not reuse these examples or commit `.env.docker`:
-
-```powershell
-.\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
-Inside Docker, `DATABASE_URL` must use `db` as its hostname, not `localhost`. If the password contains URL-reserved characters, URL-encode it in `DATABASE_URL`. Default provider values are intentionally safe:
-
-```text
-FOOD_RECOGNITION_PROVIDER=mock
-NUTRITION_COACH_PROVIDER=mock
-```
-
-Build and start the deployment:
-
-```powershell
-docker compose config
-docker compose build
-docker compose up -d
-docker compose ps
-docker compose logs --follow migrate
-docker compose logs --follow api
-```
-
-The `db` service becomes ready through `pg_isready`. The one-shot `migrate` service runs `python -m alembic -c alembic.ini upgrade head` only after that health check succeeds. The `api` service starts only after migrations complete successfully; it is healthy only when `GET /api/health` succeeds. No service uses an arbitrary startup sleep. PostgreSQL is not published to the host; only the API is exposed on `${API_HOST_PORT:-8000}` (port 8000 by default).
-
-Verify the deployment:
-
-```powershell
-Invoke-RestMethod http://127.0.0.1:8000/
-Invoke-RestMethod http://127.0.0.1:8000/api/health
-Start-Process http://127.0.0.1:8000/docs
-Start-Process http://127.0.0.1:8000/redoc
-```
-
-Stop and later restart without removing data:
-
-```powershell
-docker compose down
-docker compose up -d
-docker compose ps
-```
-
-PostgreSQL data uses the named volume `nutribox_postgres_data`, so it survives ordinary `docker compose down`. **Do not run `docker compose down -v`** unless you deliberately want to permanently remove the deployment database volume and all of its data.
-
-### Docker nutrition imports
-
-Create the ignored host directory and place a reviewed CSV inside it. The API service mounts it read-only at `/data/import`; no data is bundled into the image or imported at startup.
-
-```powershell
-New-Item -ItemType Directory -Force data\import
-docker compose run --rm api python -m app.cli.import_foods /data/import/foods.csv --dry-run
-docker compose run --rm api python -m app.cli.import_foods /data/import/foods.csv
-```
-
-Run the actual import only after a clean dry-run. The import remains transactional and administrative.
-
-### Docker backup and restore
-
-Create a plain SQL backup using PostgreSQL tools inside the database container:
-
-```powershell
-$DbContainer = docker compose ps -q db
-docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > /tmp/nutribox-backup.sql'
-docker cp "${DbContainer}:/tmp/nutribox-backup.sql" .\nutribox-backup.sql
-```
-
-Restore is destructive: stop the API first, then it drops and recreates the deployment database before loading the SQL file. Confirm the backup file and target deployment before running it.
-
-```powershell
-docker compose stop api
-$DbContainer = docker compose ps -q db
-docker cp .\nutribox-backup.sql "${DbContainer}:/tmp/nutribox-backup.sql"
-docker compose exec -T db sh -c 'dropdb -U "$POSTGRES_USER" "$POSTGRES_DB" && createdb -U "$POSTGRES_USER" "$POSTGRES_DB" && psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" < /tmp/nutribox-backup.sql'
-docker compose up -d api
-```
-
-### Optional Gemini in Docker
-
-Gemini remains opt-in. Set the provider and Gemini values in private `.env.docker`, restart the API, and make an explicit request:
-
-```text
-FOOD_RECOGNITION_PROVIDER=gemini
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-GEMINI_MODEL=YOUR_SELECTED_GEMINI_MODEL
-GEMINI_TIMEOUT_SECONDS=20
-```
-
-```powershell
-docker compose up -d --force-recreate api
-```
-
-Set `FOOD_RECOGNITION_PROVIDER=mock` and recreate the API service to return to simulated operation. Do not expose this prototype directly to a LAN or the public internet without separately addressing access control, network binding, and TLS. Docker packaging does not add CORS, a reverse proxy, or TLS. The Dockerfile does not force an architecture, so official multi-architecture images can support a later ARM64 deployment where dependencies are available.
-
-## Alembic
-
-Alembic uses the same `DATABASE_URL` from `backend/.env`; no credentials are stored in `alembic.ini`.
-
-```powershell
-# Check that Alembic can load the migration environment and show the current revision.
-alembic -c alembic.ini current
-
-# Display the migration history.
-alembic -c alembic.ini history
-```
-
-## Database integration tests
-
-Database integration tests require a separate PostgreSQL database configured through `TEST_DATABASE_URL`. They will skip when it is absent, and refuse to run if it matches `DATABASE_URL`. Test data runs inside transactions that are rolled back after each test.
+Docker is intentionally not part of the current native deployment workflow.
