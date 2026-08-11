@@ -18,3 +18,14 @@ def test_coach_provider_configuration_defaults_to_mock_and_honors_environment(mo
     monkeypatch.setenv("NUTRITION_COACH_PROVIDER", "custom")
 
     assert Settings().nutrition_coach_provider == "custom"
+
+
+def test_gemini_settings_are_optional_and_honor_environment(monkeypatch) -> None:
+    assert Settings(_env_file=None).gemini_api_key is None
+    assert Settings(_env_file=None).gemini_model is None
+    monkeypatch.setenv("GEMINI_API_KEY", "configured-key")
+    monkeypatch.setenv("GEMINI_MODEL", "configured-model")
+
+    configured = Settings(_env_file=None)
+    assert configured.gemini_api_key == "configured-key"
+    assert configured.gemini_model == "configured-model"

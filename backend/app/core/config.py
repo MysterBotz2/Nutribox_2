@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     test_database_url: str | None = None
     food_recognition_provider: str = "mock"
     food_recognition_max_upload_bytes: int = Field(default=5 * 1024 * 1024, gt=0)
+    gemini_api_key: str | None = None
+    gemini_model: str | None = None
+    gemini_timeout_seconds: int = Field(default=20, gt=0, le=120)
     nutrition_coach_provider: str = "mock"
     jwt_secret_key: str | None = None
     jwt_algorithm: str = "HS256"

@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from app.core.config import settings
 from app.database.database import get_db
@@ -13,7 +14,7 @@ from app.repositories.nutrition_target_repository import NutritionTargetReposito
 from app.schemas.ai import FoodRecognitionResponse, RecognizedFood
 from app.schemas.nutrition_coach import NutritionCoachRequest, NutritionCoachResponse
 from app.services.food_recognition_selector import get_food_recognition_provider
-from app.services.food_recognition_provider import FoodRecognitionProvider
+from app.services.food_recognition_provider import FoodRecognitionProvider, FoodRecognitionProviderError
 from app.services.image_validation import read_validated_image
 from app.services.nutrition_coach_provider import NutritionCoachProvider
 from app.services.nutrition_coach_selector import get_nutrition_coach_provider
@@ -29,12 +30,14 @@ async def recognize_food(
     file: UploadFile = File(description="JPEG, PNG, or WEBP food image."),
     provider: FoodRecognitionProvider = Depends(get_food_recognition_provider),
 ) -> FoodRecognitionResponse:
-    """Return a simulated, provider-neutral food-recognition result."""
+    """Return a provider-neutral food-recognition result for a validated image."""
     image_bytes, content_type = await read_validated_image(file)
-    result = provider.recognize_food(
-        image_bytes=image_bytes,
-        content_type=content_type,
-    )
+    try:
+        result = await run_in_threadpool(
+            provider.recognize_food, image_bytes=image_bytes, content_type=content_type
+        )
+    except FoodRecognitionProviderError as error:
+        raise HTTPException(status_code=error.status_code, detail=error.detail) from None
     return FoodRecognitionResponse(
         foods=[RecognizedFood(name=name) for name in result.food_names],
         source=result.source,

@@ -12,6 +12,12 @@ from app.database.database import get_db
 from app.main import app
 
 
+@pytest.fixture(autouse=True)
+def force_mock_food_recognition_for_tests(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep normal tests independent of a developer's real-provider .env settings."""
+    monkeypatch.setattr(settings, "food_recognition_provider", "mock")
+
+
 @pytest.fixture
 def database_session() -> Generator[Session, None, None]:
     test_database_url = settings.test_database_url

@@ -70,7 +70,17 @@ The API will be available at `http://127.0.0.1:8000`.
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
 
-`FOOD_RECOGNITION_PROVIDER` currently supports `mock` only. Future provider adapters will use the same provider-neutral endpoint and response schema.
+`FOOD_RECOGNITION_PROVIDER` supports `mock` (the default) and `gemini`. The Gemini option performs food identification only: Nutri-Box sends the validated food image and a food-identification instruction, never a profile, target, progress record, meal history, account data, or JWT. Gemini labels are resolved later against canonical Food names and aliases; nutrient values remain deterministic and backend-controlled. The AI Coach remains `mock` in this phase.
+
+To opt in to one real Gemini recognition request, add these values only to your uncommitted `backend/.env` file:
+
+```text
+FOOD_RECOGNITION_PROVIDER=gemini
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+GEMINI_MODEL=YOUR_SELECTED_GEMINI_MODEL
+```
+
+The model is intentionally configuration-driven rather than fixed in source code. Gemini usage is subject to its applicable quotas, policies, and data-handling terms. If configuration is incomplete or Gemini cannot be reached, the API returns a safe provider error and never silently falls back to mock. Set `FOOD_RECOGNITION_PROVIDER=mock` and restart the application to return to simulated recognition.
 
 `NUTRITION_COACH_PROVIDER` currently supports `mock` only. Food recognition and nutrition coaching are separate provider capabilities and can be configured independently in a future deployment.
 

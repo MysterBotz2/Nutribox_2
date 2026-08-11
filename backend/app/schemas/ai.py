@@ -22,5 +22,5 @@ class RecognizedFood(BaseModel):
 class FoodRecognitionResponse(BaseModel):
     """Provider-neutral response for a food-recognition request."""
 
-    foods: list[RecognizedFood] = Field(min_length=1, max_length=MAXIMUM_RECOGNIZED_FOODS)
-    source: Literal["simulated"]
+    foods: list[RecognizedFood] = Field(max_length=MAXIMUM_RECOGNIZED_FOODS)
+    source: Literal["simulated", "gemini"]
