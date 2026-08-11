@@ -15,7 +15,8 @@ afterEach(() => {
 
 describe('API client', () => {
   it('centralizes the API base URL', () => {
-    expect(API_BASE_URL).toBe('http://127.0.0.1:8000')
+    const configuredUrl = import.meta.env.VITE_API_BASE_URL?.trim()
+    expect(API_BASE_URL).toBe((configuredUrl || 'http://127.0.0.1:8000').replace(/\/$/, ''))
   })
 
   it('sends registration as JSON', async () => {

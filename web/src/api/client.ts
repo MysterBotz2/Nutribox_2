@@ -79,6 +79,18 @@ export const apiClient = {
     return request('/api/users/me', {}, { authenticated: true })
   },
 
+  get<T>(path: string): Promise<T> {
+    return request(path, {}, { authenticated: true })
+  },
+
+  put<T>(path: string, requestBody: unknown): Promise<T> {
+    return request(path, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    }, { authenticated: true })
+  },
+
   requestMultipart<T>(path: string, formData: FormData, authenticated = false): Promise<T> {
     return request(path, { method: 'POST', body: formData }, { authenticated })
   },

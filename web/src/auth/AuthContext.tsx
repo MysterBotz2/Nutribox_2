@@ -5,13 +5,13 @@ import { apiClient, setUnauthorizedHandler } from '../api/client'
 import { clearSessionToken, getSessionToken, storeSessionToken } from './token-storage'
 import { AuthContext } from './auth-context-definition'
 import type { AuthContextValue } from './auth-context-definition'
-const currentUserQueryKey = ['auth', 'current-user'] as const
+import { queryKeys } from '../api/query-keys'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
   const [tokenPresent, setTokenPresent] = useState(() => Boolean(getSessionToken()))
   const currentUser = useQuery({
-    queryKey: currentUserQueryKey,
+    queryKey: queryKeys.currentUser,
     queryFn: apiClient.getCurrentUser,
     enabled: tokenPresent,
     retry: false,
@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     clearSessionToken()
     setTokenPresent(false)
-    queryClient.removeQueries({ queryKey: currentUserQueryKey })
+    queryClient.removeQueries({ queryKey: queryKeys.currentUser })
   }, [queryClient])
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await apiClient.login(email, password)
       storeSessionToken(result.access_token)
       setTokenPresent(true)
-      await queryClient.fetchQuery({ queryKey: currentUserQueryKey, queryFn: apiClient.getCurrentUser })
+      await queryClient.fetchQuery({ queryKey: queryKeys.currentUser, queryFn: apiClient.getCurrentUser })
     },
     [queryClient],
   )
