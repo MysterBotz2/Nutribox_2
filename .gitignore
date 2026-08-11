@@ -12,6 +12,7 @@ venv/
 .env
 .env.*
 !.env.example
+!.env.docker.example
 
 # Local curated datasets (the CSV template remains tracked)
 data/import/

@@ -1,6 +1,6 @@
 # Nutri-Box API
 
-Phase 13 provides the FastAPI, PostgreSQL, mock-device, provider-neutral mock food recognition, canonical nutrition, validated local food-data ingestion, meal analysis, local meal persistence, local accounts, deterministic progress analytics, explicit nutrition targets, and a provider-neutral mock nutrition coach foundation for Nutri-Box. Real AI providers, hardware, Docker, and Flutter are intentionally deferred.
+Phase 15 provides the FastAPI, PostgreSQL, provider-neutral food recognition (mock and Gemini), canonical nutrition, validated local food-data ingestion, meal analysis, local meal persistence, authentication, progress analytics, nutrition targets, a mock nutrition coach, and portable Docker Compose deployment packaging. Flutter and Raspberry Pi hardware integration remain deferred.
 
 ## Prerequisites
 
@@ -180,6 +180,109 @@ Passwords are stored only as Argon2 hashes. Access tokens are signed JWTs that c
 ```powershell
 pytest backend/tests
 ```
+
+## Docker Compose deployment
+
+Docker Compose is an optional portable deployment path. The existing Windows virtual-environment workflow above remains supported. Install Docker Desktop (including Docker Compose) first, then from the repository root create the private deployment environment file:
+
+```powershell
+Copy-Item .env.docker.example .env.docker
+notepad .env.docker
+```
+
+Set `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `DATABASE_URL`, and `JWT_SECRET_KEY` in `.env.docker`. Generate secrets locally; do not reuse these examples or commit `.env.docker`:
+
+```powershell
+.\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+Inside Docker, `DATABASE_URL` must use `db` as its hostname, not `localhost`. If the password contains URL-reserved characters, URL-encode it in `DATABASE_URL`. Default provider values are intentionally safe:
+
+```text
+FOOD_RECOGNITION_PROVIDER=mock
+NUTRITION_COACH_PROVIDER=mock
+```
+
+Build and start the deployment:
+
+```powershell
+docker compose config
+docker compose build
+docker compose up -d
+docker compose ps
+docker compose logs --follow migrate
+docker compose logs --follow api
+```
+
+The `db` service becomes ready through `pg_isready`. The one-shot `migrate` service runs `python -m alembic -c alembic.ini upgrade head` only after that health check succeeds. The `api` service starts only after migrations complete successfully; it is healthy only when `GET /api/health` succeeds. No service uses an arbitrary startup sleep. PostgreSQL is not published to the host; only the API is exposed on `${API_HOST_PORT:-8000}` (port 8000 by default).
+
+Verify the deployment:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/
+Invoke-RestMethod http://127.0.0.1:8000/api/health
+Start-Process http://127.0.0.1:8000/docs
+Start-Process http://127.0.0.1:8000/redoc
+```
+
+Stop and later restart without removing data:
+
+```powershell
+docker compose down
+docker compose up -d
+docker compose ps
+```
+
+PostgreSQL data uses the named volume `nutribox_postgres_data`, so it survives ordinary `docker compose down`. **Do not run `docker compose down -v`** unless you deliberately want to permanently remove the deployment database volume and all of its data.
+
+### Docker nutrition imports
+
+Create the ignored host directory and place a reviewed CSV inside it. The API service mounts it read-only at `/data/import`; no data is bundled into the image or imported at startup.
+
+```powershell
+New-Item -ItemType Directory -Force data\import
+docker compose run --rm api python -m app.cli.import_foods /data/import/foods.csv --dry-run
+docker compose run --rm api python -m app.cli.import_foods /data/import/foods.csv
+```
+
+Run the actual import only after a clean dry-run. The import remains transactional and administrative.
+
+### Docker backup and restore
+
+Create a plain SQL backup using PostgreSQL tools inside the database container:
+
+```powershell
+$DbContainer = docker compose ps -q db
+docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > /tmp/nutribox-backup.sql'
+docker cp "${DbContainer}:/tmp/nutribox-backup.sql" .\nutribox-backup.sql
+```
+
+Restore is destructive: stop the API first, then it drops and recreates the deployment database before loading the SQL file. Confirm the backup file and target deployment before running it.
+
+```powershell
+docker compose stop api
+$DbContainer = docker compose ps -q db
+docker cp .\nutribox-backup.sql "${DbContainer}:/tmp/nutribox-backup.sql"
+docker compose exec -T db sh -c 'dropdb -U "$POSTGRES_USER" "$POSTGRES_DB" && createdb -U "$POSTGRES_USER" "$POSTGRES_DB" && psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" < /tmp/nutribox-backup.sql'
+docker compose up -d api
+```
+
+### Optional Gemini in Docker
+
+Gemini remains opt-in. Set the provider and Gemini values in private `.env.docker`, restart the API, and make an explicit request:
+
+```text
+FOOD_RECOGNITION_PROVIDER=gemini
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+GEMINI_MODEL=YOUR_SELECTED_GEMINI_MODEL
+GEMINI_TIMEOUT_SECONDS=20
+```
+
+```powershell
+docker compose up -d --force-recreate api
+```
+
+Set `FOOD_RECOGNITION_PROVIDER=mock` and recreate the API service to return to simulated operation. Do not expose this prototype directly to a LAN or the public internet without separately addressing access control, network binding, and TLS. Docker packaging does not add CORS, a reverse proxy, or TLS. The Dockerfile does not force an architecture, so official multi-architecture images can support a later ARM64 deployment where dependencies are available.
 
 ## Alembic
 
