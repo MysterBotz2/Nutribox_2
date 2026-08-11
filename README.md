@@ -1,6 +1,6 @@
 # Nutri-Box API
 
-Phase 10 provides the FastAPI, PostgreSQL, mock-device, provider-neutral mock food recognition, canonical nutrition, meal analysis, local meal persistence, local accounts, and deterministic progress analytics foundations for Nutri-Box. External AI providers, hardware, Docker, and Flutter are intentionally deferred.
+Phase 11 provides the FastAPI, PostgreSQL, mock-device, provider-neutral mock food recognition, canonical nutrition, meal analysis, local meal persistence, local accounts, deterministic progress analytics, and explicit nutrition-target foundations for Nutri-Box. External AI providers, hardware, Docker, and Flutter are intentionally deferred.
 
 ## Prerequisites
 
@@ -62,8 +62,10 @@ The API will be available at `http://127.0.0.1:8000`.
 - `POST /api/auth/register` creates a local account with an Argon2 password hash.
 - `POST /api/auth/token` accepts OAuth2 form fields; its `username` field is the account email and it returns an expiring bearer access token.
 - `GET /api/users/me`, `GET /api/users/me/profile`, and `PUT /api/users/me/profile` require bearer authentication.
+- `GET /api/users/me/targets` and `PUT /api/users/me/targets` require bearer authentication and manage one explicit target set for the current user.
 - `POST /api/meals`, `GET /api/meals`, and `GET /api/meals/{meal_id}` require bearer authentication and are scoped to the current user.
 - `GET /api/progress/today`, `GET /api/progress/daily`, `GET /api/progress/weekly`, and `GET /api/progress/summary` require bearer authentication and return deterministic analytics from stored meal snapshots.
+- `GET /api/progress/target-status` requires bearer authentication and compares today's stored totals with configured targets.
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
 
@@ -98,6 +100,18 @@ Progress is derived from the authenticated user's stored `Meal.total_*` snapshot
 
 Weekly periods are Monday through Sunday, and `week_start` must be a Monday. Weekly and summary responses contain zero-filled daily entries for charting. Summary `daily_average` divides totals by every requested calendar day, including days without meals. Values use `Decimal` and are presented to three decimal places. This phase does not calculate BMR, TDEE, calorie targets, macro targets, or medical recommendations.
 
+## Nutrition targets
+
+Nutrition targets are explicit configured values, not automatically calculated recommendations. Each target set stores a required provenance type (`manual`, `researcher_assigned`, or `professional_assigned`) and may optionally store a protocol/plan reference and short notes. Individual calorie, protein, carbohydrate, fat, and fiber targets may be omitted, but at least one positive target is required when saving a set.
+
+Use authenticated endpoints:
+
+- `GET /api/users/me/targets`
+- `PUT /api/users/me/targets`
+- `GET /api/progress/target-status?timezone=Asia/Manila`
+
+Target status uses the stored historical Meal totals. For every configured nutrient, `remaining = target - consumed`, so it can be negative when consumption exceeds the configured target. `percent_of_target = consumed / target * 100`; absent individual targets produce `null` comparison values. No target record produces `null` target/comparison sections. These are neutral numeric values only: Nutri-Box does not prescribe medical diets, generate targets with AI, or calculate BMR/TDEE/calorie needs in this phase. A later validated methodology may introduce calculated targets explicitly.
+
 Passwords are stored only as Argon2 hashes. Access tokens are signed JWTs that contain only a user identifier and expiry; they expire after `ACCESS_TOKEN_EXPIRE_MINUTES` (30 by default). Do not place JWT secrets in source control. Legacy meals created before Phase 9 remain valid with `user_id = NULL`; new persisted meals always use the authenticated user. The foreign key is `ON DELETE SET NULL`, so a future user deletion would preserve historical prototype/research meals. Nutrition profiles store optional preferences only; they do not calculate calorie targets, BMR, TDEE, or medical guidance.
 
 ## Swagger authentication workflow
@@ -109,6 +123,7 @@ Passwords are stored only as Argon2 hashes. Access tokens are signed JWTs that c
 5. Call `GET /api/users/me`, then create or replace the optional profile with `PUT /api/users/me/profile`.
 6. Call `POST /api/meals` with canonical food IDs and positive weights. `GET /api/meals` returns only the authorized account's meals.
 7. Call an authenticated progress endpoint, for example `GET /api/progress/weekly?week_start=2026-08-10&timezone=UTC`.
+8. Configure targets with `PUT /api/users/me/targets`, then call `GET /api/progress/target-status` for neutral target comparisons.
 
 ## Run tests
 

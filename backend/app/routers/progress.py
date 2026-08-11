@@ -8,11 +8,14 @@ from app.database.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
 from app.repositories.meal_repository import MealRepository
+from app.repositories.nutrition_target_repository import NutritionTargetRepository
 from app.schemas.progress import (
     DailyProgressResponse,
     ProgressSummaryResponse,
     WeeklyProgressResponse,
+    TargetStatusResponse,
 )
+from app.services.nutrition_target_comparison_service import NutritionTargetComparisonService
 from app.services.progress_service import InvalidTimezoneError, ProgressService
 
 router = APIRouter(prefix="/api/progress", tags=["progress"])
@@ -20,6 +23,15 @@ router = APIRouter(prefix="/api/progress", tags=["progress"])
 
 def get_progress_service(database_session: Annotated[Session, Depends(get_db)]) -> ProgressService:
     return ProgressService(MealRepository(database_session))
+
+
+def get_target_comparison_service(
+    database_session: Annotated[Session, Depends(get_db)],
+) -> NutritionTargetComparisonService:
+    return NutritionTargetComparisonService(
+        ProgressService(MealRepository(database_session)),
+        NutritionTargetRepository(database_session),
+    )
 
 
 def _progress_error(error: ValueError) -> HTTPException:
@@ -34,6 +46,20 @@ def get_today_progress(
 ) -> DailyProgressResponse:
     try:
         return progress_service.today(current_user.id, timezone)
+    except InvalidTimezoneError as error:
+        raise _progress_error(error) from None
+
+
+@router.get("/target-status", response_model=TargetStatusResponse)
+def get_today_target_status(
+    current_user: Annotated[User, Depends(get_current_user)],
+    comparison_service: Annotated[
+        NutritionTargetComparisonService, Depends(get_target_comparison_service)
+    ],
+    timezone: str = Query("UTC", min_length=1, max_length=64),
+) -> TargetStatusResponse:
+    try:
+        return comparison_service.today_status(current_user.id, timezone)
     except InvalidTimezoneError as error:
         raise _progress_error(error) from None
 

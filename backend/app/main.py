@@ -29,6 +29,8 @@ app.include_router(progress_router)
 
 def _json_safe_validation_detail(value: Any) -> Any:
     """Replace non-finite floats before returning request validation errors."""
+    if isinstance(value, Exception):
+        return str(value)
     if isinstance(value, float) and not math.isfinite(value):
         return str(value)
     if isinstance(value, Decimal):

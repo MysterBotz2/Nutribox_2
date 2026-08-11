@@ -40,7 +40,7 @@ def check_database_connection() -> bool:
 
 
 def get_db() -> Generator[Session, None, None]:
-    """Yield a request-scoped SQLAlchemy session for future API routes."""
+    """Yield a request-scoped session and finalize its outer transaction safely."""
     if SessionLocal is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -50,5 +50,9 @@ def get_db() -> Generator[Session, None, None]:
     database_session = SessionLocal()
     try:
         yield database_session
+        database_session.commit()
+    except Exception:
+        database_session.rollback()
+        raise
     finally:
         database_session.close()
