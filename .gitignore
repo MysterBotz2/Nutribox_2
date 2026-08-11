@@ -8,6 +8,10 @@ __pycache__/
 .venv/
 venv/
 
+# Web client generated dependencies and build output
+web/node_modules/
+web/dist/
+
 # Environment files
 .env
 .env.*

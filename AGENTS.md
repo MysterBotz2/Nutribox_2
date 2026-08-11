@@ -158,6 +158,6 @@ When debugging:
 16. Raspberry Pi / Physical Device Integration
 17. Full-System Integration, Calibration, Research Validation & Client Handoff
 
-Mobile development is external to this repository/team. Do not implement React Native, Expo, or Flutter source here unless explicitly requested.
+React Native/Expo mobile development remains external to this repository/team. The browser web companion is an explicitly requested FastAPI client; do not implement additional mobile source here unless explicitly requested.
 
 Do not skip major prerequisites unless explicitly instructed.

@@ -29,3 +29,17 @@ def test_gemini_settings_are_optional_and_honor_environment(monkeypatch) -> None
     configured = Settings(_env_file=None)
     assert configured.gemini_api_key == "configured-key"
     assert configured.gemini_model == "configured-model"
+
+
+def test_cors_origins_parse_as_explicit_allowlist(tmp_path) -> None:
+    environment_file = tmp_path / ".env"
+    environment_file.write_text(
+        "CORS_ALLOWED_ORIGINS=http://localhost:5173, http://127.0.0.1:5173,\n",
+        encoding="utf-8",
+    )
+    configured = Settings(_env_file=environment_file)
+
+    assert configured.cors_allowed_origins == [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
