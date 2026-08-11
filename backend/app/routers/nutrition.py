@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.repositories.food_repository import FoodRepository
+from app.repositories.food_alias_repository import FoodAliasRepository
 from app.schemas.nutrition import (
     CalculatedFood,
     FoodListResponse,
@@ -21,7 +22,10 @@ def get_nutrition_service(
     database_session: Annotated[Session, Depends(get_db)],
 ) -> NutritionService:
     """Provide a nutrition service scoped to the current database session."""
-    return NutritionService(FoodRepository(database_session))
+    return NutritionService(
+        FoodRepository(database_session),
+        food_alias_repository=FoodAliasRepository(database_session),
+    )
 
 
 @router.get("/search", response_model=FoodListResponse)
@@ -29,7 +33,7 @@ def search_foods(
     q: Annotated[str, Query(min_length=1, max_length=160)],
     nutrition_service: Annotated[NutritionService, Depends(get_nutrition_service)],
 ) -> FoodListResponse:
-    """Search canonical foods by case-insensitive display or normalized name."""
+    """Search canonical foods by their names and aliases without duplicate results."""
     foods = nutrition_service.search_foods(q)
     return FoodListResponse(foods=[FoodResponse.from_food(food) for food in foods])
 

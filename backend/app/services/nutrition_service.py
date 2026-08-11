@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from app.models.food import Food, normalize_food_name
+from app.repositories.food_alias_repository import FoodAliasRepository
 from app.repositories.food_repository import FoodRepository
 from app.schemas.nutrition import NutritionPer100g, PortionNutrition
 from app.services.nutrient_calculator import NutrientCalculator
@@ -13,18 +14,26 @@ class NutritionService:
         self,
         food_repository: FoodRepository,
         nutrient_calculator: NutrientCalculator | None = None,
+        food_alias_repository: FoodAliasRepository | None = None,
     ) -> None:
         self._food_repository = food_repository
         self._nutrient_calculator = nutrient_calculator or NutrientCalculator()
+        self._food_alias_repository = food_alias_repository
 
     def get_food(self, food_id: int) -> Food | None:
         return self._food_repository.get_by_id(food_id)
 
     def get_food_by_recognized_name(self, recognized_name: str) -> Food | None:
-        """Find an exact canonical food match using deterministic normalization."""
-        return self._food_repository.get_by_normalized_name(
-            normalize_food_name(recognized_name)
-        )
+        """Backward-compatible name for exact canonical then alias resolution."""
+        return self.resolve_food_name(recognized_name)
+
+    def resolve_food_name(self, food_name: str) -> Food | None:
+        """Resolve an exact normalized canonical name, then an exact alias."""
+        normalized_name = normalize_food_name(food_name)
+        food = self._food_repository.get_by_normalized_name(normalized_name)
+        if food is not None or self._food_alias_repository is None:
+            return food
+        return self._food_alias_repository.get_food_by_normalized_alias(normalized_name)
 
     @staticmethod
     def get_nutrition_per_100g(food: Food) -> NutritionPer100g:

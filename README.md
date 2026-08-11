@@ -1,6 +1,6 @@
 # Nutri-Box API
 
-Phase 12 provides the FastAPI, PostgreSQL, mock-device, provider-neutral mock food recognition, canonical nutrition, meal analysis, local meal persistence, local accounts, deterministic progress analytics, explicit nutrition targets, and a provider-neutral mock nutrition coach foundation for Nutri-Box. Real AI providers, hardware, Docker, and Flutter are intentionally deferred.
+Phase 13 provides the FastAPI, PostgreSQL, mock-device, provider-neutral mock food recognition, canonical nutrition, validated local food-data ingestion, meal analysis, local meal persistence, local accounts, deterministic progress analytics, explicit nutrition targets, and a provider-neutral mock nutrition coach foundation for Nutri-Box. Real AI providers, hardware, Docker, and Flutter are intentionally deferred.
 
 ## Prerequisites
 
@@ -56,7 +56,7 @@ The API will be available at `http://127.0.0.1:8000`.
 - `POST /api/device/simulate` accepts validated development-only simulated weight and temperature readings. Raspberry Pi sensor integration will be added in a later phase.
 - `POST /api/ai/recognize-food` accepts JPEG, PNG, or WEBP uploads and returns a simulated food-recognition result. It uses `MockFoodRecognitionProvider`; the image is validated but is not analyzed by an external AI service.
 - `POST /api/ai/coach` requires bearer authentication and returns a transient simulated coaching response assembled from trusted Nutri-Box data.
-- `GET /api/nutrition/search?q=...` searches canonical food reference data.
+- `GET /api/nutrition/search?q=...` searches canonical food reference data and exact/partial aliases, returning canonical foods without duplicates.
 - `GET /api/nutrition/{food_id}` returns one canonical food reference record.
 - `POST /api/nutrition/calculate` calculates a measured food portion from stored per-100g reference values without saving a meal.
 - `POST /api/meals/analyze` combines a validated image, a manual development weight, canonical food lookup, and deterministic nutrient calculation without saving a meal.
@@ -89,6 +89,36 @@ POST /api/nutrition/calculate
 Portion calculation uses Python `Decimal`, never binary float conversion of stored nutrition data. Each calculated nutrient is rounded once to three decimal places with round-half-up behavior. A `0 g` portion is valid and returns zero values. The calculation does not create a meal or persist any result.
 
 Meal analysis uses the configured provider-neutral food-recognition provider and manually supplied weight during hardware-free development. Nutrition always comes from canonical PostgreSQL Food records, not AI output. Multiple recognized foods require user selection; their shared plate weight is never divided automatically. Analysis results are transient and are not persisted.
+
+## Validated food-data ingestion
+
+Food reference data is imported only through a local administrative CSV workflow; there is no public import API and no web scraping, AI, or external API call. Start from [the CSV template](data/templates/foods_import_template.csv). It has these headers:
+
+```text
+name,category,calories_per_100g,protein_g_per_100g,carbohydrates_g_per_100g,fat_g_per_100g,fiber_g_per_100g,source_name,source_reference,is_verified,aliases
+```
+
+`category` and `aliases` may be empty. All nutrient fields, `name`, `source_name`, `source_reference`, and explicit `is_verified` (`true` or `false`) are required. Nutrients are parsed as `Decimal` directly from the CSV and must fit the existing database precision and be finite and non-negative. `aliases` are separated with `|` and resolve exactly, after trimming, whitespace collapsing, and case folding, to one canonical Food. A canonical name is always checked before an alias.
+
+Review the dataset's source, license/terms, record mapping, and scientific suitability before import. The importer checks syntax and database consistency only: `is_verified=true` is never inferred merely because a row imports successfully. Source name and source reference are retained for provenance. A source reference is not globally unique because a dataset/report reference can legitimately cover several foods.
+
+From the repository root, validate a curated CSV without writing to PostgreSQL:
+
+```powershell
+Push-Location backend
+..\.venv\Scripts\python.exe -m app.cli.import_foods ..\data\import\foods.csv --dry-run
+Pop-Location
+```
+
+Perform the actual atomic import only after a clean dry-run:
+
+```powershell
+Push-Location backend
+..\.venv\Scripts\python.exe -m app.cli.import_foods ..\data\import\foods.csv
+Pop-Location
+```
+
+The importer rejects the entire file if it finds a malformed row, duplicate normalized canonical name, canonical/alias collision, or a name/alias already resolving to a stored Food. It never overwrites existing records and does not partially import a file. Dry runs perform the same checks and report planned inserts but make no database changes. Store private curated files under `data/import/` (ignored by Git); do not commit unreviewed or licensed datasets.
 
 Confirmed meals are persisted only through `POST /api/meals`. The backend resolves every requested food, calculates all item nutrients and totals, and stores snapshots so later food-reference updates do not change recorded history. These endpoints are local prototype records scoped to the authenticated account.
 

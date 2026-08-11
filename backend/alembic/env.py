@@ -11,6 +11,7 @@ sys.path.insert(0, str(BACKEND_DIRECTORY))
 from app.core.config import settings  # noqa: E402
 from app.database.base import Base  # noqa: E402
 from app.models.food import Food  # noqa: F401, E402
+from app.models.food_alias import FoodAlias  # noqa: F401, E402
 from app.models.meal import Meal, MealItem  # noqa: F401, E402
 from app.models.nutrition_profile import NutritionProfile  # noqa: F401, E402
 from app.models.nutrition_target import NutritionTarget  # noqa: F401, E402

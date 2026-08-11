@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, Integer, Numeric, String, Text, func
 from sqlalchemy import event
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
 
@@ -58,6 +58,9 @@ class Food(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+    aliases: Mapped[list["FoodAlias"]] = relationship(
+        back_populates="food", cascade="all, delete-orphan", passive_deletes=True
     )
 
 

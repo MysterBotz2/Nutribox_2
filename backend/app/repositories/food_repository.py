@@ -2,6 +2,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.models.food import Food
+from app.models.food_alias import FoodAlias
 
 
 class FoodRepository:
@@ -21,7 +22,16 @@ class FoodRepository:
         pattern = f"%{query}%"
         statement = (
             select(Food)
-            .where(or_(Food.name.ilike(pattern), Food.normalized_name.ilike(pattern)))
+            .outerjoin(FoodAlias, FoodAlias.food_id == Food.id)
+            .where(
+                or_(
+                    Food.name.ilike(pattern),
+                    Food.normalized_name.ilike(pattern),
+                    FoodAlias.alias.ilike(pattern),
+                    FoodAlias.normalized_alias.ilike(pattern),
+                )
+            )
+            .distinct()
             .order_by(Food.name)
         )
         return list(self._session.scalars(statement))

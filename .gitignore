@@ -13,6 +13,9 @@ venv/
 .env.*
 !.env.example
 
+# Local curated datasets (the CSV template remains tracked)
+data/import/
+
 # IDEs and operating systems
 .vscode/
 .idea/
