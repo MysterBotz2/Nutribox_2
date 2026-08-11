@@ -4,6 +4,7 @@ from app.models.nutrition_target import NutritionTarget
 from app.repositories.nutrition_target_repository import NutritionTargetRepository
 from app.schemas.nutrition_target import TargetNutrientValues
 from app.schemas.progress import OptionalNutrientValues, TargetStatusResponse
+from app.schemas.progress import DailyProgressResponse
 from app.services.nutrient_calculator import PORTION_NUTRIENT_QUANTUM
 from app.services.progress_service import ProgressService
 
@@ -21,6 +22,12 @@ class NutritionTargetComparisonService:
 
     def today_status(self, user_id: int, timezone_name: str) -> TargetStatusResponse:
         progress = self._progress.today(user_id, timezone_name)
+        return self.status_for_today_progress(user_id, progress)
+
+    def status_for_today_progress(
+        self, user_id: int, progress: DailyProgressResponse
+    ) -> TargetStatusResponse:
+        """Compare an already assembled trusted today-progress result with the user's target."""
         target = self._targets.get_by_user_id(user_id)
         if target is None:
             return TargetStatusResponse(

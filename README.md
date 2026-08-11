@@ -1,6 +1,6 @@
 # Nutri-Box API
 
-Phase 11 provides the FastAPI, PostgreSQL, mock-device, provider-neutral mock food recognition, canonical nutrition, meal analysis, local meal persistence, local accounts, deterministic progress analytics, and explicit nutrition-target foundations for Nutri-Box. External AI providers, hardware, Docker, and Flutter are intentionally deferred.
+Phase 12 provides the FastAPI, PostgreSQL, mock-device, provider-neutral mock food recognition, canonical nutrition, meal analysis, local meal persistence, local accounts, deterministic progress analytics, explicit nutrition targets, and a provider-neutral mock nutrition coach foundation for Nutri-Box. Real AI providers, hardware, Docker, and Flutter are intentionally deferred.
 
 ## Prerequisites
 
@@ -55,6 +55,7 @@ The API will be available at `http://127.0.0.1:8000`.
 - `GET /api/health` verifies database connectivity. It returns `200` with `{"status": "healthy", "database": "connected"}` when PostgreSQL is available, otherwise a safe `503` response.
 - `POST /api/device/simulate` accepts validated development-only simulated weight and temperature readings. Raspberry Pi sensor integration will be added in a later phase.
 - `POST /api/ai/recognize-food` accepts JPEG, PNG, or WEBP uploads and returns a simulated food-recognition result. It uses `MockFoodRecognitionProvider`; the image is validated but is not analyzed by an external AI service.
+- `POST /api/ai/coach` requires bearer authentication and returns a transient simulated coaching response assembled from trusted Nutri-Box data.
 - `GET /api/nutrition/search?q=...` searches canonical food reference data.
 - `GET /api/nutrition/{food_id}` returns one canonical food reference record.
 - `POST /api/nutrition/calculate` calculates a measured food portion from stored per-100g reference values without saving a meal.
@@ -70,6 +71,8 @@ The API will be available at `http://127.0.0.1:8000`.
 - ReDoc: `http://127.0.0.1:8000/redoc`
 
 `FOOD_RECOGNITION_PROVIDER` currently supports `mock` only. Future provider adapters will use the same provider-neutral endpoint and response schema.
+
+`NUTRITION_COACH_PROVIDER` currently supports `mock` only. Food recognition and nutrition coaching are separate provider capabilities and can be configured independently in a future deployment.
 
 ## Nutrition reference data
 
@@ -112,6 +115,12 @@ Use authenticated endpoints:
 
 Target status uses the stored historical Meal totals. For every configured nutrient, `remaining = target - consumed`, so it can be negative when consumption exceeds the configured target. `percent_of_target = consumed / target * 100`; absent individual targets produce `null` comparison values. No target record produces `null` target/comparison sections. These are neutral numeric values only: Nutri-Box does not prescribe medical diets, generate targets with AI, or calculate BMR/TDEE/calorie needs in this phase. A later validated methodology may introduce calculated targets explicitly.
 
+## AI Coach
+
+`POST /api/ai/coach?timezone=Asia/Manila` is authenticated and currently uses `MockNutritionCoachProvider`. Its response is explicitly simulated; no external AI API is configured or called. The client may provide only an optional bounded question, for example `{"question": "How am I doing today?"}`. Authoritative nutrition values are assembled by Nutri-Box from the current user's stored profile preferences, explicit targets, stored progress snapshots, and deterministic target comparison.
+
+The coach cannot modify targets, meals, progress, or nutrition records. It receives no email, name, password data, JWT, user ID, or database session. It is not a medical service and does not diagnose, treat, or prescribe; medical questions receive a simulated prompt to consult a qualified healthcare professional. Future external providers can be selected through `NUTRITION_COACH_PROVIDER` while retaining the same provider-neutral endpoint and response schema.
+
 Passwords are stored only as Argon2 hashes. Access tokens are signed JWTs that contain only a user identifier and expiry; they expire after `ACCESS_TOKEN_EXPIRE_MINUTES` (30 by default). Do not place JWT secrets in source control. Legacy meals created before Phase 9 remain valid with `user_id = NULL`; new persisted meals always use the authenticated user. The foreign key is `ON DELETE SET NULL`, so a future user deletion would preserve historical prototype/research meals. Nutrition profiles store optional preferences only; they do not calculate calorie targets, BMR, TDEE, or medical guidance.
 
 ## Swagger authentication workflow
@@ -124,6 +133,7 @@ Passwords are stored only as Argon2 hashes. Access tokens are signed JWTs that c
 6. Call `POST /api/meals` with canonical food IDs and positive weights. `GET /api/meals` returns only the authorized account's meals.
 7. Call an authenticated progress endpoint, for example `GET /api/progress/weekly?week_start=2026-08-10&timezone=UTC`.
 8. Configure targets with `PUT /api/users/me/targets`, then call `GET /api/progress/target-status` for neutral target comparisons.
+9. Call `POST /api/ai/coach` with `{}` or a short optional question. The returned provider is currently `mock` and the response is simulated.
 
 ## Run tests
 
