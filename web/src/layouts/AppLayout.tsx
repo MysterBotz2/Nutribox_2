@@ -4,10 +4,12 @@ import { useAuth } from '../auth/useAuth'
 
 const activeSections = [
   { to: '/app/dashboard', label: 'Dashboard' },
+  { to: '/app/meals', label: 'Meals' },
+  { to: '/app/progress', label: 'Progress' },
   { to: '/app/profile', label: 'Profile' },
   { to: '/app/targets', label: 'Targets' },
 ]
-const futureSections = ['Meals', 'Progress', 'Scan Food', 'AI Coach']
+const futureSections = ['Scan Food', 'AI Coach']
 
 export function AppLayout() {
   const { user, logout } = useAuth()

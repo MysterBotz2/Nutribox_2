@@ -1,6 +1,6 @@
 # Nutri-Box Web Companion
 
-This React + TypeScript + Vite client is a browser companion for the FastAPI backend. It implements registration, login, bearer authentication, and the Phase 16B account experience: Dashboard, Nutrition Profile, and configured Nutrition Targets.
+This React + TypeScript + Vite client is a browser companion for the FastAPI backend. It implements registration, login, bearer authentication, Dashboard, Nutrition Profile, Nutrition Targets, read-only Meal History, and detailed Progress analytics.
 
 ## Prerequisites
 
@@ -88,3 +88,13 @@ Registration uses JSON. Login uses FastAPI's OAuth2 form encoding and sends the 
 The dashboard treats negative remaining values neutrally (for example, “Above configured target by …”) and preserves percentages above 100%; only the visual fill is capped for layout. No target is presented as a clinical recommendation.
 
 The browser companion is account-oriented. The future Raspberry Pi touchscreen will be a separate, device-oriented application; this client intentionally has no hardware, live-weight, tare, heating, camera, or device-control UI.
+
+## Phase 16C meals and progress
+
+- `/app/meals` uses bounded `GET /api/meals?limit&offset` pagination and displays stored meal totals; it never loads all history at once.
+- `/app/meals/:mealId` uses `GET /api/meals/{meal_id}` and displays stored Meal and MealItem nutrient snapshots. A `404` is shown neutrally as “Meal not found.” without exposing ownership details.
+- `/app/progress` uses backend `today`, `daily`, `weekly`, `summary`, and `target-status` endpoints. Browser IANA timezone detection is sent with each request, with the existing `UTC` fallback.
+- The selected daily date is sent to FastAPI unchanged. Weekly navigation requests Monday `week_start` values; backend-provided Monday–Sunday daily series are displayed directly.
+- Rolling summaries offer 7, 30, and 90 day backend-bounded periods. The displayed daily average is the backend value, calculated over all calendar days in the selected period.
+
+Progress charts are responsive CSS visualizations of the backend daily series. Decimal strings are converted to JavaScript numbers only at the chart-display boundary; the authoritative API values are not mutated or used for client-side nutrition calculations. Numerical values remain visible alongside every chart.

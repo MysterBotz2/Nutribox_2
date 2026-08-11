@@ -52,6 +52,21 @@ textarea { min-height: 6rem; resize: vertical; }
 .recent-meals { display: grid; gap: .6rem; list-style: none; margin: 1rem 0 0; padding: 0; }
 .recent-meals li { background: #f5f9f6; border-radius: .6rem; padding: .8rem; }
 .recent-meals span { color: #637168; display: block; font-size: .85rem; margin-top: .2rem; }
+.meal-list, .meal-items { display: grid; gap: .9rem; }
+.meal-card { align-items: center; display: flex; gap: 1rem; justify-content: space-between; }
+.meal-card p { margin-bottom: .35rem; }
+.meal-item { border-top: 1px solid #dce8df; padding-top: 1rem; }
+.meal-item .nutrient-grid { margin-top: .7rem; }
+.pagination, .inline-actions { align-items: center; display: flex; gap: .75rem; justify-content: space-between; }
+.pagination span { color: #637168; text-align: center; }
+.compact-label { font-size: .85rem; min-width: 9rem; }
+.chart-wrap { margin-top: 1.25rem; }
+.bar-chart { align-items: end; border-bottom: 1px solid #b9cabc; display: flex; gap: .5rem; height: 11rem; padding: 1rem .25rem 0; }
+.chart-column { align-items: center; display: flex; flex: 1; flex-direction: column; gap: .35rem; height: 100%; justify-content: end; min-width: 1.5rem; }
+.chart-bar { background: #27704d; border-radius: .25rem .25rem 0 0; max-width: 2.4rem; min-height: 2px; width: 100%; }
+.chart-column span { color: #637168; font-size: .7rem; writing-mode: vertical-rl; }
+.chart-values { display: grid; gap: .3rem; list-style: none; margin: .8rem 0 0; padding: 0; }
+.chart-values li { color: #526359; display: flex; font-size: .85rem; gap: .5rem; justify-content: space-between; }
 .form-card { margin: 0; }
 .form-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .tag-editor { border: 0; display: grid; gap: .6rem; margin: .5rem 0; padding: 0; }
@@ -59,5 +74,5 @@ textarea { min-height: 6rem; resize: vertical; }
 .tag-input input { min-width: 0; }
 .tags { display: flex; flex-wrap: wrap; gap: .45rem; }
 .tag { background: #e5f1e8; color: #1b5939; padding: .35rem .55rem; }
-@media (max-width: 48rem) { .authenticated-layout { grid-template-columns: 1fr; } .sidebar { gap: .8rem; padding: 1rem; } .sidebar nav { display: flex; flex-wrap: wrap; } .nav-link { width: auto; } .nav-link small { display: none; } .account-controls { border-top: 0; display: flex; justify-content: space-between; margin-top: 0; padding-top: 0; } .account-controls p { display: none; } .nutrient-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 48rem) { .authenticated-layout { grid-template-columns: 1fr; } .sidebar { gap: .8rem; padding: 1rem; } .sidebar nav { display: flex; flex-wrap: wrap; } .nav-link { width: auto; } .nav-link small { display: none; } .account-controls { border-top: 0; display: flex; justify-content: space-between; margin-top: 0; padding-top: 0; } .account-controls p { display: none; } .nutrient-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .meal-card { align-items: stretch; flex-direction: column; } }
 @media (max-width: 32rem) { .auth-card { padding: 1.25rem; } .section-heading, .target-row-heading { align-items: stretch; flex-direction: column; } .form-grid { grid-template-columns: 1fr; } .nutrient-grid { grid-template-columns: 1fr; } .tag-input { flex-direction: column; } }

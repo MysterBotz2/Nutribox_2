@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, expect, it, vi } from 'vitest'
 
@@ -11,10 +11,10 @@ function renderRoute(path: string) {
   return render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><MemoryRouter initialEntries={[path]}><AuthProvider><App /></AuthProvider></MemoryRouter></QueryClientProvider>)
 }
 
-afterEach(() => { clearSessionToken(); vi.unstubAllGlobals() })
+afterEach(() => { cleanup(); clearSessionToken(); vi.unstubAllGlobals() })
 
-it('redirects unauthenticated app access to login', async () => {
-  renderRoute('/app')
+it.each(['/app/meals', '/app/progress'])('redirects unauthenticated protected route %s to login', async (path) => {
+  renderRoute(path)
   expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
 })
 
