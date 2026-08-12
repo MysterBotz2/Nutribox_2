@@ -10,4 +10,5 @@ export const queryKeys = {
   dailyProgress: (date: string, timezone: string) => ['progress', 'daily', date, timezone] as const,
   weeklyProgress: (weekStart: string, timezone: string) => ['progress', 'weekly', weekStart, timezone] as const,
   progressSummary: (days: number, timezone: string) => ['progress', 'summary', days, timezone] as const,
+  scanAnalysis: ['scan', 'analysis'] as const,
 }

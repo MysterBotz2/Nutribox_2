@@ -9,6 +9,7 @@ import { MealsPage } from './pages/MealsPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { ProgressPage } from './pages/ProgressPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { ScanPage } from './pages/ScanPage'
 import { TargetsPage } from './pages/TargetsPage'
 
 function ProtectedRoute() {
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="meals" element={<MealsPage />} />
         <Route path="meals/:mealId" element={<MealDetailPage />} />
         <Route path="progress" element={<ProgressPage />} />
+        <Route path="scan" element={<ScanPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="targets" element={<TargetsPage />} />
       </Route>

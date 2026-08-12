@@ -91,6 +91,14 @@ export const apiClient = {
     }, { authenticated: true })
   },
 
+  post<T>(path: string, requestBody: unknown, authenticated = true): Promise<T> {
+    return request(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    }, { authenticated })
+  },
+
   requestMultipart<T>(path: string, formData: FormData, authenticated = false): Promise<T> {
     return request(path, { method: 'POST', body: formData }, { authenticated })
   },

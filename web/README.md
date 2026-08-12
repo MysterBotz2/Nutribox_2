@@ -98,3 +98,11 @@ The browser companion is account-oriented. The future Raspberry Pi touchscreen w
 - Rolling summaries offer 7, 30, and 90 day backend-bounded periods. The displayed daily average is the backend value, calculated over all calendar days in the selected period.
 
 Progress charts are responsive CSS visualizations of the backend daily series. Decimal strings are converted to JavaScript numbers only at the chart-display boundary; the authoritative API values are not mutated or used for client-side nutrition calculations. Numerical values remain visible alongside every chart.
+
+## Phase 16D scan and meal confirmation
+
+`/app/scan` is an authenticated web-companion workflow: select a JPEG, PNG, or WEBP image, enter a **manual** portion weight (0–5000 g), then send it to FastAPI as multipart `file` and `weight_grams` fields. The browser does not call Gemini directly; the backend selects the configured provider and returns a provider-neutral analysis status.
+
+Calculated results display backend nutrition and can save a Meal using only the returned canonical `food_id` and `weight_grams`. FastAPI recalculates persisted nutrition and assigns ownership. Non-calculated domain results are handled explicitly: no recognition, unavailable validated nutrition reference, or multiple foods requiring separate individual portion confirmation. The current multiple-food API response has no safe canonical per-item selection flow, so the web companion does not divide weight, guess portions, or save an invented meal.
+
+The image preview is local and temporary; it is not stored in browser storage. This companion flow is distinct from the future Raspberry Pi camera/load-cell touchscreen workflow and includes no device controls.

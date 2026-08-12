@@ -67,6 +67,10 @@ textarea { min-height: 6rem; resize: vertical; }
 .chart-column span { color: #637168; font-size: .7rem; writing-mode: vertical-rl; }
 .chart-values { display: grid; gap: .3rem; list-style: none; margin: .8rem 0 0; padding: 0; }
 .chart-values li { color: #526359; display: flex; font-size: .85rem; gap: .5rem; justify-content: space-between; }
+.scan-form { margin: 0; max-width: 44rem; }
+.scan-preview { border: 1px solid #dce8df; border-radius: .7rem; max-height: 20rem; max-width: 100%; object-fit: contain; }
+.result-card { max-width: 52rem; }
+.result-card .nutrient-grid { margin-bottom: 1.25rem; }
 .form-card { margin: 0; }
 .form-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .tag-editor { border: 0; display: grid; gap: .6rem; margin: .5rem 0; padding: 0; }

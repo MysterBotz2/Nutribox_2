@@ -6,10 +6,11 @@ const activeSections = [
   { to: '/app/dashboard', label: 'Dashboard' },
   { to: '/app/meals', label: 'Meals' },
   { to: '/app/progress', label: 'Progress' },
+  { to: '/app/scan', label: 'Scan Food' },
   { to: '/app/profile', label: 'Profile' },
   { to: '/app/targets', label: 'Targets' },
 ]
-const futureSections = ['Scan Food', 'AI Coach']
+const futureSections = ['AI Coach']
 
 export function AppLayout() {
   const { user, logout } = useAuth()
