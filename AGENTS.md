@@ -161,3 +161,7 @@ When debugging:
 React Native/Expo mobile development remains external to this repository/team. The browser web companion is an explicitly requested FastAPI client; do not implement additional mobile source here unless explicitly requested.
 
 Do not skip major prerequisites unless explicitly instructed.
+
+## V2 re-baseline
+
+Phase 16E is the frozen **Web Reference Client** checkpoint; Phase 16F is postponed. Client-provided V2 roadmap and flowcharts are the primary source for remaining requirements. R0 is requirements reconciliation only: no implementation begins until its decisions are reviewed. The official companion application is future React Native/Expo; the Raspberry Pi UI/controller is a separate surface. Cloud remains only a possible future deployment option and must not drive current implementation.
