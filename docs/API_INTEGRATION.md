@@ -2,7 +2,7 @@
 
 ## Base URL and contract
 
-The existing `/api/...` routes are the Nutri-Box **v1** contract. Breaking changes require a future versioning decision; clients must not assume an unannounced route rename. Configure the base URL in each client environment:
+The existing `/api/...` routes are the Nutri-Box **v1** contract. Breaking changes require a future versioning decision; clients must not assume an unannounced route rename. Non-browser clients configure an installation-specific API base URL in their own environment:
 
 - Same computer: `http://127.0.0.1:8000`
 - LAN example: `http://192.168.x.x:8000` (replace with the development computer's actual LAN address)
@@ -74,4 +74,6 @@ The stable safe error shape is normally `{"detail": "..."}`. FastAPI/Pydantic va
 
 ## LAN development
 
-For a physical phone or device, start the native API with `scripts\start.ps1 -HostAddress 0.0.0.0 -Port 8000`. `127.0.0.1` works only on the development computer. Configure the phone with the computer's actual LAN address and allow inbound TCP on the selected port through Windows Firewall manually. Do not hard-code a LAN address into the mobile app or backend.
+The web companion follows a different same-origin development model: the browser opens `http://<server-lan-ip>:5173`, requests `/api/...`, and Vite proxies `/api` to FastAPI at `127.0.0.1:8000` on the same PC. No LAN IP is compiled into the web application and Vite proxies no unrelated paths.
+
+For a physical non-browser client, start the native API with `scripts\start.ps1` (default `0.0.0.0:8000`) and configure that client with the computer's actual LAN address through its private deployment settings. `127.0.0.1` works only on the development computer. Allow inbound TCP on the selected port through Windows Firewall manually on Private networks. Do not hard-code a LAN address into a client or backend.

@@ -1,8 +1,9 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+from typing import Annotated
 
 BACKEND_DIRECTORY = Path(__file__).resolve().parents[2]
 ENV_FILE = BACKEND_DIRECTORY / ".env"
@@ -22,6 +23,17 @@ class Settings(BaseSettings):
     jwt_secret_key: str | None = None
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = Field(default=30, gt=0, le=1440)
+    cors_allowed_origins: Annotated[list[str], NoDecode] = Field(default_factory=list)
+
+    @field_validator("cors_allowed_origins", mode="before")
+    @classmethod
+    def parse_cors_allowed_origins(cls, value: str | list[str] | None) -> list[str]:
+        """Parse a comma-separated explicit browser-origin allowlist."""
+        if value is None:
+            return []
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
 
     model_config = SettingsConfigDict(env_file=ENV_FILE, extra="ignore")
 
