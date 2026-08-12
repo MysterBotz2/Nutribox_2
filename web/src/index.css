@@ -78,5 +78,14 @@ textarea { min-height: 6rem; resize: vertical; }
 .tag-input input { min-width: 0; }
 .tags { display: flex; flex-wrap: wrap; gap: .45rem; }
 .tag { background: #e5f1e8; color: #1b5939; padding: .35rem .55rem; }
+.coach-context ul, .coach-highlights { display: grid; gap: .6rem; margin: 1rem 0 0; padding-left: 1.2rem; }
+.coach-context li { color: #40564a; }
+.coach-form-card { max-width: 52rem; }
+.coach-character-count { font-size: .85rem; margin: -.35rem 0 0; text-align: right; }
+.coach-response { max-width: 52rem; }
+.coach-provider { background: #eef5f0; border-radius: 100vw; color: #40564a; font-size: .8rem; padding: .4rem .65rem; white-space: nowrap; }
+.coach-message { line-height: 1.6; margin: 1.25rem 0; white-space: pre-wrap; }
+.coach-notice { background: #f7faf7; max-width: 52rem; }
+@media (max-width: 32rem) { .coach-provider { align-self: start; } }
 @media (max-width: 48rem) { .authenticated-layout { grid-template-columns: 1fr; } .sidebar { gap: .8rem; padding: 1rem; } .sidebar nav { display: flex; flex-wrap: wrap; } .nav-link { width: auto; } .nav-link small { display: none; } .account-controls { border-top: 0; display: flex; justify-content: space-between; margin-top: 0; padding-top: 0; } .account-controls p { display: none; } .nutrient-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .meal-card { align-items: stretch; flex-direction: column; } }
 @media (max-width: 32rem) { .auth-card { padding: 1.25rem; } .section-heading, .target-row-heading { align-items: stretch; flex-direction: column; } .form-grid { grid-template-columns: 1fr; } .nutrient-grid { grid-template-columns: 1fr; } .tag-input { flex-direction: column; } }

@@ -7,10 +7,11 @@ const activeSections = [
   { to: '/app/meals', label: 'Meals' },
   { to: '/app/progress', label: 'Progress' },
   { to: '/app/scan', label: 'Scan Food' },
+  { to: '/app/coach', label: 'AI Coach' },
   { to: '/app/profile', label: 'Profile' },
   { to: '/app/targets', label: 'Targets' },
 ]
-const futureSections = ['AI Coach']
+const futureSections: string[] = []
 
 export function AppLayout() {
   const { user, logout } = useAuth()

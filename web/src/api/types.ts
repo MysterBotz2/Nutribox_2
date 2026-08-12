@@ -20,3 +20,5 @@ export type ProgressSummaryResponse = components['schemas']['ProgressSummaryResp
 export type DailyProgressPoint = components['schemas']['DailyProgressPoint']
 export type MealCreateRequest = components['schemas']['MealCreateRequest']
 export type MealAnalysisResponse = components['schemas']['CalculatedMealAnalysis'] | components['schemas']['FoodNotRecognizedMealAnalysis'] | components['schemas']['NutritionReferenceNotFoundMealAnalysis'] | components['schemas']['RequiresFoodSelectionMealAnalysis']
+export type NutritionCoachRequest = components['schemas']['NutritionCoachRequest']
+export type NutritionCoachResponse = components['schemas']['NutritionCoachResponse']

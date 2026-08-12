@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth/useAuth'
 import { AppLayout } from './layouts/AppLayout'
 import { DashboardPage } from './pages/DashboardPage'
+import { CoachPage } from './pages/CoachPage'
 import { LoginPage } from './pages/LoginPage'
 import { MealDetailPage } from './pages/MealDetailPage'
 import { MealsPage } from './pages/MealsPage'
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="meals/:mealId" element={<MealDetailPage />} />
         <Route path="progress" element={<ProgressPage />} />
         <Route path="scan" element={<ScanPage />} />
+        <Route path="coach" element={<CoachPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="targets" element={<TargetsPage />} />
       </Route>

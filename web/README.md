@@ -106,3 +106,11 @@ Progress charts are responsive CSS visualizations of the backend daily series. D
 Calculated results display backend nutrition and can save a Meal using only the returned canonical `food_id` and `weight_grams`. FastAPI recalculates persisted nutrition and assigns ownership. Non-calculated domain results are handled explicitly: no recognition, unavailable validated nutrition reference, or multiple foods requiring separate individual portion confirmation. The current multiple-food API response has no safe canonical per-item selection flow, so the web companion does not divide weight, guess portions, or save an invented meal.
 
 The image preview is local and temporary; it is not stored in browser storage. This companion flow is distinct from the future Raspberry Pi camera/load-cell touchscreen workflow and includes no device controls.
+
+## Phase 16E AI Coach
+
+`/app/coach` is an authenticated, user-triggered nutrition-coaching screen. It sends `POST /api/ai/coach` through the centralized bearer-authenticated client with the browser IANA timezone (falling back to `UTC`) and an optional question of at most 500 characters. Opening the page, logging in, recording a meal, and viewing progress never automatically request coaching.
+
+The backend remains responsible for building trusted context from optional profile and targets, stored progress, and deterministic target comparison. The page only shows a lightweight setup preview; missing profile or targets do not block a request and link to their existing setup pages. Each submission is independent: no chat history is stored in the browser or created by the web companion.
+
+Responses render as safe plain text with optional provider metadata. The default mock provider works without live AI credentials; the UI is provider-neutral and does not call any external AI service directly. Nutri-Box AI Coach offers general nutrition information only and is not a medical diagnosis or treatment service. The separate mobile companion may use the same FastAPI contract; no mobile or Raspberry Pi UI is included here.
