@@ -35,6 +35,38 @@ Expected model impact: `Food`, nutrition reference schemas/import contract, calc
 
 R1 likely needs Alembic migrations and compatible API/OpenAPI extensions for references, snapshots, and possibly target/progress representations. No breaking replacement occurs without an explicit versioning decision.
 
+## R1A persistence foundation
+
+R1A adds only the additive persistence foundation. It does not change public
+nutrition, meal, target, or progress responses; importer behavior; calculation
+behavior; or AI/provider behavior.
+
+`foods` retains the existing required per-100g energy and five-nutrient fields,
+then adds nullable per-100g values for saturated fat, sugars, sodium,
+cholesterol, omega-3, omega-6, calcium, potassium, zinc, iron, magnesium,
+vitamins A/B12/C/D, and folate. Values use `NUMERIC`/`Decimal` rather than
+binary floating point. Units are: kcal for calories; grams for protein,
+carbohydrates, fats, fiber, sugars, and omega fatty acids; milligrams for
+sodium, cholesterol, calcium, potassium, zinc, iron, magnesium, and vitamin C;
+and micrograms for vitamin A (RAE), B12, D, and folate (DFE).
+
+`meal_items` adds nullable calculated snapshots for the same V2 nutrients and
+nullable source snapshots (`nutrition_source_type`, source name/reference, and
+`nutrition_is_estimated`). This preserves the existing immutable meal snapshot
+pattern: later reference-data changes cannot rewrite an already stored meal.
+
+The accepted source categories are `canteen_recipe`, `local_database`, `USDA`,
+and `AI_estimate`. They record capability/provenance, not a new runtime source
+selection service. Legacy rows receive no fabricated values: newly introduced
+nutrient and provenance columns remain `NULL` until trustworthy data is
+available, while a stored `0` remains an explicit confirmed zero.
+
+The R1A migration is `c4b6e4d10f92` (`expand V2 nutrition persistence`). It is
+additive on upgrade and introduces no tables, no backfill, no recalculation, and
+no migration-time data import. Its downgrade removes only the R1A columns and
+constraints, so it must not be used after intentionally storing R1A-only data
+unless that data loss is acceptable.
+
 ## Not authorized for R1
 
 - Personal medical/dietary recommendation logic or unvalidated profile rules.
