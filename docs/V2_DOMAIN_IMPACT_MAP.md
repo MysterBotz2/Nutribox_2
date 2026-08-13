@@ -29,3 +29,7 @@ This is a domain impact assessment, not a final SQL design. “Likely” indicat
 ## Reuse boundary
 
 Keep existing meal snapshots as historical facts. If V2 extends nutrient scope, the migration plan must state whether historical rows retain known five-nutrient values with unavailable values omitted, or whether a validated backfill source exists. Historical values must never be silently re-estimated from changed Food records.
+
+## R0.6 decision impact
+
+R1 must extend Food/Nutrition Reference and future MealItem snapshots for nine mandatory nutrients, optional nutrient availability, source hierarchy, and richer provenance. Unknown nutrients remain unavailable rather than zero. Recipes are now confirmed as a future domain requiring both composition and final per-serving nutrition; full recipe/ingredient behavior remains R4 work. AI estimate is a fallback data mode, not the numerical authority. Whole meal weight is measured while AI component weights are estimated. Existing snapshots retain their original known values; new historical nutrient values are unavailable unless a validated migration source exists.

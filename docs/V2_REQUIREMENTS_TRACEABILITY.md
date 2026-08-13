@@ -60,3 +60,19 @@ The matrix contains **42 canonical requirements**. Status totals: **IMPLEMENTED 
 Current numeric nutrition authority is **database-first deterministic**: verified/permitted Food records on a per-100g basis plus measured weight create immutable MealItem snapshots. AI recognition is an input to food resolution only. The V2 roadmap description of AI-estimated nutritional content conflicts with this. **DEC-NUTR-001 is open**; no V2 implementation may silently switch authority.
 
 The current five-nutrient scope is not the V2 scope. The **explicit roadmap minimum** appears to be energy/calories, protein, carbohydrates, total fat, saturated fat, dietary fiber, sugars, and sodium. The **flowchart extended set** includes cholesterol, omega-3/omega-6, calcium, potassium, zinc, iron, magnesium, vitamins A/B12/C/D, and folate. R1 must confirm the exact mandatory data dictionary, units, data sources, completeness semantics, and snapshot migration policy.
+
+## R0.6 client-response reconciliation — August 12, 2026
+
+The original rows above preserve R0 discovery status. The completed questionnaire supersedes ambiguity statuses without changing current implementation truth.
+
+| Requirement(s) | R0.6 requirement status | Client-locked interpretation |
+| --- | --- | --- |
+| NUTR-001/002 | PARTIALLY_IMPLEMENTED / MISSING | Required: energy/calories, protein, carbohydrates, total fat, saturated fat, dietary fiber, sugars, sodium, cholesterol. Optional when data exists: omega-3/6, calcium, potassium, zinc, iron, magnesium, vitamins A/B12/C/D, folate. |
+| NUTR-003/004, MEAL-001/002 | PARTIALLY_IMPLEMENTED | Approved source hierarchy is canteen recipe → local database → USDA → AI fallback. Database/recipe + deterministic scaling is authoritative; AI fallback and component estimates require provenance. |
+| DIAG-003 | PARTIALLY_IMPLEMENTED | Non-clinical below/above target and persistent-imbalance indicators only; no clinical diagnosis/severity. |
+| LOSS-001 | MISSING | Second image and weighing are required; future consumed nutrition is initial minus leftover nutrition. |
+| SYNC-001 | PARTIALLY_IMPLEMENTED | Mobile keeps a secure cache; FastAPI/PostgreSQL is authoritative. |
+
+**Revised canonical counts:** IMPLEMENTED **3**; PARTIALLY_IMPLEMENTED **20**; MISSING **17**; INTENTIONALLY_DEFERRED **1**; REFERENCE_WEB_ONLY **1**; NEEDS_CLARIFICATION **0**; CONFLICT_WITH_CURRENT_DESIGN **0**. A clarified requirement remains missing or partial until runtime work exists.
+
+R0.6 makes the nutrition authority canonical: approved recipe/reference data plus deterministic weight scaling is authoritative; AI identification is an input and AI numerical estimation is a provenance-labelled fallback only when no approved source resolves. `0` requires explicit source support; unknown values remain unavailable/`NULL`.
