@@ -20,3 +20,9 @@ These decisions are not approvals to implement. They prevent the V2 roadmap from
 ## Immediate priority
 
 **DEC-NUTR-001 is the immediate decision before R1.** It determines the V2 nutrition data model, provenance, snapshot semantics, food-data imports, calculator validity, diagnostics, and research evaluation. DEC-PROF-001 and DEC-DATA-001 should be answered before any sensitive-profile or extended-nutrient migration is proposed.
+
+## R0.6 client-response update — August 12, 2026
+
+This original R0 register is retained as the audit baseline. The client questionnaire updates its statuses as follows: **resolved:** DEC-NUTR-001, DEC-NUTR-002, DEC-NUTR-003, DEC-NUTR-004, DEC-NUTR-005, DEC-DIAG-001, DEC-LOSS-001, DEC-SYNC-001; **partially resolved:** DEC-CALC-001 and DEC-SYNC-002; **blocked:** DEC-PROF-001 by research method and DEC-DEVICE-001 by hardware specification; **deferred:** DEC-AUTH-001; **still open:** DEC-NOTIF-001 and DEC-SET-001.
+
+The current client-controlled decision source is [V2 Client Decisions](V2_CLIENT_DECISIONS.md). R1 is governed by [V2 R1 Scope Gate](V2_R1_SCOPE_GATE.md), not by the earlier “immediate priority” wording above. In particular, DEC-NUTR-001 is now resolved as approved recipe/reference data plus deterministic scaling, with explicit AI-estimate fallback provenance only when no approved source resolves.

@@ -20,3 +20,7 @@
 | Native PowerShell setup/start/migrate scripts | KEEP | Portable native deployment support; no Docker dependency required. |
 | LAN portability / relative web API design | KEEP | Supports local device/mobile development without embedded addresses. |
 | React/Vite Web Companion | DEPRECATE | Freeze as a reference/integration client after 16E; it is not the official companion product and receives selective regression updates only. |
+
+## R0.6 reuse confirmation
+
+The client decision preserves the strongest existing foundations: deterministic database/weight calculation, Food and FoodAlias provenance, immutable MealItem snapshots, provider-neutral recognition, and the source-independent architecture. R1 should **extend** those components for nine mandatory nutrients, optional availability, source hierarchy, AI-fallback provenance, and recipe readiness. It must not replace approved reference values with AI values or silently recalculate historical snapshots.
