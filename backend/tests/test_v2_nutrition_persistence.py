@@ -1,6 +1,8 @@
 from decimal import Decimal
 
 import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -108,5 +110,38 @@ def test_meal_item_persists_extended_snapshot_and_provenance(database_session: S
     assert item.calculated_cholesterol_mg is None
     assert item.nutrition_source_type == "USDA"
     assert item.nutrition_source_name_snapshot == "USDA FoodData Central"
+    assert item.nutrition_source_reference_snapshot == "fdcId:12345"
+    assert item.nutrition_is_estimated is False
+
+
+def test_new_meal_snapshots_use_calculated_v2_values_and_preserve_unknowns(
+    database_session: Session, client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    food = make_food()
+    food.saturated_fat_g_per_100g = Decimal("1.2345")
+    food.sugars_g_per_100g = Decimal("0")
+    food.sodium_mg_per_100g = Decimal("123.456")
+    food.vitamin_b12_mcg_per_100g = Decimal("0.500")
+    food.source_type = "USDA"
+    food.source_reference = "fdcId:12345"
+    database_session.add(food)
+    database_session.flush()
+
+    response = client.post(
+        "/api/meals",
+        json={"items": [{"food_id": food.id, "weight_grams": "125.5"}]},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 201
+    item = database_session.scalar(select(MealItem))
+    assert item is not None
+    assert item.calculated_saturated_fat_g == Decimal("1.549")
+    assert item.calculated_sugars_g == Decimal("0.000")
+    assert item.calculated_sodium_mg == Decimal("154.937")
+    assert item.calculated_vitamin_b12_mcg == Decimal("0.628")
+    assert item.calculated_omega_3_g is None
+    assert item.nutrition_source_type == "USDA"
+    assert item.nutrition_source_name_snapshot == "Synthetic test source"
     assert item.nutrition_source_reference_snapshot == "fdcId:12345"
     assert item.nutrition_is_estimated is False

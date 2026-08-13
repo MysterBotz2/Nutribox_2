@@ -61,8 +61,8 @@ class MealAnalysisService:
                 recognition_source=recognition.source,
             )
 
-        nutrition = self._nutrient_calculator.calculate(
-            self._nutrition_service.get_nutrition_per_100g(food), weight_grams
+        nutrition = self._nutrient_calculator.calculate_extended(
+            self._nutrition_service.get_extended_nutrition_per_100g(food), weight_grams
         )
         return CalculatedMealAnalysis(
             status=MealAnalysisStatus.CALCULATED,
@@ -70,6 +70,6 @@ class MealAnalysisService:
             recognition_source=recognition.source,
             food=CalculatedFood(id=food.id, name=food.name),
             weight_grams=weight_grams,
-            nutrition=nutrition,
+            nutrition=nutrition.to_legacy_portion_nutrition(),
             weight_source="manual",
         )

@@ -67,6 +67,44 @@ no migration-time data import. Its downgrade removes only the R1A columns and
 constraints, so it must not be used after intentionally storing R1A-only data
 unless that data loss is acceptable.
 
+## R1B calculation and ingestion foundation
+
+R1B extends the internal deterministic calculation path only. The calculator
+continues to use `Decimal`, `weight_g / 100`, and final three-decimal
+`ROUND_HALF_UP` presentation. All known V2 per-100g nutrients scale by that
+same multiplier. An unavailable source value remains `NULL` in the calculated
+result and, for future meals, in the immutable `MealItem` snapshot. An explicit
+source zero scales to numeric zero. The established public five-nutrient
+nutrition/meal/analysis responses are deliberately unchanged; V2 public API,
+targets, and progress expansion remain R1C work.
+
+New curated CSV imports now use the V2 header template at
+`data/templates/foods_import_template.csv`. Required nutrient columns are
+calories, protein, carbohydrates, total fat, fiber, saturated fat, sugars,
+sodium, and cholesterol. Optional nutrient columns are omega-3/6, calcium,
+potassium, zinc, iron, magnesium, vitamin A (mcg RAE), B12 (mcg), C (mg), D
+(mcg), and folate (mcg DFE). A blank optional cell stores `NULL`; an explicit
+`0` stores Decimal zero; blank required values, invalid decimals, negative
+numbers, `NaN`, and infinity are rejected. Existing database rows remain
+compatible and are not revalidated or backfilled by R1B.
+
+Every new CSV row must provide an exact approved `source_type`:
+`canteen_recipe`, `local_database`, `USDA`, or `AI_estimate`. The latter is a
+provenance-only future capability: R1B makes no network/AI numerical request,
+and an imported `AI_estimate` row may not be marked verified. The existing
+importer remains insert-only and rejects canonical/alias conflicts. Because
+there is one canonical `Food` record per normalized name—not a separate
+multi-reference model—R1B does not implement runtime source-priority selection
+or automatic overwrite. The approved ordering is documented for later
+FoodReference/Recipe work: canteen recipe, then local database, USDA, then AI
+estimate.
+
+Future `MealItem` creation snapshots every available calculated V2 nutrient
+and its source category/name/reference plus estimated flag. Existing historical
+snapshots and the existing five-field `Meal` totals are unchanged. No new
+migration is needed: R1A already supplied the required nullable persistence
+columns.
+
 ## Not authorized for R1
 
 - Personal medical/dietary recommendation logic or unvalidated profile rules.
