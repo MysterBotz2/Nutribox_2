@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -16,12 +17,58 @@ class NutrientValues(BaseModel):
     fiber_g: Decimal
 
 
-class NutritionPer100g(NutrientValues):
+class AdditionalNutrientValues(BaseModel):
+    """Nullable V2 nutrients in their canonical units; ``None`` means unknown."""
+
+    saturated_fat_g: Decimal | None = None
+    sugars_g: Decimal | None = None
+    sodium_mg: Decimal | None = None
+    cholesterol_mg: Decimal | None = None
+    omega_3_g: Decimal | None = None
+    omega_6_g: Decimal | None = None
+    calcium_mg: Decimal | None = None
+    potassium_mg: Decimal | None = None
+    zinc_mg: Decimal | None = None
+    iron_mg: Decimal | None = None
+    magnesium_mg: Decimal | None = None
+    vitamin_a_mcg_rae: Decimal | None = None
+    vitamin_b12_mcg: Decimal | None = None
+    vitamin_c_mg: Decimal | None = None
+    vitamin_d_mcg: Decimal | None = None
+    folate_mcg_dfe: Decimal | None = None
+
+
+class V2NutrientValues(NutrientValues):
+    """Stable v1 nutrient values plus nullable additive V2 nutrient values."""
+
+    saturated_fat_g: Decimal | None = None
+    sugars_g: Decimal | None = None
+    sodium_mg: Decimal | None = None
+    cholesterol_mg: Decimal | None = None
+    omega_3_g: Decimal | None = None
+    omega_6_g: Decimal | None = None
+    calcium_mg: Decimal | None = None
+    potassium_mg: Decimal | None = None
+    zinc_mg: Decimal | None = None
+    iron_mg: Decimal | None = None
+    magnesium_mg: Decimal | None = None
+    vitamin_a_mcg_rae: Decimal | None = None
+    vitamin_b12_mcg: Decimal | None = None
+    vitamin_c_mg: Decimal | None = None
+    vitamin_d_mcg: Decimal | None = None
+    folate_mcg_dfe: Decimal | None = None
+
+
+class NutritionPer100g(V2NutrientValues):
     """Nutrient reference values, all expressed per 100 grams."""
 
 
-class PortionNutrition(NutrientValues):
+class PortionNutrition(V2NutrientValues):
     """Deterministically calculated nutrient values for one measured portion."""
+
+    @classmethod
+    def from_extended(cls, nutrition: Any) -> "PortionNutrition":
+        return cls(**nutrition.__dict__)
 
 
 class FoodSource(BaseModel):
@@ -30,6 +77,7 @@ class FoodSource(BaseModel):
     name: str
     reference: str | None
     verified: bool
+    category: str | None = None
 
 
 class FoodResponse(BaseModel):
@@ -57,11 +105,28 @@ class FoodResponse(BaseModel):
                 carbohydrates_g=food.carbohydrates_g_per_100g,
                 fat_g=food.fat_g_per_100g,
                 fiber_g=food.fiber_g_per_100g,
+                saturated_fat_g=food.saturated_fat_g_per_100g,
+                sugars_g=food.sugars_g_per_100g,
+                sodium_mg=food.sodium_mg_per_100g,
+                cholesterol_mg=food.cholesterol_mg_per_100g,
+                omega_3_g=food.omega_3_g_per_100g,
+                omega_6_g=food.omega_6_g_per_100g,
+                calcium_mg=food.calcium_mg_per_100g,
+                potassium_mg=food.potassium_mg_per_100g,
+                zinc_mg=food.zinc_mg_per_100g,
+                iron_mg=food.iron_mg_per_100g,
+                magnesium_mg=food.magnesium_mg_per_100g,
+                vitamin_a_mcg_rae=food.vitamin_a_mcg_rae_per_100g,
+                vitamin_b12_mcg=food.vitamin_b12_mcg_per_100g,
+                vitamin_c_mg=food.vitamin_c_mg_per_100g,
+                vitamin_d_mcg=food.vitamin_d_mcg_per_100g,
+                folate_mcg_dfe=food.folate_mcg_dfe_per_100g,
             ),
             source=FoodSource(
                 name=food.source_name,
                 reference=food.source_reference,
                 verified=food.is_verified,
+                category=food.source_type,
             ),
         )
 

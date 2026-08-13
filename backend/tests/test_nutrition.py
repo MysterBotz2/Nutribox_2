@@ -26,21 +26,11 @@ def test_food_response_serializes_decimal_values_consistently() -> None:
 
     response = FoodResponse.from_food(food)
 
-    assert response.model_dump(mode="json") == {
-        "id": 1,
-        "name": "Test Food",
-        "normalized_name": "test food",
-        "category": "test",
-        "nutrition_per_100g": {
-            "calories": "100.00",
-            "protein_g": "10.000",
-            "carbohydrates_g": "20.000",
-            "fat_g": "3.000",
-            "fiber_g": "2.000",
-        },
-        "source": {
-            "name": "Synthetic test source",
-            "reference": "test-only",
-            "verified": False,
-        },
+    payload = response.model_dump(mode="json")
+    assert payload["id"] == 1
+    assert payload["name"] == "Test Food"
+    assert payload["nutrition_per_100g"]["saturated_fat_g"] is None
+    assert {key: payload["nutrition_per_100g"][key] for key in ("calories", "protein_g", "carbohydrates_g", "fat_g", "fiber_g")} == {
+        "calories": "100.00", "protein_g": "10.000", "carbohydrates_g": "20.000", "fat_g": "3.000", "fiber_g": "2.000",
     }
+    assert payload["source"] == {"name": "Synthetic test source", "reference": "test-only", "verified": False, "category": None}

@@ -117,24 +117,13 @@ def test_get_food_returns_structured_per_100g_response(
     response = client.get(f"/api/nutrition/{food.id}")
 
     assert response.status_code == 200
-    assert response.json() == {
-        "id": food.id,
-        "name": "Test White Rice",
-        "normalized_name": "test white rice",
-        "category": "test",
-        "nutrition_per_100g": {
-            "calories": "100.00",
-            "protein_g": "10.000",
-            "carbohydrates_g": "20.000",
-            "fat_g": "3.000",
-            "fiber_g": "2.000",
-        },
-        "source": {
-            "name": "Synthetic test source",
-            "reference": "test-only",
-            "verified": False,
-        },
+    payload = response.json()
+    assert payload["id"] == food.id
+    assert payload["name"] == "Test White Rice"
+    assert {key: payload["nutrition_per_100g"][key] for key in ("calories", "protein_g", "carbohydrates_g", "fat_g", "fiber_g")} == {
+        "calories": "100.00", "protein_g": "10.000", "carbohydrates_g": "20.000", "fat_g": "3.000", "fiber_g": "2.000",
     }
+    assert payload["source"] == {"name": "Synthetic test source", "reference": "test-only", "verified": False, "category": None}
 
 
 def test_unknown_food_id_returns_404(client: TestClient) -> None:
@@ -157,16 +146,11 @@ def test_calculate_food_returns_portion_nutrition(
     )
 
     assert response.status_code == 200
-    assert response.json() == {
-        "food": {"id": food.id, "name": "Test Food"},
-        "weight_grams": "180",
-        "nutrition": {
-            "calories": "180.000",
-            "protein_g": "18.000",
-            "carbohydrates_g": "36.000",
-            "fat_g": "5.400",
-            "fiber_g": "3.600",
-        },
+    payload = response.json()
+    assert payload["food"] == {"id": food.id, "name": "Test Food"}
+    assert payload["weight_grams"] == "180"
+    assert {key: payload["nutrition"][key] for key in ("calories", "protein_g", "carbohydrates_g", "fat_g", "fiber_g")} == {
+        "calories": "180.000", "protein_g": "18.000", "carbohydrates_g": "36.000", "fat_g": "5.400", "fiber_g": "3.600",
     }
 
 

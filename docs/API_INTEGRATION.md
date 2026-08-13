@@ -58,6 +58,39 @@ For `POST /api/meals`, submit only canonical `food_id` and positive `weight_gram
 
 ## Progress and targets
 
+### V2 additive nutrition fields
+
+`FoodResponse.nutrition_per_100g`, `PortionCalculationResponse.nutrition`, and
+the `calculated` meal-analysis nutrition contain the existing five fields plus
+nullable V2 fields: `saturated_fat_g`, `sugars_g`, `sodium_mg`,
+`cholesterol_mg`, `omega_3_g`, `omega_6_g`, `calcium_mg`, `potassium_mg`,
+`zinc_mg`, `iron_mg`, `magnesium_mg`, `vitamin_a_mcg_rae`,
+`vitamin_b12_mcg`, `vitamin_c_mg`, `vitamin_d_mcg`, and `folate_mcg_dfe`.
+Units are kcal for calories; grams for macros and omega fats; milligrams for
+sodium, cholesterol, minerals, and vitamin C; and micrograms for vitamin A
+(RAE), B12, D, and folate (DFE). `fat_g` is the backward-compatible public name
+for total fat.
+
+`null` is not zero: it means the authoritative source did not provide a value.
+An explicit decimal zero is a known zero. The backend performs authoritative
+Decimal calculation; React Native/Expo—the future official companion client—and
+other clients must not calculate or replace nutrient values locally.
+
+Food `source.category` is nullable for legacy records and otherwise one of
+`canteen_recipe`, `local_database`, `USDA`, or `AI_estimate`. The latter is
+provenance only and is distinguishable from verified database data. Automatic
+priority among competing sources is not yet available because one canonical
+Food record exists per normalized name; FoodReference/Recipe modeling is later
+work.
+
+`POST /api/meals` and `GET /api/meals/{meal_id}` expose immutable V2 item
+snapshots and `additional_totals`. Each `additional_totals` nutrient is numeric
+only if every item has a known snapshot; otherwise it is `null`, never a partial
+sum. `GET /api/meals` stays compact and exposes its legacy five-nutrient item
+shape. Existing progress and target-status APIs remain five-nutrient contracts;
+V2 target meanings are not defined yet, so clients must not infer targets for
+the new fields.
+
 `timezone` is an IANA identifier such as `Asia/Manila`; omitted timezone is UTC. Weeks run Monday–Sunday; weekly results always include seven zero-filled daily points. Summary `days` is bounded to 1–365 and `daily_average` divides by all calendar days in the period, including empty days. Target status is neutral arithmetic from stored meal snapshots and configured targets.
 
 ## Error contract

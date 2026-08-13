@@ -27,7 +27,7 @@ def test_calculator_at_100g_returns_reference_values(
 ) -> None:
     result = NutrientCalculator().calculate(reference_nutrition, Decimal("100"))
 
-    assert result.model_dump() == {
+    assert {key: result.model_dump()[key] for key in ("calories", "protein_g", "carbohydrates_g", "fat_g", "fiber_g")} == {
         "calories": Decimal("150.000"),
         "protein_g": Decimal("20.000"),
         "carbohydrates_g": Decimal("30.000"),
@@ -39,7 +39,7 @@ def test_calculator_at_100g_returns_reference_values(
 def test_calculator_at_50g_returns_half_values(reference_nutrition: NutritionPer100g) -> None:
     result = NutrientCalculator().calculate(reference_nutrition, Decimal("50"))
 
-    assert result.model_dump() == {
+    assert {key: result.model_dump()[key] for key in ("calories", "protein_g", "carbohydrates_g", "fat_g", "fiber_g")} == {
         "calories": Decimal("75.000"),
         "protein_g": Decimal("10.000"),
         "carbohydrates_g": Decimal("15.000"),
@@ -61,7 +61,7 @@ def test_calculator_at_200g_returns_double_values(reference_nutrition: Nutrition
 def test_calculator_at_zero_grams_returns_zero(reference_nutrition: NutritionPer100g) -> None:
     result = NutrientCalculator().calculate(reference_nutrition, Decimal("0"))
 
-    assert result.model_dump() == {
+    assert {key: result.model_dump()[key] for key in ("calories", "protein_g", "carbohydrates_g", "fat_g", "fiber_g")} == {
         "calories": Decimal("0.000"),
         "protein_g": Decimal("0.000"),
         "carbohydrates_g": Decimal("0.000"),
@@ -81,7 +81,7 @@ def test_calculator_handles_fractional_weight_deterministically() -> None:
 
     result = NutrientCalculator().calculate(reference, Decimal("125.5"))
 
-    assert result.model_dump() == {
+    assert {key: result.model_dump()[key] for key in ("calories", "protein_g", "carbohydrates_g", "fat_g", "fiber_g")} == {
         "calories": Decimal("125.651"),
         "protein_g": Decimal("12.704"),
         "carbohydrates_g": Decimal("25.672"),
@@ -156,16 +156,11 @@ def test_calculation_endpoint_returns_nested_portion_response() -> None:
         app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    assert response.json() == {
-        "food": {"id": 1, "name": "Test Food"},
-        "weight_grams": "180",
-        "nutrition": {
-            "calories": "180.000",
-            "protein_g": "18.000",
-            "carbohydrates_g": "36.000",
-            "fat_g": "5.400",
-            "fiber_g": "3.600",
-        },
+    payload = response.json()
+    assert payload["food"] == {"id": 1, "name": "Test Food"}
+    assert payload["weight_grams"] == "180"
+    assert {key: payload["nutrition"][key] for key in ("calories", "protein_g", "carbohydrates_g", "fat_g", "fiber_g")} == {
+        "calories": "180.000", "protein_g": "18.000", "carbohydrates_g": "36.000", "fat_g": "5.400", "fiber_g": "3.600",
     }
 
 

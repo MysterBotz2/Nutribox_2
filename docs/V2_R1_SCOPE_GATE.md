@@ -105,6 +105,37 @@ snapshots and the existing five-field `Meal` totals are unchanged. No new
 migration is needed: R1A already supplied the required nullable persistence
 columns.
 
+## R1C compatible API exposure
+
+R1C exposes the V2 nutrient set as additive nullable fields on food-reference,
+portion-calculation, and calculated meal-analysis responses. The established
+`calories`, `protein_g`, `carbohydrates_g`, `fat_g` (total fat), and `fiber_g`
+fields retain their names, units, Decimal-string serialization, and meaning.
+The V2 field names follow the R1A storage units. `null` means unavailable or
+unknown; clients must not convert it to zero. Numeric `"0.000"` remains an
+explicit source-confirmed zero.
+
+Food provenance keeps its existing name/reference/verified fields and adds a
+nullable `category` for the approved `canteen_recipe`, `local_database`,
+`USDA`, or `AI_estimate` category. Meal detail and creation responses expose
+the immutable per-item V2 snapshot and a source snapshot. `AI_estimate` stays
+identifiable through its category and `is_estimated`; R1C adds no AI numerical
+runtime fallback.
+
+The existing five-nutrient `totals` remain unchanged. Detailed meal responses
+add `additional_totals`, derived only from stored `MealItem` snapshots: a V2
+aggregate is numeric only when every item has a numeric snapshot for that
+nutrient; if any item is unknown, it is `null`. This strict completeness policy
+never presents partial subtotals as complete. Paginated meal lists intentionally
+retain their compact legacy item fields.
+
+Progress and target-status remain five-nutrient contracts in R1C. Progress V2
+aggregation is deferred rather than exposing incomplete data without a
+dedicated analytics contract. `DEC-TARGET-001` is open: V2 target semantics
+(goal/minimum/maximum/range) must be specified before target or comparison
+expansion. There is no R1C migration and no automatic multi-reference source
+priority; that requires later FoodReference/Recipe modeling.
+
 ## Not authorized for R1
 
 - Personal medical/dietary recommendation logic or unvalidated profile rules.

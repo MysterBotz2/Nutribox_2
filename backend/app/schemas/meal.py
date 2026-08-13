@@ -6,7 +6,12 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.ai import RecognizedFood
-from app.schemas.nutrition import CalculatedFood, PortionNutrition
+from app.schemas.nutrition import (
+    AdditionalNutrientValues,
+    CalculatedFood,
+    NutrientValues,
+    PortionNutrition,
+)
 from app.core.constants import MAXIMUM_PROTOTYPE_WEIGHT_GRAMS
 
 
@@ -67,6 +72,25 @@ class MealItemResponse(BaseModel):
     food: CalculatedFood
     weight_grams: Decimal
     nutrition: PortionNutrition
+    nutrition_source: "MealItemNutritionSource | None" = None
+
+
+class MealItemNutritionSource(BaseModel):
+    """Immutable provenance snapshot for a saved meal item."""
+
+    category: str | None
+    name: str | None
+    reference: str | None
+    is_estimated: bool | None
+
+
+class MealListItemResponse(BaseModel):
+    """Legacy-compatible compact item representation for paginated meal lists."""
+
+    id: int
+    food: CalculatedFood
+    weight_grams: Decimal
+    nutrition: NutrientValues
 
 
 class MealTotals(PortionNutrition):
@@ -78,9 +102,19 @@ class MealResponse(BaseModel):
     recorded_at: datetime
     items: list[MealItemResponse]
     totals: MealTotals
+    additional_totals: AdditionalNutrientValues
+
+
+class MealListItem(BaseModel):
+    """Legacy-compatible meal representation that avoids expanded item payloads."""
+
+    id: int
+    recorded_at: datetime
+    items: list[MealListItemResponse]
+    totals: MealTotals
 
 
 class MealListResponse(BaseModel):
-    meals: list[MealResponse]
+    meals: list[MealListItem]
     limit: int
     offset: int

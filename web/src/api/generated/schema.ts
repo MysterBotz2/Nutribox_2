@@ -413,6 +413,44 @@ export interface components {
          * @enum {string}
          */
         ActivityLevel: "sedentary" | "lightly_active" | "moderately_active" | "very_active";
+        /**
+         * AdditionalNutrientValues
+         * @description Nullable V2 nutrients in their canonical units; ``None`` means unknown.
+         */
+        AdditionalNutrientValues: {
+            /** Calcium Mg */
+            calcium_mg?: string | null;
+            /** Cholesterol Mg */
+            cholesterol_mg?: string | null;
+            /** Folate Mcg Dfe */
+            folate_mcg_dfe?: string | null;
+            /** Iron Mg */
+            iron_mg?: string | null;
+            /** Magnesium Mg */
+            magnesium_mg?: string | null;
+            /** Omega 3 G */
+            omega_3_g?: string | null;
+            /** Omega 6 G */
+            omega_6_g?: string | null;
+            /** Potassium Mg */
+            potassium_mg?: string | null;
+            /** Saturated Fat G */
+            saturated_fat_g?: string | null;
+            /** Sodium Mg */
+            sodium_mg?: string | null;
+            /** Sugars G */
+            sugars_g?: string | null;
+            /** Vitamin A Mcg Rae */
+            vitamin_a_mcg_rae?: string | null;
+            /** Vitamin B12 Mcg */
+            vitamin_b12_mcg?: string | null;
+            /** Vitamin C Mg */
+            vitamin_c_mg?: string | null;
+            /** Vitamin D Mcg */
+            vitamin_d_mcg?: string | null;
+            /** Zinc Mg */
+            zinc_mg?: string | null;
+        };
         /** Body_analyze_meal_api_meals_analyze_post */
         Body_analyze_meal_api_meals_analyze_post: {
             /**
@@ -589,6 +627,8 @@ export interface components {
          * @description Traceability metadata for a nutrition reference record.
          */
         FoodSource: {
+            /** Category */
+            category?: string | null;
             /** Name */
             name: string;
             /** Reference */
@@ -613,12 +653,55 @@ export interface components {
             /** Weight Grams */
             weight_grams: number | string;
         };
+        /**
+         * MealItemNutritionSource
+         * @description Immutable provenance snapshot for a saved meal item.
+         */
+        MealItemNutritionSource: {
+            /** Category */
+            category: string | null;
+            /** Is Estimated */
+            is_estimated: boolean | null;
+            /** Name */
+            name: string | null;
+            /** Reference */
+            reference: string | null;
+        };
         /** MealItemResponse */
         MealItemResponse: {
             food: components["schemas"]["CalculatedFood"];
             /** Id */
             id: number;
             nutrition: components["schemas"]["PortionNutrition"];
+            nutrition_source?: components["schemas"]["MealItemNutritionSource"] | null;
+            /** Weight Grams */
+            weight_grams: string;
+        };
+        /**
+         * MealListItem
+         * @description Legacy-compatible meal representation that avoids expanded item payloads.
+         */
+        MealListItem: {
+            /** Id */
+            id: number;
+            /** Items */
+            items: components["schemas"]["MealListItemResponse"][];
+            /**
+             * Recorded At
+             * Format: date-time
+             */
+            recorded_at: string;
+            totals: components["schemas"]["MealTotals"];
+        };
+        /**
+         * MealListItemResponse
+         * @description Legacy-compatible compact item representation for paginated meal lists.
+         */
+        MealListItemResponse: {
+            food: components["schemas"]["CalculatedFood"];
+            /** Id */
+            id: number;
+            nutrition: components["schemas"]["NutrientValues"];
             /** Weight Grams */
             weight_grams: string;
         };
@@ -627,12 +710,13 @@ export interface components {
             /** Limit */
             limit: number;
             /** Meals */
-            meals: components["schemas"]["MealResponse"][];
+            meals: components["schemas"]["MealListItem"][];
             /** Offset */
             offset: number;
         };
         /** MealResponse */
         MealResponse: {
+            additional_totals: components["schemas"]["AdditionalNutrientValues"];
             /** Id */
             id: number;
             /** Items */
@@ -646,6 +730,54 @@ export interface components {
         };
         /** MealTotals */
         MealTotals: {
+            /** Calcium Mg */
+            calcium_mg?: string | null;
+            /** Calories */
+            calories: string;
+            /** Carbohydrates G */
+            carbohydrates_g: string;
+            /** Cholesterol Mg */
+            cholesterol_mg?: string | null;
+            /** Fat G */
+            fat_g: string;
+            /** Fiber G */
+            fiber_g: string;
+            /** Folate Mcg Dfe */
+            folate_mcg_dfe?: string | null;
+            /** Iron Mg */
+            iron_mg?: string | null;
+            /** Magnesium Mg */
+            magnesium_mg?: string | null;
+            /** Omega 3 G */
+            omega_3_g?: string | null;
+            /** Omega 6 G */
+            omega_6_g?: string | null;
+            /** Potassium Mg */
+            potassium_mg?: string | null;
+            /** Protein G */
+            protein_g: string;
+            /** Saturated Fat G */
+            saturated_fat_g?: string | null;
+            /** Sodium Mg */
+            sodium_mg?: string | null;
+            /** Sugars G */
+            sugars_g?: string | null;
+            /** Vitamin A Mcg Rae */
+            vitamin_a_mcg_rae?: string | null;
+            /** Vitamin B12 Mcg */
+            vitamin_b12_mcg?: string | null;
+            /** Vitamin C Mg */
+            vitamin_c_mg?: string | null;
+            /** Vitamin D Mcg */
+            vitamin_d_mcg?: string | null;
+            /** Zinc Mg */
+            zinc_mg?: string | null;
+        };
+        /**
+         * NutrientTotals
+         * @description Stored-meal nutrient totals aggregated for a reporting period.
+         */
+        NutrientTotals: {
             /** Calories */
             calories: string;
             /** Carbohydrates G */
@@ -658,10 +790,10 @@ export interface components {
             protein_g: string;
         };
         /**
-         * NutrientTotals
-         * @description Stored-meal nutrient totals aggregated for a reporting period.
+         * NutrientValues
+         * @description A shared collection of nutrient values expressed in a stated context.
          */
-        NutrientTotals: {
+        NutrientValues: {
             /** Calories */
             calories: string;
             /** Carbohydrates G */
@@ -705,16 +837,48 @@ export interface components {
          * @description Nutrient reference values, all expressed per 100 grams.
          */
         NutritionPer100g: {
+            /** Calcium Mg */
+            calcium_mg?: string | null;
             /** Calories */
             calories: string;
             /** Carbohydrates G */
             carbohydrates_g: string;
+            /** Cholesterol Mg */
+            cholesterol_mg?: string | null;
             /** Fat G */
             fat_g: string;
             /** Fiber G */
             fiber_g: string;
+            /** Folate Mcg Dfe */
+            folate_mcg_dfe?: string | null;
+            /** Iron Mg */
+            iron_mg?: string | null;
+            /** Magnesium Mg */
+            magnesium_mg?: string | null;
+            /** Omega 3 G */
+            omega_3_g?: string | null;
+            /** Omega 6 G */
+            omega_6_g?: string | null;
+            /** Potassium Mg */
+            potassium_mg?: string | null;
             /** Protein G */
             protein_g: string;
+            /** Saturated Fat G */
+            saturated_fat_g?: string | null;
+            /** Sodium Mg */
+            sodium_mg?: string | null;
+            /** Sugars G */
+            sugars_g?: string | null;
+            /** Vitamin A Mcg Rae */
+            vitamin_a_mcg_rae?: string | null;
+            /** Vitamin B12 Mcg */
+            vitamin_b12_mcg?: string | null;
+            /** Vitamin C Mg */
+            vitamin_c_mg?: string | null;
+            /** Vitamin D Mcg */
+            vitamin_d_mcg?: string | null;
+            /** Zinc Mg */
+            zinc_mg?: string | null;
         };
         /** NutritionProfileResponse */
         NutritionProfileResponse: {
@@ -872,16 +1036,48 @@ export interface components {
          * @description Deterministically calculated nutrient values for one measured portion.
          */
         PortionNutrition: {
+            /** Calcium Mg */
+            calcium_mg?: string | null;
             /** Calories */
             calories: string;
             /** Carbohydrates G */
             carbohydrates_g: string;
+            /** Cholesterol Mg */
+            cholesterol_mg?: string | null;
             /** Fat G */
             fat_g: string;
             /** Fiber G */
             fiber_g: string;
+            /** Folate Mcg Dfe */
+            folate_mcg_dfe?: string | null;
+            /** Iron Mg */
+            iron_mg?: string | null;
+            /** Magnesium Mg */
+            magnesium_mg?: string | null;
+            /** Omega 3 G */
+            omega_3_g?: string | null;
+            /** Omega 6 G */
+            omega_6_g?: string | null;
+            /** Potassium Mg */
+            potassium_mg?: string | null;
             /** Protein G */
             protein_g: string;
+            /** Saturated Fat G */
+            saturated_fat_g?: string | null;
+            /** Sodium Mg */
+            sodium_mg?: string | null;
+            /** Sugars G */
+            sugars_g?: string | null;
+            /** Vitamin A Mcg Rae */
+            vitamin_a_mcg_rae?: string | null;
+            /** Vitamin B12 Mcg */
+            vitamin_b12_mcg?: string | null;
+            /** Vitamin C Mg */
+            vitamin_c_mg?: string | null;
+            /** Vitamin D Mcg */
+            vitamin_d_mcg?: string | null;
+            /** Zinc Mg */
+            zinc_mg?: string | null;
         };
         /** ProgressSummaryResponse */
         ProgressSummaryResponse: {

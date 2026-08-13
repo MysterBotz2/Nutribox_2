@@ -86,7 +86,6 @@ class NutritionService:
         if food is None:
             return None
 
-        nutrition_per_100g = self.get_nutrition_per_100g(food)
-        return food, self._nutrient_calculator.calculate(
-            nutrition_per_100g, weight_grams
-        )
+        return food, PortionNutrition.from_extended(self._nutrient_calculator.calculate_extended(
+            self.get_extended_nutrition_per_100g(food), weight_grams
+        ))
