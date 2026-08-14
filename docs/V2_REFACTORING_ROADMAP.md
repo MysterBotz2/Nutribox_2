@@ -32,6 +32,13 @@ This sequence keeps sensitive storage and AI-context release separate from the
 ordinary-profile foundation. Weight/goal history remains R3; no subphase
 authorizes medical or unvalidated personalization.
 
+## R2B-0 checkpoint
+
+R2B-0 is a documentation/decision gate between completed R2A and runtime R2B.
+It must resolve field-level storage, cache, AI, recommendation, withdrawal, and
+methodology authorization without changing runtime behavior. R2B cannot start
+until its targeted client clarifications are accepted.
+
 ## R1 completion checkpoint
 
 R1 is complete through R1D. The controlled completion record is

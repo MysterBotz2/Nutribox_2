@@ -46,6 +46,13 @@ this checkout; their requirements are traceable through the R0 records.
 
 ## Cross-cutting decisions
 
+## R2B-0 sensitive-field boundary
+
+`V2_R2B_SENSITIVE_FIELD_REGISTER.md` and `V2_R2B_SCOPE_GATE.md` supersede no
+field classification here; they record that no sensitive P3/P4 field is yet
+authorized for R2B persistence, AI context, or recommendation use. The client
+clarification gate is `V2_R2B_CLIENT_CLARIFICATIONS.md`.
+
 ## R2A human authorization
 
 The approved R2A implementation set is exactly: `age`, `height_cm`,

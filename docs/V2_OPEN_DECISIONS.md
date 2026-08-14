@@ -40,6 +40,15 @@ implementation boundary are documented in `V2_PROFILE_DATA_CLASSIFICATION.md`,
 `V2_PROFILE_CONSENT_MODEL.md`, `V2_PROFILE_PERSONALIZATION_MATRIX.md`, and
 `V2_R2_SCOPE_GATE.md`.
 
+## R2B-0 sensitive-context gate
+
+`DEC-PROF-001` remains **BLOCKED_BY_RESEARCH_METHOD** for recommendation use.
+R2B-0 finds no field-specific authorization for sensitive storage, mobile cache,
+or AI context. The blocking client questions are in
+`V2_R2B_CLIENT_CLARIFICATIONS.md`; the proposed future boundary is recorded in
+`V2_R2B_SCOPE_GATE.md`. Consent state, withdrawal, retention, and legal-policy
+details remain separate decisions and `LEGAL_REVIEW_REQUIRED` where applicable.
+
 ## Immediate priority
 
 **DEC-NUTR-001 is the immediate decision before R1.** It determines the V2 nutrition data model, provenance, snapshot semantics, food-data imports, calculator validity, diagnostics, and research evaluation. DEC-PROF-001 and DEC-DATA-001 should be answered before any sensitive-profile or extended-nutrient migration is proposed.
