@@ -56,6 +56,31 @@ Nutrition values are Decimal-safe JSON strings where documented by the response 
 
 For `POST /api/meals`, submit only canonical `food_id` and positive `weight_grams`; never submit trusted nutrient totals or `user_id`.
 
+## Core profile contract (R2A)
+
+FastAPI/PostgreSQL is the authoritative profile system of record. The future
+React Native client may retain only a secure local cache; it is not an
+independent profile authority.
+
+`GET /api/users/me/profile` and `PUT /api/users/me/profile` remain the only
+ordinary-user profile routes. They are bearer-authenticated and always operate
+on the token subject; clients cannot supply another `user_id`.
+
+The complete R2A field set is `age`, `height_cm`, `weight_kg` (current profile
+state only), `activity_level`, `nutrition_goal`, `dietary_restrictions`, and
+`allergies`. No other onboarding, sensitive-health, consent, history, or AI
+permission field is accepted in R2A.
+
+`PUT` is a full replacement: an omitted or `null` scalar/label-list value is
+stored and returned as `null`/unknown. It does not mean false, no, unrestricted,
+or no allergies. An explicit `[]` is the deliberate empty value for either
+label list. Existing physical sanity validation applies to age, height, and
+weight; label lists contain at most 20 normalized labels of at most 100
+characters. Unsupported fields are rejected with `422`.
+
+R2A does not add consent runtime, sensitive health/lifestyle fields,
+recommendation logic, weight/goal history, or additional AI Coach context.
+
 ## Progress and targets
 
 ### V2 additive nutrition fields

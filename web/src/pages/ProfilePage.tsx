@@ -25,7 +25,7 @@ export function ProfilePage() {
   const profile = useQuery({ queryKey: queryKeys.profile, queryFn: profileApi.get, retry: false })
   const [form, setForm] = useState<ProfileForm>(emptyProfile)
   const [saved, setSaved] = useState(false)
-  useEffect(() => { if (profile.data) setForm({ age: profile.data.age?.toString() ?? '', height_cm: profile.data.height_cm ?? '', weight_kg: profile.data.weight_kg ?? '', activity_level: profile.data.activity_level ?? '', nutrition_goal: profile.data.nutrition_goal ?? '', dietary_restrictions: profile.data.dietary_restrictions, allergies: profile.data.allergies }) }, [profile.data])
+  useEffect(() => { if (profile.data) setForm({ age: profile.data.age?.toString() ?? '', height_cm: profile.data.height_cm ?? '', weight_kg: profile.data.weight_kg ?? '', activity_level: profile.data.activity_level ?? '', nutrition_goal: profile.data.nutrition_goal ?? '', dietary_restrictions: profile.data.dietary_restrictions ?? [], allergies: profile.data.allergies ?? [] }) }, [profile.data])
   const isMissing = profile.error instanceof ApiError && profile.error.status === 404
   const save = useMutation({ mutationFn: profileApi.replace, onSuccess: (savedProfile) => { queryClient.setQueryData(queryKeys.profile, savedProfile); setSaved(true) } })
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setSaved(false); const request: NutritionProfileUpdateRequest = { age: form.age ? Number(form.age) : null, height_cm: form.height_cm || null, weight_kg: form.weight_kg || null, activity_level: form.activity_level || null, nutrition_goal: form.nutrition_goal || null, dietary_restrictions: form.dietary_restrictions, allergies: form.allergies }; save.mutate(request) }

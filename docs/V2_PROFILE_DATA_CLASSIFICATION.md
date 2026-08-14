@@ -46,6 +46,15 @@ this checkout; their requirements are traceable through the R0 records.
 
 ## Cross-cutting decisions
 
+## R2A human authorization
+
+The approved R2A implementation set is exactly: `age`, `height_cm`,
+`weight_kg`, `activity_level`, `nutrition_goal`, `dietary_restrictions`, and
+`allergies`. These existing fields are **AUTHORIZED_FOR_R2A** for core
+persistence/API hardening only. This approval does not authorize new fields,
+recommendation rules, sensitive-context storage, consent runtime, or AI-context
+expansion. Every other register entry retains its existing status.
+
 1. **Storage is not recommendation permission.** `STORAGE_ALLOWED_IF_CONFIRMED`
    means only that an R2A design may consider persisted user declarations with
    the required consent and ownership controls. It does not approve a nutrition,
