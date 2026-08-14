@@ -19,6 +19,19 @@ The order below is a controlled hypothesis derived from R0. Each phase begins on
 
 Do not implement clinical deficiency/condition diagnosis, BMR/TDEE target prescriptions, numeric nutrition AI fallback, leftover subtraction, heater control, device pairing, notification delivery, social login/2FA, chatbot persistence, or React Native/Pi source before their R0 decisions and dependencies are approved.
 
+## R2 controlled subphases
+
+| Subphase | Scope | Entry condition |
+| --- | --- | --- |
+| R2A — Profile Persistence + Core API | Approved ordinary/dietary fields, ownership, explicit null/clear behavior, and compatible authenticated contracts. | `V2_R2_SCOPE_GATE.md` accepted and field requirements authorized. |
+| R2B — Consent / Sensitive Context + AI Context Boundary | Purpose-specific consent metadata and only approved storage-only sensitive declarations; AI assembly gate. | Product/legal review inputs and sensitive-field authorization. |
+| R2C — Mobile Onboarding Contract | Stable shared contract for the official React Native client and secure-cache classification. | R2A/B API contract accepted; no offline mutation assumption. |
+| R2D — R2 Hardening / Closure | Migration/API/ownership/privacy regression evidence and documentation. | R2A–C scope completed. |
+
+This sequence keeps sensitive storage and AI-context release separate from the
+ordinary-profile foundation. Weight/goal history remains R3; no subphase
+authorizes medical or unvalidated personalization.
+
 ## R1 completion checkpoint
 
 R1 is complete through R1D. The controlled completion record is

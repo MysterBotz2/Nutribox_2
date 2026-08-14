@@ -17,6 +17,23 @@ These decisions are not approvals to implement. They prevent the V2 roadmap from
 | DEC-NOTIF-001 | Water, meal, goal, streak, allergen/condition and motivational reminders. | No notification architecture. | Delivery and consent differ across mobile, backend, and device. | Mobile local notifications; backend push; device alerts; hybrid event model. | Which reminder types, channels, schedules, quiet hours, consent defaults, and safety escalation rules are required? | R6, R8. |
 | DEC-SET-001 | Language, units, accessibility, theme/font, chat style, and device settings. | No setting model. | Some preferences should synchronize; some must remain device-local. | Account-synced language/units; client-local appearance; device-local accessibility; hybrid. | Confirm ownership/defaults and whether a setting applies to mobile, device, Coach, or all surfaces. | R6, R7, R8. |
 
+## R2A-0 profile, privacy, and consent decisions
+
+| ID | Decision | R2A-0 state | Required resolution before use |
+| --- | --- | --- | --- |
+| DEC-PROF-001 | Profile recommendation eligibility | **BLOCKED_BY_RESEARCH_METHOD** | Storage never authorizes a rule. Client-approved deterministic/research methodology is required for each field before recommendation use. |
+| DEC-PROF-002 | Required versus optional onboarding fields | **OPEN** | Confirm exact mandatory profile fields, age versus DOB, sex/gender terminology, and conditional onboarding rules. |
+| DEC-PROF-003 | Sensitive-field consent model | **DESIGN_DEFINED / IMPLEMENTATION_PENDING** | Separate product opt-ins for sensitive declarations; legal text, retention, evidence, and access policy are `LEGAL_REVIEW_REQUIRED`. |
+| DEC-PROF-004 | AI profile-context permissions | **DESIGN_DEFINED / IMPLEMENTATION_PENDING** | Task-minimize context and require an explicit AI-context opt-in; do not forward whole profiles or methodology-restricted fields. |
+| DEC-SYNC-003 | Profile offline mutation and conflict resolution | **OPEN** | Decide offline edits, queued writes, conflict rule, timestamps, and stale-write handling. Backend authority alone does not answer these. |
+| DEC-HISTORY-001 | Current weight versus weight history ownership | **OPEN / DEFERRED TO R3** | R2 owns current/default profile weight only; approve a separate observation/history model before trend/history work. |
+| DEC-GOAL-001 | General profile goal versus `NutritionTarget` versus goal history | **OPEN** | Keep the three concepts distinct; target range/min/max semantics remain DEC-TARGET-001. |
+
+The associated field register, consent model, personalization matrix, and
+implementation boundary are documented in `V2_PROFILE_DATA_CLASSIFICATION.md`,
+`V2_PROFILE_CONSENT_MODEL.md`, `V2_PROFILE_PERSONALIZATION_MATRIX.md`, and
+`V2_R2_SCOPE_GATE.md`.
+
 ## Immediate priority
 
 **DEC-NUTR-001 is the immediate decision before R1.** It determines the V2 nutrition data model, provenance, snapshot semantics, food-data imports, calculator validity, diagnostics, and research evaluation. DEC-PROF-001 and DEC-DATA-001 should be answered before any sensitive-profile or extended-nutrient migration is proposed.
