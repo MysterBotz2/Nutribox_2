@@ -43,6 +43,14 @@ Expected future domains: `Profile` (EXTEND), `Health/Dietary Context`
 Cache Contract` (EXTEND). These labels do not finalize SQL tables, migrations,
 or APIs.
 
+## R2B-0 sensitive-context boundary
+
+If later authorized, `Sensitive Context` should be a **NEW**, one-to-one
+user-owned domain rather than extra columns on `NutritionProfile`; `Consent /
+Preference` remains a separate **NEW** domain and `AI Context` remains an
+**EXTEND** boundary. This is a proposed privacy/minimization architecture, not
+an approved table, migration, API, or data collection decision.
+
 ## Reuse boundary
 
 Keep existing meal snapshots as historical facts. If V2 extends nutrient scope, the migration plan must state whether historical rows retain known five-nutrient values with unavailable values omitted, or whether a validated backfill source exists. Historical values must never be silently re-estimated from changed Food records.

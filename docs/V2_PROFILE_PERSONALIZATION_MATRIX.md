@@ -24,6 +24,12 @@ expanded by that authorization.
 | Budget allotment | Not stored | No | No | No | F/PROF-004; no method | UNRESOLVED | Define currency/period/purpose and food-cost methodology. |
 | Derived BMI/BMR/TDEE/EER | Not primary profile data | Future calculator output only | No | No | Q13; DEC-CALC-001 open | BLOCKED_BY_RESEARCH_METHOD | Formula, population, validation, and target-application policy. |
 
+## R2B-0 confirmation
+
+The sensitive rows remain `BLOCKED_BY_RESEARCH_METHOD`; no row is promoted to
+storage, AI, or recommendation authorization by R2B-0. See
+`V2_R2B_SENSITIVE_FIELD_REGISTER.md` for the field-level AI permission matrix.
+
 All fields are subject to the consent model in
 `V2_PROFILE_CONSENT_MODEL.md`. “AI Coach context” means task-minimized data
 passed through the existing provider-neutral context object; it does not permit

@@ -104,6 +104,14 @@ existing profile resource is hardened to preserve null/unknown labels rather
 than fabricating default empty arrays; all other onboarding and sensitive-field
 requirements remain unresolved, missing, or deferred as recorded above.
 
+## R2B-0 sensitive-context decision status
+
+`PROF-003`, `PROF-004`, and `PROF-006` remain **MISSING** at runtime. R2B-0
+does not authorize their implementation: client sources identify the candidate
+fields but not storage approval, data shape, cache permission, AI-task use,
+withdrawal behavior, or field-level research methods. The targeted decision
+gate is `V2_R2B_CLIENT_CLARIFICATIONS.md`.
+
 ## R1 completion status
 
 R1 is complete. NUTR-001 and NUTR-002 now have an additive V2 reference,
