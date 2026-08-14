@@ -9,6 +9,7 @@ Nutri-Box is a FastAPI and PostgreSQL backend for authenticated meal persistence
 - [Integration checklist](docs/INTEGRATION_CHECKLIST.md)
 - [Generated OpenAPI schema](docs/openapi.json)
 - [REST Client examples](docs/http/nutribox.http)
+- [React web companion](web/README.md)
 
 React Native/Expo and physical-device software are separate clients of this backend. They submit inputs and display results; the backend remains authoritative for authentication, ownership, food resolution, nutrients, totals, and progress.
 

@@ -5,6 +5,7 @@ from typing import Any
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.routers.ai import router as ai_router
@@ -15,12 +16,28 @@ from app.routers.meals import router as meals_router
 from app.routers.nutrition import router as nutrition_router
 from app.routers.progress import router as progress_router
 from app.routers.users import router as users_router
+from app.core.config import settings
 
 app = FastAPI(
     title="Nutri-Box API",
     version="1.0.0",
     description="Nutri-Box v1 integration API. Existing /api routes are the stable v1 contract.",
 )
+
+
+def configure_cors(application: FastAPI, allowed_origins: list[str]) -> None:
+    """Apply an explicit browser-origin allowlist without wildcard credentials."""
+    if allowed_origins:
+        application.add_middleware(
+            CORSMiddleware,
+            allow_origins=allowed_origins,
+            allow_credentials=False,
+            allow_methods=["GET", "POST", "PUT", "OPTIONS"],
+            allow_headers=["Authorization", "Content-Type"],
+        )
+
+
+configure_cors(app, settings.cors_allowed_origins)
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(users_router)

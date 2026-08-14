@@ -29,6 +29,205 @@
         "title": "ActivityLevel",
         "type": "string"
       },
+      "AdditionalNutrientValues": {
+        "description": "Nullable V2 nutrients in their canonical units; ``None`` means unknown.",
+        "properties": {
+          "calcium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calcium Mg"
+          },
+          "cholesterol_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cholesterol Mg"
+          },
+          "folate_mcg_dfe": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Folate Mcg Dfe"
+          },
+          "iron_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iron Mg"
+          },
+          "magnesium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Magnesium Mg"
+          },
+          "omega_3_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Omega 3 G"
+          },
+          "omega_6_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Omega 6 G"
+          },
+          "potassium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Potassium Mg"
+          },
+          "saturated_fat_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saturated Fat G"
+          },
+          "sodium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sodium Mg"
+          },
+          "sugars_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sugars G"
+          },
+          "vitamin_a_mcg_rae": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin A Mcg Rae"
+          },
+          "vitamin_b12_mcg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin B12 Mcg"
+          },
+          "vitamin_c_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin C Mg"
+          },
+          "vitamin_d_mcg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin D Mcg"
+          },
+          "zinc_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zinc Mg"
+          }
+        },
+        "title": "AdditionalNutrientValues",
+        "type": "object"
+      },
       "Body_analyze_meal_api_meals_analyze_post": {
         "properties": {
           "file": {
@@ -411,6 +610,16 @@
       "FoodSource": {
         "description": "Traceability metadata for a nutrition reference record.",
         "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NutritionSourceCategory"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -500,6 +709,62 @@
         "title": "MealItemCreateRequest",
         "type": "object"
       },
+      "MealItemNutritionSource": {
+        "description": "Immutable provenance snapshot for a saved meal item.",
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NutritionSourceCategory"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_estimated": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Estimated"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "category",
+          "name",
+          "reference",
+          "is_estimated"
+        ],
+        "title": "MealItemNutritionSource",
+        "type": "object"
+      },
       "MealItemResponse": {
         "properties": {
           "food": {
@@ -511,6 +776,16 @@
           },
           "nutrition": {
             "$ref": "#/components/schemas/PortionNutrition"
+          },
+          "nutrition_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MealItemNutritionSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "weight_grams": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -527,6 +802,66 @@
         "title": "MealItemResponse",
         "type": "object"
       },
+      "MealListItem": {
+        "description": "Legacy-compatible meal representation that avoids expanded item payloads.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MealListItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "recorded_at": {
+            "format": "date-time",
+            "title": "Recorded At",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/MealTotals"
+          }
+        },
+        "required": [
+          "id",
+          "recorded_at",
+          "items",
+          "totals"
+        ],
+        "title": "MealListItem",
+        "type": "object"
+      },
+      "MealListItemResponse": {
+        "description": "Legacy-compatible compact item representation for paginated meal lists.",
+        "properties": {
+          "food": {
+            "$ref": "#/components/schemas/CalculatedFood"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/NutrientValues"
+          },
+          "weight_grams": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Weight Grams",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "food",
+          "weight_grams",
+          "nutrition"
+        ],
+        "title": "MealListItemResponse",
+        "type": "object"
+      },
       "MealListResponse": {
         "properties": {
           "limit": {
@@ -535,7 +870,7 @@
           },
           "meals": {
             "items": {
-              "$ref": "#/components/schemas/MealResponse"
+              "$ref": "#/components/schemas/MealListItem"
             },
             "title": "Meals",
             "type": "array"
@@ -555,6 +890,9 @@
       },
       "MealResponse": {
         "properties": {
+          "additional_totals": {
+            "$ref": "#/components/schemas/AdditionalNutrientValues"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -579,13 +917,26 @@
           "id",
           "recorded_at",
           "items",
-          "totals"
+          "totals",
+          "additional_totals"
         ],
         "title": "MealResponse",
         "type": "object"
       },
       "MealTotals": {
         "properties": {
+          "calcium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calcium Mg"
+          },
           "calories": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Calories",
@@ -595,6 +946,18 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Carbohydrates G",
             "type": "string"
+          },
+          "cholesterol_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cholesterol Mg"
           },
           "fat_g": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -606,10 +969,178 @@
             "title": "Fiber G",
             "type": "string"
           },
+          "folate_mcg_dfe": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Folate Mcg Dfe"
+          },
+          "iron_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iron Mg"
+          },
+          "magnesium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Magnesium Mg"
+          },
+          "omega_3_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Omega 3 G"
+          },
+          "omega_6_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Omega 6 G"
+          },
+          "potassium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Potassium Mg"
+          },
           "protein_g": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Protein G",
             "type": "string"
+          },
+          "saturated_fat_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saturated Fat G"
+          },
+          "sodium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sodium Mg"
+          },
+          "sugars_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sugars G"
+          },
+          "vitamin_a_mcg_rae": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin A Mcg Rae"
+          },
+          "vitamin_b12_mcg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin B12 Mcg"
+          },
+          "vitamin_c_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin C Mg"
+          },
+          "vitamin_d_mcg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin D Mcg"
+          },
+          "zinc_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zinc Mg"
           }
         },
         "required": [
@@ -659,6 +1190,45 @@
           "fiber_g"
         ],
         "title": "NutrientTotals",
+        "type": "object"
+      },
+      "NutrientValues": {
+        "description": "A shared collection of nutrient values expressed in a stated context.",
+        "properties": {
+          "calories": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Calories",
+            "type": "string"
+          },
+          "carbohydrates_g": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Carbohydrates G",
+            "type": "string"
+          },
+          "fat_g": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Fat G",
+            "type": "string"
+          },
+          "fiber_g": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Fiber G",
+            "type": "string"
+          },
+          "protein_g": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Protein G",
+            "type": "string"
+          }
+        },
+        "required": [
+          "calories",
+          "protein_g",
+          "carbohydrates_g",
+          "fat_g",
+          "fiber_g"
+        ],
+        "title": "NutrientValues",
         "type": "object"
       },
       "NutritionCoachRequest": {
@@ -728,6 +1298,18 @@
       "NutritionPer100g": {
         "description": "Nutrient reference values, all expressed per 100 grams.",
         "properties": {
+          "calcium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calcium Mg"
+          },
           "calories": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Calories",
@@ -737,6 +1319,18 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Carbohydrates G",
             "type": "string"
+          },
+          "cholesterol_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cholesterol Mg"
           },
           "fat_g": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -748,10 +1342,178 @@
             "title": "Fiber G",
             "type": "string"
           },
+          "folate_mcg_dfe": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Folate Mcg Dfe"
+          },
+          "iron_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iron Mg"
+          },
+          "magnesium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Magnesium Mg"
+          },
+          "omega_3_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Omega 3 G"
+          },
+          "omega_6_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Omega 6 G"
+          },
+          "potassium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Potassium Mg"
+          },
           "protein_g": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Protein G",
             "type": "string"
+          },
+          "saturated_fat_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saturated Fat G"
+          },
+          "sodium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sodium Mg"
+          },
+          "sugars_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sugars G"
+          },
+          "vitamin_a_mcg_rae": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin A Mcg Rae"
+          },
+          "vitamin_b12_mcg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin B12 Mcg"
+          },
+          "vitamin_c_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin C Mg"
+          },
+          "vitamin_d_mcg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin D Mcg"
+          },
+          "zinc_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zinc Mg"
           }
         },
         "required": [
@@ -788,11 +1550,18 @@
             "title": "Age"
           },
           "allergies": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Allergies",
-            "type": "array"
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allergies"
           },
           "created_at": {
             "format": "date-time",
@@ -800,11 +1569,18 @@
             "type": "string"
           },
           "dietary_restrictions": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Dietary Restrictions",
-            "type": "array"
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dietary Restrictions"
           },
           "height_cm": {
             "anyOf": [
@@ -871,7 +1647,8 @@
         "type": "object"
       },
       "NutritionProfileUpdateRequest": {
-        "description": "Full-replacement profile input; omitted scalar fields are cleared.",
+        "additionalProperties": false,
+        "description": "Full-replacement profile input; omitted fields are retained as unknown/null.",
         "properties": {
           "activity_level": {
             "anyOf": [
@@ -897,20 +1674,34 @@
             "title": "Age"
           },
           "allergies": {
-            "items": {
-              "type": "string"
-            },
-            "maxItems": 20,
-            "title": "Allergies",
-            "type": "array"
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allergies"
           },
           "dietary_restrictions": {
-            "items": {
-              "type": "string"
-            },
-            "maxItems": 20,
-            "title": "Dietary Restrictions",
-            "type": "array"
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dietary Restrictions"
           },
           "height_cm": {
             "anyOf": [
@@ -986,6 +1777,17 @@
         ],
         "title": "NutritionReferenceNotFoundMealAnalysis",
         "type": "object"
+      },
+      "NutritionSourceCategory": {
+        "description": "Approved nutrition provenance categories exposed to API clients.",
+        "enum": [
+          "canteen_recipe",
+          "local_database",
+          "USDA",
+          "AI_estimate"
+        ],
+        "title": "NutritionSourceCategory",
+        "type": "string"
       },
       "NutritionTargetResponse": {
         "properties": {
@@ -1359,6 +2161,18 @@
       "PortionNutrition": {
         "description": "Deterministically calculated nutrient values for one measured portion.",
         "properties": {
+          "calcium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calcium Mg"
+          },
           "calories": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Calories",
@@ -1368,6 +2182,18 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Carbohydrates G",
             "type": "string"
+          },
+          "cholesterol_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cholesterol Mg"
           },
           "fat_g": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -1379,10 +2205,178 @@
             "title": "Fiber G",
             "type": "string"
           },
+          "folate_mcg_dfe": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Folate Mcg Dfe"
+          },
+          "iron_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iron Mg"
+          },
+          "magnesium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Magnesium Mg"
+          },
+          "omega_3_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Omega 3 G"
+          },
+          "omega_6_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Omega 6 G"
+          },
+          "potassium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Potassium Mg"
+          },
           "protein_g": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Protein G",
             "type": "string"
+          },
+          "saturated_fat_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saturated Fat G"
+          },
+          "sodium_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sodium Mg"
+          },
+          "sugars_g": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sugars G"
+          },
+          "vitamin_a_mcg_rae": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin A Mcg Rae"
+          },
+          "vitamin_b12_mcg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin B12 Mcg"
+          },
+          "vitamin_c_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin C Mg"
+          },
+          "vitamin_d_mcg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin D Mcg"
+          },
+          "zinc_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zinc Mg"
           }
         },
         "required": [

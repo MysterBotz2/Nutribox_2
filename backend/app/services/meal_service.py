@@ -33,8 +33,8 @@ class MealService:
                 food = self._nutrition_service.get_food(item_request.food_id)
                 if food is None:
                     raise MealFoodNotFoundError("Food record was not found.")
-                nutrition = self._nutrient_calculator.calculate(
-                    self._nutrition_service.get_nutrition_per_100g(food),
+                nutrition = self._nutrient_calculator.calculate_extended(
+                    self._nutrition_service.get_extended_nutrition_per_100g(food),
                     item_request.weight_grams,
                 )
                 meal_items.append(
@@ -46,8 +46,32 @@ class MealService:
                         calculated_carbohydrates_g=nutrition.carbohydrates_g,
                         calculated_fat_g=nutrition.fat_g,
                         calculated_fiber_g=nutrition.fiber_g,
+                        calculated_saturated_fat_g=nutrition.saturated_fat_g,
+                        calculated_sugars_g=nutrition.sugars_g,
+                        calculated_sodium_mg=nutrition.sodium_mg,
+                        calculated_cholesterol_mg=nutrition.cholesterol_mg,
+                        calculated_omega_3_g=nutrition.omega_3_g,
+                        calculated_omega_6_g=nutrition.omega_6_g,
+                        calculated_calcium_mg=nutrition.calcium_mg,
+                        calculated_potassium_mg=nutrition.potassium_mg,
+                        calculated_zinc_mg=nutrition.zinc_mg,
+                        calculated_iron_mg=nutrition.iron_mg,
+                        calculated_magnesium_mg=nutrition.magnesium_mg,
+                        calculated_vitamin_a_mcg_rae=nutrition.vitamin_a_mcg_rae,
+                        calculated_vitamin_b12_mcg=nutrition.vitamin_b12_mcg,
+                        calculated_vitamin_c_mg=nutrition.vitamin_c_mg,
+                        calculated_vitamin_d_mcg=nutrition.vitamin_d_mcg,
+                        calculated_folate_mcg_dfe=nutrition.folate_mcg_dfe,
                         food_name_snapshot=food.name,
                         food_normalized_name_snapshot=food.normalized_name,
+                        nutrition_source_type=food.source_type,
+                        nutrition_source_name_snapshot=food.source_name,
+                        nutrition_source_reference_snapshot=food.source_reference,
+                        nutrition_is_estimated=(
+                            food.source_type == "AI_estimate"
+                            if food.source_type is not None
+                            else None
+                        ),
                     )
                 )
             meal = Meal(

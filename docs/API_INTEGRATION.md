@@ -2,7 +2,7 @@
 
 ## Base URL and contract
 
-The existing `/api/...` routes are the Nutri-Box **v1** contract. Breaking changes require a future versioning decision; clients must not assume an unannounced route rename. Configure the base URL in each client environment:
+The existing `/api/...` routes are the Nutri-Box **v1** contract. Breaking changes require a future versioning decision; clients must not assume an unannounced route rename. Non-browser clients configure an installation-specific API base URL in their own environment:
 
 - Same computer: `http://127.0.0.1:8000`
 - LAN example: `http://192.168.x.x:8000` (replace with the development computer's actual LAN address)
@@ -56,7 +56,65 @@ Nutrition values are Decimal-safe JSON strings where documented by the response 
 
 For `POST /api/meals`, submit only canonical `food_id` and positive `weight_grams`; never submit trusted nutrient totals or `user_id`.
 
+## Core profile contract (R2A)
+
+FastAPI/PostgreSQL is the authoritative profile system of record. The future
+React Native client may retain only a secure local cache; it is not an
+independent profile authority.
+
+`GET /api/users/me/profile` and `PUT /api/users/me/profile` remain the only
+ordinary-user profile routes. They are bearer-authenticated and always operate
+on the token subject; clients cannot supply another `user_id`.
+
+The complete R2A field set is `age`, `height_cm`, `weight_kg` (current profile
+state only), `activity_level`, `nutrition_goal`, `dietary_restrictions`, and
+`allergies`. No other onboarding, sensitive-health, consent, history, or AI
+permission field is accepted in R2A.
+
+`PUT` is a full replacement: an omitted or `null` scalar/label-list value is
+stored and returned as `null`/unknown. It does not mean false, no, unrestricted,
+or no allergies. An explicit `[]` is the deliberate empty value for either
+label list. Existing physical sanity validation applies to age, height, and
+weight; label lists contain at most 20 normalized labels of at most 100
+characters. Unsupported fields are rejected with `422`.
+
+R2A does not add consent runtime, sensitive health/lifestyle fields,
+recommendation logic, weight/goal history, or additional AI Coach context.
+
 ## Progress and targets
+
+### V2 additive nutrition fields
+
+`FoodResponse.nutrition_per_100g`, `PortionCalculationResponse.nutrition`, and
+the `calculated` meal-analysis nutrition contain the existing five fields plus
+nullable V2 fields: `saturated_fat_g`, `sugars_g`, `sodium_mg`,
+`cholesterol_mg`, `omega_3_g`, `omega_6_g`, `calcium_mg`, `potassium_mg`,
+`zinc_mg`, `iron_mg`, `magnesium_mg`, `vitamin_a_mcg_rae`,
+`vitamin_b12_mcg`, `vitamin_c_mg`, `vitamin_d_mcg`, and `folate_mcg_dfe`.
+Units are kcal for calories; grams for macros and omega fats; milligrams for
+sodium, cholesterol, minerals, and vitamin C; and micrograms for vitamin A
+(RAE), B12, D, and folate (DFE). `fat_g` is the backward-compatible public name
+for total fat.
+
+`null` is not zero: it means the authoritative source did not provide a value.
+An explicit decimal zero is a known zero. The backend performs authoritative
+Decimal calculation; React Native/Expo—the future official companion client—and
+other clients must not calculate or replace nutrient values locally.
+
+Food `source.category` is nullable for legacy records and otherwise one of
+`canteen_recipe`, `local_database`, `USDA`, or `AI_estimate`. The latter is
+provenance only and is distinguishable from verified database data. Automatic
+priority among competing sources is not yet available because one canonical
+Food record exists per normalized name; FoodReference/Recipe modeling is later
+work.
+
+`POST /api/meals` and `GET /api/meals/{meal_id}` expose immutable V2 item
+snapshots and `additional_totals`. Each `additional_totals` nutrient is numeric
+only if every item has a known snapshot; otherwise it is `null`, never a partial
+sum. `GET /api/meals` stays compact and exposes its legacy five-nutrient item
+shape. Existing progress and target-status APIs remain five-nutrient contracts;
+V2 target meanings are not defined yet, so clients must not infer targets for
+the new fields.
 
 `timezone` is an IANA identifier such as `Asia/Manila`; omitted timezone is UTC. Weeks run Monday–Sunday; weekly results always include seven zero-filled daily points. Summary `days` is bounded to 1–365 and `daily_average` divides by all calendar days in the period, including empty days. Target status is neutral arithmetic from stored meal snapshots and configured targets.
 
@@ -74,4 +132,6 @@ The stable safe error shape is normally `{"detail": "..."}`. FastAPI/Pydantic va
 
 ## LAN development
 
-For a physical phone or device, start the native API with `scripts\start.ps1 -HostAddress 0.0.0.0 -Port 8000`. `127.0.0.1` works only on the development computer. Configure the phone with the computer's actual LAN address and allow inbound TCP on the selected port through Windows Firewall manually. Do not hard-code a LAN address into the mobile app or backend.
+The web companion follows a different same-origin development model: the browser opens `http://<server-lan-ip>:5173`, requests `/api/...`, and Vite proxies `/api` to FastAPI at `127.0.0.1:8000` on the same PC. No LAN IP is compiled into the web application and Vite proxies no unrelated paths.
+
+For a physical non-browser client, start the native API with `scripts\start.ps1` (default `0.0.0.0:8000`) and configure that client with the computer's actual LAN address through its private deployment settings. `127.0.0.1` works only on the development computer. Allow inbound TCP on the selected port through Windows Firewall manually on Private networks. Do not hard-code a LAN address into a client or backend.
