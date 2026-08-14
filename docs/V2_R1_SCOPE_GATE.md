@@ -35,6 +35,107 @@ Expected model impact: `Food`, nutrition reference schemas/import contract, calc
 
 R1 likely needs Alembic migrations and compatible API/OpenAPI extensions for references, snapshots, and possibly target/progress representations. No breaking replacement occurs without an explicit versioning decision.
 
+## R1A persistence foundation
+
+R1A adds only the additive persistence foundation. It does not change public
+nutrition, meal, target, or progress responses; importer behavior; calculation
+behavior; or AI/provider behavior.
+
+`foods` retains the existing required per-100g energy and five-nutrient fields,
+then adds nullable per-100g values for saturated fat, sugars, sodium,
+cholesterol, omega-3, omega-6, calcium, potassium, zinc, iron, magnesium,
+vitamins A/B12/C/D, and folate. Values use `NUMERIC`/`Decimal` rather than
+binary floating point. Units are: kcal for calories; grams for protein,
+carbohydrates, fats, fiber, sugars, and omega fatty acids; milligrams for
+sodium, cholesterol, calcium, potassium, zinc, iron, magnesium, and vitamin C;
+and micrograms for vitamin A (RAE), B12, D, and folate (DFE).
+
+`meal_items` adds nullable calculated snapshots for the same V2 nutrients and
+nullable source snapshots (`nutrition_source_type`, source name/reference, and
+`nutrition_is_estimated`). This preserves the existing immutable meal snapshot
+pattern: later reference-data changes cannot rewrite an already stored meal.
+
+The accepted source categories are `canteen_recipe`, `local_database`, `USDA`,
+and `AI_estimate`. They record capability/provenance, not a new runtime source
+selection service. Legacy rows receive no fabricated values: newly introduced
+nutrient and provenance columns remain `NULL` until trustworthy data is
+available, while a stored `0` remains an explicit confirmed zero.
+
+The R1A migration is `c4b6e4d10f92` (`expand V2 nutrition persistence`). It is
+additive on upgrade and introduces no tables, no backfill, no recalculation, and
+no migration-time data import. Its downgrade removes only the R1A columns and
+constraints, so it must not be used after intentionally storing R1A-only data
+unless that data loss is acceptable.
+
+## R1B calculation and ingestion foundation
+
+R1B extends the internal deterministic calculation path only. The calculator
+continues to use `Decimal`, `weight_g / 100`, and final three-decimal
+`ROUND_HALF_UP` presentation. All known V2 per-100g nutrients scale by that
+same multiplier. An unavailable source value remains `NULL` in the calculated
+result and, for future meals, in the immutable `MealItem` snapshot. An explicit
+source zero scales to numeric zero. The established public five-nutrient
+nutrition/meal/analysis responses are deliberately unchanged; V2 public API,
+targets, and progress expansion remain R1C work.
+
+New curated CSV imports now use the V2 header template at
+`data/templates/foods_import_template.csv`. Required nutrient columns are
+calories, protein, carbohydrates, total fat, fiber, saturated fat, sugars,
+sodium, and cholesterol. Optional nutrient columns are omega-3/6, calcium,
+potassium, zinc, iron, magnesium, vitamin A (mcg RAE), B12 (mcg), C (mg), D
+(mcg), and folate (mcg DFE). A blank optional cell stores `NULL`; an explicit
+`0` stores Decimal zero; blank required values, invalid decimals, negative
+numbers, `NaN`, and infinity are rejected. Existing database rows remain
+compatible and are not revalidated or backfilled by R1B.
+
+Every new CSV row must provide an exact approved `source_type`:
+`canteen_recipe`, `local_database`, `USDA`, or `AI_estimate`. The latter is a
+provenance-only future capability: R1B makes no network/AI numerical request,
+and an imported `AI_estimate` row may not be marked verified. The existing
+importer remains insert-only and rejects canonical/alias conflicts. Because
+there is one canonical `Food` record per normalized name—not a separate
+multi-reference model—R1B does not implement runtime source-priority selection
+or automatic overwrite. The approved ordering is documented for later
+FoodReference/Recipe work: canteen recipe, then local database, USDA, then AI
+estimate.
+
+Future `MealItem` creation snapshots every available calculated V2 nutrient
+and its source category/name/reference plus estimated flag. Existing historical
+snapshots and the existing five-field `Meal` totals are unchanged. No new
+migration is needed: R1A already supplied the required nullable persistence
+columns.
+
+## R1C compatible API exposure
+
+R1C exposes the V2 nutrient set as additive nullable fields on food-reference,
+portion-calculation, and calculated meal-analysis responses. The established
+`calories`, `protein_g`, `carbohydrates_g`, `fat_g` (total fat), and `fiber_g`
+fields retain their names, units, Decimal-string serialization, and meaning.
+The V2 field names follow the R1A storage units. `null` means unavailable or
+unknown; clients must not convert it to zero. Numeric `"0.000"` remains an
+explicit source-confirmed zero.
+
+Food provenance keeps its existing name/reference/verified fields and adds a
+nullable `category` for the approved `canteen_recipe`, `local_database`,
+`USDA`, or `AI_estimate` category. Meal detail and creation responses expose
+the immutable per-item V2 snapshot and a source snapshot. `AI_estimate` stays
+identifiable through its category and `is_estimated`; R1C adds no AI numerical
+runtime fallback.
+
+The existing five-nutrient `totals` remain unchanged. Detailed meal responses
+add `additional_totals`, derived only from stored `MealItem` snapshots: a V2
+aggregate is numeric only when every item has a numeric snapshot for that
+nutrient; if any item is unknown, it is `null`. This strict completeness policy
+never presents partial subtotals as complete. Paginated meal lists intentionally
+retain their compact legacy item fields.
+
+Progress and target-status remain five-nutrient contracts in R1C. Progress V2
+aggregation is deferred rather than exposing incomplete data without a
+dedicated analytics contract. `DEC-TARGET-001` is open: V2 target semantics
+(goal/minimum/maximum/range) must be specified before target or comparison
+expansion. There is no R1C migration and no automatic multi-reference source
+priority; that requires later FoodReference/Recipe modeling.
+
 ## Not authorized for R1
 
 - Personal medical/dietary recommendation logic or unvalidated profile rules.
@@ -49,3 +150,11 @@ R1 likely needs Alembic migrations and compatible API/OpenAPI extensions for ref
 3. AI fallback cannot silently override approved data.
 4. Importer, API, OpenAPI, and migration documentation are updated.
 5. Existing backend/reference-web regressions pass without unauthorized feature work.
+
+## Completion
+
+R1 completed through R1D with the additive migration, deterministic calculation,
+safe ingestion, immutable snapshots, compatible API exposure, OpenAPI audit,
+and reference-web regression validation recorded in
+[V2_R1_COMPLETION_REPORT.md](V2_R1_COMPLETION_REPORT.md). Deferred decisions
+remain deferred; R2 requires separate authorization.

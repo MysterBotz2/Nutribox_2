@@ -76,3 +76,14 @@ The original rows above preserve R0 discovery status. The completed questionnair
 **Revised canonical counts:** IMPLEMENTED **3**; PARTIALLY_IMPLEMENTED **20**; MISSING **17**; INTENTIONALLY_DEFERRED **1**; REFERENCE_WEB_ONLY **1**; NEEDS_CLARIFICATION **0**; CONFLICT_WITH_CURRENT_DESIGN **0**. A clarified requirement remains missing or partial until runtime work exists.
 
 R0.6 makes the nutrition authority canonical: approved recipe/reference data plus deterministic weight scaling is authoritative; AI identification is an input and AI numerical estimation is a provenance-labelled fallback only when no approved source resolves. `0` requires explicit source support; unknown values remain unavailable/`NULL`.
+
+## R1 completion status
+
+R1 is complete. NUTR-001 and NUTR-002 now have an additive V2 reference,
+calculation, immutable snapshot, and API foundation. NUTR-003 is partially
+implemented: provenance categories and conflict-safe local ingestion exist, but
+full source priority requires later FoodReference/Recipe modeling. NUTR-004 is
+implemented within the R1 scope: approved reference data plus deterministic
+Decimal scaling is authoritative; no live AI numerical fallback is used. The
+completion evidence and deliberate deferrals are recorded in
+[V2_R1_COMPLETION_REPORT.md](V2_R1_COMPLETION_REPORT.md).

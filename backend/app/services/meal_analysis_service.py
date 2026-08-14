@@ -9,7 +9,7 @@ from app.schemas.meal import (
     NutritionReferenceNotFoundMealAnalysis,
     RequiresFoodSelectionMealAnalysis,
 )
-from app.schemas.nutrition import CalculatedFood
+from app.schemas.nutrition import CalculatedFood, PortionNutrition
 from app.services.food_recognition_provider import FoodRecognitionProvider
 from app.services.nutrient_calculator import NutrientCalculator
 from app.services.nutrition_service import NutritionService
@@ -61,8 +61,8 @@ class MealAnalysisService:
                 recognition_source=recognition.source,
             )
 
-        nutrition = self._nutrient_calculator.calculate(
-            self._nutrition_service.get_nutrition_per_100g(food), weight_grams
+        nutrition = self._nutrient_calculator.calculate_extended(
+            self._nutrition_service.get_extended_nutrition_per_100g(food), weight_grams
         )
         return CalculatedMealAnalysis(
             status=MealAnalysisStatus.CALCULATED,
@@ -70,6 +70,6 @@ class MealAnalysisService:
             recognition_source=recognition.source,
             food=CalculatedFood(id=food.id, name=food.name),
             weight_grams=weight_grams,
-            nutrition=nutrition,
+            nutrition=PortionNutrition.from_extended(nutrition),
             weight_source="manual",
         )

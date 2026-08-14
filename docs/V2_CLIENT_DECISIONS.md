@@ -26,4 +26,16 @@
 
 **Second priority:** nutrition calculators; alternative-food recommendations; password change/2FA/linked accounts.
 
+## DEC-TARGET-001 — V2 nutrient target semantics
+
+**Status:** OPEN / DEFERRED TO DIAGNOSTICS-TARGET DESIGN
+
+**Question:** For each V2 targetable nutrient, does a configured value mean a
+goal, minimum, maximum/upper limit, or range? How should remaining amount,
+percentage, and status be interpreted for that meaning?
+
+This decision does not block compatible V2 nutrition API exposure. It blocks
+generic expansion of `NutritionTarget` and target-status comparison to
+saturated fat, sugars, sodium, cholesterol, or optional micronutrients.
+
 The questionnaire leaves pairing/heating checkboxes visually unmarked but labels both “1st priority; required”; the final summary independently confirms heating priority. R0.6 records priority, not technical readiness.

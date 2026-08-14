@@ -85,13 +85,29 @@ def test_single_recognized_food_with_reference_is_calculated() -> None:
     assert result.recognition_source == "simulated"
     assert result.weight_source == "manual"
     assert result.food.name == "Test Food"
-    assert result.nutrition.model_dump() == {
+    assert {key: result.nutrition.model_dump()[key] for key in ("calories", "protein_g", "carbohydrates_g", "fat_g", "fiber_g")} == {
         "calories": Decimal("180.000"),
         "protein_g": Decimal("18.000"),
         "carbohydrates_g": Decimal("36.000"),
         "fat_g": Decimal("5.400"),
         "fiber_g": Decimal("3.600"),
     }
+
+
+def test_calculated_analysis_exposes_v2_values_without_changing_domain_state() -> None:
+    food = create_test_food()
+    food.sodium_mg_per_100g = Decimal("123.456")
+    food.sugars_g_per_100g = Decimal("0.000")
+    food.omega_3_g_per_100g = None
+
+    result = create_service(("Test Food",), food).analyze(
+        image_bytes=b"test", content_type="image/jpeg", weight_grams=Decimal("150")
+    )
+
+    assert result.status == "calculated"
+    assert result.nutrition.sodium_mg == Decimal("185.184")
+    assert result.nutrition.sugars_g == Decimal("0.000")
+    assert result.nutrition.omega_3_g is None
 
 
 def test_no_recognized_food_returns_domain_outcome() -> None:

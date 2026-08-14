@@ -164,4 +164,4 @@ Do not skip major prerequisites unless explicitly instructed.
 
 ## V2 re-baseline
 
-R0 and R0.6 are complete: the client questionnaire was received, DEC-NUTR-001 is resolved, and the R1 scope gate is created. R1 is the next implementation phase pending human review. Phase 16E remains the frozen Web Reference Client checkpoint and Phase 16F is postponed. Client V2 sources remain primary; the official companion app is future React Native/Expo, the Raspberry Pi UI/controller is separate, and cloud remains only a possible future deployment option.
+R0, R0.6, and R1 are complete. R1 established the V2 nutrition/data-model foundation; its completion report is `docs/V2_R1_COMPLETION_REPORT.md`. R2 requires explicit authorization and its own profile/onboarding, privacy, and consent decisions. Phase 16E remains the frozen Web Reference Client checkpoint and Phase 16F is postponed. Client V2 sources remain primary; the official companion app is future React Native/Expo, the Raspberry Pi UI/controller is separate, and cloud remains only a possible future deployment option.

@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.models.food import Food, clean_food_name, normalize_food_name
+from app.models.food import NUTRITION_SOURCE_TYPES, Food, clean_food_name, normalize_food_name
 from app.models.food_alias import FoodAlias
 
 
@@ -23,7 +23,12 @@ REQUIRED_HEADERS = (
     "carbohydrates_g_per_100g",
     "fat_g_per_100g",
     "fiber_g_per_100g",
+    "saturated_fat_g_per_100g",
+    "sugars_g_per_100g",
+    "sodium_mg_per_100g",
+    "cholesterol_mg_per_100g",
     "source_name",
+    "source_type",
     "source_reference",
     "is_verified",
     "aliases",
@@ -35,7 +40,35 @@ _NUTRIENT_SPECS = {
     "carbohydrates_g_per_100g": (8, 3),
     "fat_g_per_100g": (8, 3),
     "fiber_g_per_100g": (8, 3),
+    "saturated_fat_g_per_100g": (8, 3),
+    "sugars_g_per_100g": (8, 3),
+    "sodium_mg_per_100g": (10, 3),
+    "cholesterol_mg_per_100g": (10, 3),
+    "omega_3_g_per_100g": (8, 3),
+    "omega_6_g_per_100g": (8, 3),
+    "calcium_mg_per_100g": (10, 3),
+    "potassium_mg_per_100g": (10, 3),
+    "zinc_mg_per_100g": (10, 3),
+    "iron_mg_per_100g": (10, 3),
+    "magnesium_mg_per_100g": (10, 3),
+    "vitamin_a_mcg_rae_per_100g": (10, 3),
+    "vitamin_b12_mcg_per_100g": (10, 3),
+    "vitamin_c_mg_per_100g": (10, 3),
+    "vitamin_d_mcg_per_100g": (10, 3),
+    "folate_mcg_dfe_per_100g": (10, 3),
 }
+
+MANDATORY_NUTRIENT_FIELDS = (
+    "calories_per_100g",
+    "protein_g_per_100g",
+    "carbohydrates_g_per_100g",
+    "fat_g_per_100g",
+    "fiber_g_per_100g",
+    "saturated_fat_g_per_100g",
+    "sugars_g_per_100g",
+    "sodium_mg_per_100g",
+    "cholesterol_mg_per_100g",
+)
 
 
 @dataclass(frozen=True)
@@ -78,8 +111,9 @@ class _FoodRow:
     name: str
     normalized_name: str
     category: str | None
-    nutrients: dict[str, Decimal]
+    nutrients: dict[str, Decimal | None]
     source_name: str
+    source_type: str
     source_reference: str
     is_verified: bool
     aliases: tuple[tuple[str, str], ...]
@@ -127,7 +161,24 @@ class FoodIngestionService:
                         carbohydrates_g_per_100g=row.nutrients["carbohydrates_g_per_100g"],
                         fat_g_per_100g=row.nutrients["fat_g_per_100g"],
                         fiber_g_per_100g=row.nutrients["fiber_g_per_100g"],
+                        saturated_fat_g_per_100g=row.nutrients["saturated_fat_g_per_100g"],
+                        sugars_g_per_100g=row.nutrients["sugars_g_per_100g"],
+                        sodium_mg_per_100g=row.nutrients["sodium_mg_per_100g"],
+                        cholesterol_mg_per_100g=row.nutrients["cholesterol_mg_per_100g"],
+                        omega_3_g_per_100g=row.nutrients["omega_3_g_per_100g"],
+                        omega_6_g_per_100g=row.nutrients["omega_6_g_per_100g"],
+                        calcium_mg_per_100g=row.nutrients["calcium_mg_per_100g"],
+                        potassium_mg_per_100g=row.nutrients["potassium_mg_per_100g"],
+                        zinc_mg_per_100g=row.nutrients["zinc_mg_per_100g"],
+                        iron_mg_per_100g=row.nutrients["iron_mg_per_100g"],
+                        magnesium_mg_per_100g=row.nutrients["magnesium_mg_per_100g"],
+                        vitamin_a_mcg_rae_per_100g=row.nutrients["vitamin_a_mcg_rae_per_100g"],
+                        vitamin_b12_mcg_per_100g=row.nutrients["vitamin_b12_mcg_per_100g"],
+                        vitamin_c_mg_per_100g=row.nutrients["vitamin_c_mg_per_100g"],
+                        vitamin_d_mcg_per_100g=row.nutrients["vitamin_d_mcg_per_100g"],
+                        folate_mcg_dfe_per_100g=row.nutrients["folate_mcg_dfe_per_100g"],
                         source_name=row.source_name,
+                        source_type=row.source_type,
                         source_reference=row.source_reference,
                         is_verified=row.is_verified,
                     )
@@ -205,29 +256,48 @@ class FoodIngestionService:
         if category is not None and len(category) > 80:
             errors.append(FoodImportIssue(row_number, "category", "Value must be at most 80 characters."))
         nutrients = {
-            field: self._parse_decimal(row_number, field, values.get(field), precision, scale, errors)
+            field: self._parse_decimal(
+                row_number,
+                field,
+                values.get(field),
+                precision,
+                scale,
+                errors,
+                required=field in MANDATORY_NUTRIENT_FIELDS,
+            )
             for field, (precision, scale) in _NUTRIENT_SPECS.items()
         }
         source_name = required("source_name", 160)
+        source_type = required("source_type", 32)
+        if source_type is not None and source_type not in NUTRITION_SOURCE_TYPES:
+            errors.append(FoodImportIssue(row_number, "source_type", "Unsupported source category."))
         source_reference = required("source_reference")
         is_verified = self._parse_boolean(row_number, values.get("is_verified"), errors)
+        if source_type == "AI_estimate" and is_verified:
+            errors.append(FoodImportIssue(row_number, "is_verified", "AI_estimate records must not be marked verified."))
         aliases = self._parse_aliases(row_number, values.get("aliases"), errors)
 
-        if errors or name is None or normalized_name is None or source_name is None or source_reference is None or is_verified is None:
+        if errors or name is None or normalized_name is None or source_name is None or source_type is None or source_reference is None or is_verified is None:
             return None, errors
-        return _FoodRow(row_number, name, normalized_name, category, nutrients, source_name, source_reference, is_verified, aliases), errors
+        return _FoodRow(row_number, name, normalized_name, category, nutrients, source_name, source_type, source_reference, is_verified, aliases), errors
 
     @staticmethod
     def _parse_decimal(
         row_number: int, field: str, value: str | None, precision: int, scale: int,
         errors: list[FoodImportIssue],
-    ) -> Decimal:
+        *,
+        required: bool,
+    ) -> Decimal | None:
         raw_value = (value or "").strip()
+        if not raw_value:
+            if required:
+                errors.append(FoodImportIssue(row_number, field, "Value is required."))
+            return None
         try:
             decimal_value = Decimal(raw_value)
         except (InvalidOperation, ValueError):
             errors.append(FoodImportIssue(row_number, field, "Value must be a valid Decimal."))
-            return Decimal(0)
+            return None
         if not decimal_value.is_finite():
             errors.append(FoodImportIssue(row_number, field, "Value must be finite."))
         elif decimal_value < 0:

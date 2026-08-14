@@ -19,6 +19,13 @@ The order below is a controlled hypothesis derived from R0. Each phase begins on
 
 Do not implement clinical deficiency/condition diagnosis, BMR/TDEE target prescriptions, numeric nutrition AI fallback, leftover subtraction, heater control, device pairing, notification delivery, social login/2FA, chatbot persistence, or React Native/Pi source before their R0 decisions and dependencies are approved.
 
+## R1 completion checkpoint
+
+R1 is complete through R1D. The controlled completion record is
+[V2_R1_COMPLETION_REPORT.md](V2_R1_COMPLETION_REPORT.md). R2 remains the next
+candidate phase, but requires explicit authorization and the privacy, consent,
+and profile-field decisions stated in its roadmap dependency.
+
 ## R0.6 priority re-baseline
 
 R1 remains Nutrition/Data Model Foundation and may implement the resolved nutrition foundation in [V2 R1 Scope Gate](V2_R1_SCOPE_GATE.md). R2–R8 retain their dependency ordering, but first-priority scheduling, non-clinical weekly diagnostics, leftovers, ingredient identification, chat/history, notifications, device sync, and heating must be scheduled ahead of second-priority calculators, alternative recommendations, and account-security expansion where dependencies permit. R1 must not absorb full recipe/ingredient functionality, calculators, diagnostics, leftover runtime, chat persistence, notifications, pairing, heating, or mobile/Pi work.
