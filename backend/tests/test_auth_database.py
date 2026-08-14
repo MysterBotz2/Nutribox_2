@@ -175,6 +175,63 @@ def test_meals_are_owned_scoped_and_cannot_be_spoofed(
     assert client.get(f"/api/meals/{meal.id}", headers=first_headers).status_code == 200
 
 
+def test_profile_preserves_unknown_labels_and_allows_explicit_empty_label_lists(
+    client: TestClient, jwt_configuration: None
+) -> None:
+    _, headers = register_and_login(client)
+
+    unknown = client.put("/api/users/me/profile", json={}, headers=headers)
+    explicit_empty = client.put(
+        "/api/users/me/profile",
+        json={"dietary_restrictions": [], "allergies": []},
+        headers=headers,
+    )
+
+    assert unknown.status_code == 200
+    assert unknown.json()["dietary_restrictions"] is None
+    assert unknown.json()["allergies"] is None
+    assert explicit_empty.status_code == 200
+    assert explicit_empty.json()["dietary_restrictions"] == []
+    assert explicit_empty.json()["allergies"] == []
+
+
+def test_profile_put_is_full_replacement_and_rejects_unauthorized_fields(
+    client: TestClient, jwt_configuration: None
+) -> None:
+    _, headers = register_and_login(client)
+    assert client.put(
+        "/api/users/me/profile",
+        json={"age": 30, "dietary_restrictions": ["vegetarian"]},
+        headers=headers,
+    ).status_code == 200
+
+    replaced = client.put("/api/users/me/profile", json={"weight_kg": "70.250"}, headers=headers)
+    unsupported = client.put(
+        "/api/users/me/profile",
+        json={"medical_conditions": ["diabetes"], "email": "other@example.com"},
+        headers=headers,
+    )
+
+    assert replaced.status_code == 200
+    assert replaced.json()["age"] is None
+    assert replaced.json()["dietary_restrictions"] is None
+    assert replaced.json()["weight_kg"] == "70.250"
+    assert unsupported.status_code == 422
+    locations = {tuple(error["loc"]) for error in unsupported.json()["detail"]}
+    assert ("body", "medical_conditions") in locations
+    assert ("body", "email") in locations
+
+
+def test_profile_rejects_invalid_physical_values_without_new_clinical_rules(
+    client: TestClient, jwt_configuration: None
+) -> None:
+    _, headers = register_and_login(client)
+
+    assert client.put("/api/users/me/profile", json={"age": -1}, headers=headers).status_code == 422
+    assert client.put("/api/users/me/profile", json={"height_cm": "0"}, headers=headers).status_code == 422
+    assert client.put("/api/users/me/profile", json={"weight_kg": "0"}, headers=headers).status_code == 422
+
+
 def test_authentication_configuration_failure_is_safe(client: TestClient, monkeypatch) -> None:
     monkeypatch.setattr(settings, "jwt_secret_key", None)
     response = client.get("/api/users/me", headers={"Authorization": "Bearer any-token"})

@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String, func, text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -49,12 +49,10 @@ class NutritionProfile(Base):
     weight_kg: Mapped[Decimal | None] = mapped_column(Numeric(6, 3), nullable=True)
     activity_level: Mapped[str | None] = mapped_column(String(32), nullable=True)
     nutrition_goal: Mapped[str | None] = mapped_column(String(32), nullable=True)
-    dietary_restrictions: Mapped[list[str]] = mapped_column(
-        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    dietary_restrictions: Mapped[list[str] | None] = mapped_column(
+        JSONB(none_as_null=True), nullable=True
     )
-    allergies: Mapped[list[str]] = mapped_column(
-        JSONB, nullable=False, server_default=text("'[]'::jsonb")
-    )
+    allergies: Mapped[list[str] | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

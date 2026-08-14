@@ -1550,11 +1550,18 @@
             "title": "Age"
           },
           "allergies": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Allergies",
-            "type": "array"
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allergies"
           },
           "created_at": {
             "format": "date-time",
@@ -1562,11 +1569,18 @@
             "type": "string"
           },
           "dietary_restrictions": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Dietary Restrictions",
-            "type": "array"
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dietary Restrictions"
           },
           "height_cm": {
             "anyOf": [
@@ -1633,7 +1647,8 @@
         "type": "object"
       },
       "NutritionProfileUpdateRequest": {
-        "description": "Full-replacement profile input; omitted scalar fields are cleared.",
+        "additionalProperties": false,
+        "description": "Full-replacement profile input; omitted fields are retained as unknown/null.",
         "properties": {
           "activity_level": {
             "anyOf": [
@@ -1659,20 +1674,34 @@
             "title": "Age"
           },
           "allergies": {
-            "items": {
-              "type": "string"
-            },
-            "maxItems": 20,
-            "title": "Allergies",
-            "type": "array"
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allergies"
           },
           "dietary_restrictions": {
-            "items": {
-              "type": "string"
-            },
-            "maxItems": 20,
-            "title": "Dietary Restrictions",
-            "type": "array"
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dietary Restrictions"
           },
           "height_cm": {
             "anyOf": [

@@ -95,6 +95,15 @@ eligible merely from this requirement.
 | PROF-006 | Consent must be explicit and purpose-specific. | MISSING | Product/legal text, version/audit, retention, and user-rights design (`LEGAL_REVIEW_REQUIRED`). |
 | SYNC-001 | Backend authority and mobile secure cache are retained. | PARTIALLY_IMPLEMENTED | Offline mutation/conflict decision DEC-SYNC-003. |
 
+## R2A core-profile contract hardening
+
+Human approval authorizes only the already-existing `age`, `height_cm`,
+`weight_kg`, `activity_level`, `nutrition_goal`, `dietary_restrictions`, and
+`allergies` fields. R2A introduces no additional field requirement. The
+existing profile resource is hardened to preserve null/unknown labels rather
+than fabricating default empty arrays; all other onboarding and sensitive-field
+requirements remain unresolved, missing, or deferred as recorded above.
+
 ## R1 completion status
 
 R1 is complete. NUTR-001 and NUTR-002 now have an additive V2 reference,

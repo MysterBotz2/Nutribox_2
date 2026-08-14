@@ -884,14 +884,14 @@ export interface components {
             /** Age */
             age: number | null;
             /** Allergies */
-            allergies: string[];
+            allergies: string[] | null;
             /**
              * Created At
              * Format: date-time
              */
             created_at: string;
             /** Dietary Restrictions */
-            dietary_restrictions: string[];
+            dietary_restrictions: string[] | null;
             /** Height Cm */
             height_cm: string | null;
             /** Id */
@@ -909,16 +909,16 @@ export interface components {
         };
         /**
          * NutritionProfileUpdateRequest
-         * @description Full-replacement profile input; omitted scalar fields are cleared.
+         * @description Full-replacement profile input; omitted fields are retained as unknown/null.
          */
         NutritionProfileUpdateRequest: {
             activity_level?: components["schemas"]["ActivityLevel"] | null;
             /** Age */
             age?: number | null;
             /** Allergies */
-            allergies?: string[];
+            allergies?: string[] | null;
             /** Dietary Restrictions */
-            dietary_restrictions?: string[];
+            dietary_restrictions?: string[] | null;
             /** Height Cm */
             height_cm?: number | string | null;
             nutrition_goal?: components["schemas"]["NutritionGoal"] | null;

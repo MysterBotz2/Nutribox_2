@@ -87,7 +87,7 @@ def test_coach_assembles_only_current_users_trusted_context(
     second, second_headers = register_and_login(client, "second@example.com")
     assert client.put(
         "/api/users/me/profile",
-        json={"activity_level": "lightly_active", "dietary_restrictions": ["vegetarian"], "allergies": ["peanut"]},
+        json={"age": 30, "height_cm": "170.00", "weight_kg": "70.000", "activity_level": "lightly_active", "dietary_restrictions": ["vegetarian"], "allergies": ["peanut"]},
         headers=first_headers,
     ).status_code == 200
     assert client.put(
@@ -127,6 +127,7 @@ def test_coach_assembles_only_current_users_trusted_context(
     assert context.weekly.meal_count == 1
     assert context.question == "How am I doing today?"
     assert not any(hasattr(context, field) for field in ("user_id", "email", "password", "token", "session"))
+    assert not any(hasattr(context.profile, field) for field in ("age", "height_cm", "weight_kg"))
 
 
 def test_coach_context_never_uses_calculator_or_receives_a_database_session(

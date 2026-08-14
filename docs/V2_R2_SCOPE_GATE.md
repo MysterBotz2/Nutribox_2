@@ -64,9 +64,14 @@ DEC-GOAL-001, DEC-TARGET-001, and DEC-SET-001 remain as listed in
 
 ## 20. R2A authorization gate
 
+**Human-approved R2A field set:** `age`, `height_cm`, `weight_kg`,
+`activity_level`, `nutrition_goal`, `dietary_restrictions`, and `allergies`.
+This is complete and exclusive. R2A adds no new profile-field requirement;
+every other proposed onboarding field remains unresolved or deferred.
+
 | Category | Scope |
 | --- | --- |
-| AUTHORIZED FOR R2A | Backend-authoritative profile persistence/core authenticated contract for approved ordinary/dietary fields; consent/preference metadata; explicit nullable/clear semantics; ownership, migration, API, and regression tests. |
+| AUTHORIZED FOR R2A | Only the seven human-approved fields above, through the existing backend-authoritative profile resource; explicit nullable/clear semantics, ownership, OpenAPI, and regression tests. No consent runtime. |
 | AUTHORIZED FOR STORAGE ONLY | User-declared health/lifestyle context only after separate sensitive-consent design is accepted; no rule, automated advice, or AI context. |
 | BLOCKED FROM PERSONALIZATION | All medical/lifestyle declarations, allergies as a safety guarantee, blood type, body type, derived calculator values, and any unvalidated profile rule. |
 | DEFERRED | Weight/goal history, account deletion, mobile UI/offline sync, target semantics, notifications, device work, chat persistence. |

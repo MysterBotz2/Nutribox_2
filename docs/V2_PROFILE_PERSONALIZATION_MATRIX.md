@@ -3,6 +3,11 @@
 This matrix applies the field register to current product behavior. It does not
 authorize medical recommendations, calculator targets, or new API fields.
 
+R2A may harden only the existing `age`, `height_cm`, `weight_kg`,
+`activity_level`, `nutrition_goal`, `dietary_restrictions`, and `allergies`
+fields. Their current personalization and AI-context statuses below are not
+expanded by that authorization.
+
 | Profile field/group | Stored? | UI personalization? | Deterministic nutrition logic? | AI Coach context? | Validated method/source | Current status | Future requirement |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Account identity/contact/credentials | Existing account only | Account display only | No | No | E | ACTIVE / KEEP | Decide username/phone/profile-image ownership separately. |

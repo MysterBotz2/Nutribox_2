@@ -78,6 +78,6 @@ class NutritionCoachService:
         return NutritionCoachProfileContext(
             activity_level=profile.activity_level,
             nutrition_goal=profile.nutrition_goal,
-            dietary_restrictions=tuple(profile.dietary_restrictions),
-            allergies=tuple(profile.allergies),
+            dietary_restrictions=tuple(profile.dietary_restrictions or ()),
+            allergies=tuple(profile.allergies or ()),
         )

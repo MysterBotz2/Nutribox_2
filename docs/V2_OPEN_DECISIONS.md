@@ -29,6 +29,12 @@ These decisions are not approvals to implement. They prevent the V2 roadmap from
 | DEC-HISTORY-001 | Current weight versus weight history ownership | **OPEN / DEFERRED TO R3** | R2 owns current/default profile weight only; approve a separate observation/history model before trend/history work. |
 | DEC-GOAL-001 | General profile goal versus `NutritionTarget` versus goal history | **OPEN** | Keep the three concepts distinct; target range/min/max semantics remain DEC-TARGET-001. |
 
+**R2A authorization update:** human approval authorizes only the existing
+`age`, `height_cm`, `weight_kg`, `activity_level`, `nutrition_goal`,
+`dietary_restrictions`, and `allergies` fields for core contract hardening.
+This does not resolve the requiredness question in DEC-PROF-002 and does not
+authorize any other proposed onboarding field.
+
 The associated field register, consent model, personalization matrix, and
 implementation boundary are documented in `V2_PROFILE_DATA_CLASSIFICATION.md`,
 `V2_PROFILE_CONSENT_MODEL.md`, `V2_PROFILE_PERSONALIZATION_MATRIX.md`, and
