@@ -21,6 +21,18 @@
 | LAN portability / relative web API design | KEEP | Supports local device/mobile development without embedded addresses. |
 | React/Vite Web Companion | DEPRECATE | Freeze as a reference/integration client after 16E; it is not the official companion product and receives selective regression updates only. |
 
+## R2A-0 reuse classification
+
+| Component | Classification | R2-specific boundary |
+| --- | --- | --- |
+| `User` and JWT current-user dependency | KEEP | Continue authenticated ownership; identity/credentials remain outside profile/AI context. |
+| `NutritionProfile` and `/api/users/me/profile` | EXTEND | Reuse current one-to-one ownership and full-replacement behavior only after approved field/clear semantics. |
+| `NutritionTarget` | KEEP | Do not merge with general profile goal or derived calculators. |
+| SQLAlchemy/Alembic and repository/service pattern | KEEP | Use only after R2A authorization; R2A-0 creates no migration. |
+| Existing Coach profile-context object | REFACTOR | Preserve provider neutrality while adding a future field-level consent/minimization boundary. |
+| API/OpenAPI integration documentation | EXTEND | Publish only approved mobile cache/API contracts; reference web stays frozen. |
+| React Native secure-cache decision | DEFER | Backend authority is resolved; exact cache list and offline mutation conflicts are not. |
+
 ## R0.6 reuse confirmation
 
 The client decision preserves the strongest existing foundations: deterministic database/weight calculation, Food and FoodAlias provenance, immutable MealItem snapshots, provider-neutral recognition, and the source-independent architecture. R1 should **extend** those components for nine mandatory nutrients, optional availability, source hierarchy, AI-fallback provenance, and recipe readiness. It must not replace approved reference values with AI values or silently recalculate historical snapshots.

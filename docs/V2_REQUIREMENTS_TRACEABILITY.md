@@ -77,6 +77,24 @@ The original rows above preserve R0 discovery status. The completed questionnair
 
 R0.6 makes the nutrition authority canonical: approved recipe/reference data plus deterministic weight scaling is authoritative; AI identification is an input and AI numerical estimation is a provenance-labelled fallback only when no approved source resolves. `0` requires explicit source support; unknown values remain unavailable/`NULL`.
 
+## R2A-0 profile/onboarding reconciliation
+
+R2A-0 does **not** change runtime status. `PROF-001` and `PROF-002` remain
+partially implemented only for the existing narrow `NutritionProfile` fields;
+`PROF-003`, `PROF-004`, and `PROF-006` remain missing. The client’s statement
+that all fields should influence recommendations is constrained by Q15: some
+validated rules exist and other fields are storage only, but no field-level
+methodology was supplied. Therefore no new profile field is recommendation-
+eligible merely from this requirement.
+
+| Requirement(s) | R2A-0 design outcome | Runtime status remains | Blocking item |
+| --- | --- | --- | --- |
+| PROF-001, PROF-005 | Field register distinguishes existing account/current-profile fields from proposed identity/personal fields. | PARTIALLY_IMPLEMENTED | Requiredness, terminology, purpose, and ownership decisions. |
+| PROF-002 | Allergies/restrictions are safety-relevant declarations, not an allergen-detection or medical guarantee. | PARTIALLY_IMPLEMENTED | Controlled taxonomy and approved filtering/recommendation method. |
+| PROF-003, PROF-004 | Health/lifestyle and blood/body-type fields are storage-only candidates with P3/P4 handling. | MISSING | Sensitive consent plus approved field-level methodology. |
+| PROF-006 | Consent must be explicit and purpose-specific. | MISSING | Product/legal text, version/audit, retention, and user-rights design (`LEGAL_REVIEW_REQUIRED`). |
+| SYNC-001 | Backend authority and mobile secure cache are retained. | PARTIALLY_IMPLEMENTED | Offline mutation/conflict decision DEC-SYNC-003. |
+
 ## R1 completion status
 
 R1 is complete. NUTR-001 and NUTR-002 now have an additive V2 reference,

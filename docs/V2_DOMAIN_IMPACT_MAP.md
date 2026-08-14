@@ -24,7 +24,24 @@ This is a domain impact assessment, not a final SQL design. “Likely” indicat
 | Notifications | none | NEW | Preferences, scheduled/event delivery records, consent | Likely | Likely | B/M/P |
 | Device | `DeviceService`, `MockDeviceService` reading | EXTEND | Device identity, state/capabilities, safe command boundary | Likely | Likely | B/P |
 | Device Pairing/Sync | LAN portability only | NEW | Pairing, association, credentials, status, conflict handling | Likely | Likely | B/M/P |
+| Consent / Preference | none | NEW | Purpose-specific consent/preference state; legal text, retention, and evidence need review | Likely | Likely | B/M |
+| AI Context | transient provider-neutral `NutritionCoachContext` | EXTEND | Field-level opt-in and task-minimized assembly; no full-profile forwarding | Possible | Possible | B/M |
+| Mobile Cache Contract | API integration documentation | EXTEND | Backend-authoritative cacheability classification; offline mutation remains open | No | Likely | B/M |
 | Settings | none | NEW | Account preferences and separate client/device-local settings | Possible | Likely | M/P |
+
+## R2A-0 profile impact
+
+The R2 field register is deliberately a domain boundary rather than a proposed
+table layout. `User` remains the account/identity owner; profile, health/dietary
+declarations, consent/preference state, and AI context are separate concerns.
+`NutritionTarget`, current profile goal, future goal history, and future weight
+history are not interchangeable. No profile data authorizes a recommendation
+without a field-level approved method.
+
+Expected future domains: `Profile` (EXTEND), `Health/Dietary Context`
+(REFACTOR), `Consent/Preference` (NEW), `AI Context` (EXTEND), and `Mobile
+Cache Contract` (EXTEND). These labels do not finalize SQL tables, migrations,
+or APIs.
 
 ## Reuse boundary
 
