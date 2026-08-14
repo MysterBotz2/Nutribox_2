@@ -53,3 +53,6 @@ def test_openapi_exposes_additive_v2_nutrition_fields() -> None:
 
     assert {"saturated_fat_g", "sugars_g", "sodium_mg", "cholesterol_mg", "omega_3_g", "vitamin_b12_mcg"} <= set(nutrition)
     assert "category" in food_source
+    assert schema["components"]["schemas"]["NutritionSourceCategory"]["enum"] == [
+        "canteen_recipe", "local_database", "USDA", "AI_estimate"
+    ]

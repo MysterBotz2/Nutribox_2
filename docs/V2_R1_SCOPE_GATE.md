@@ -150,3 +150,11 @@ priority; that requires later FoodReference/Recipe modeling.
 3. AI fallback cannot silently override approved data.
 4. Importer, API, OpenAPI, and migration documentation are updated.
 5. Existing backend/reference-web regressions pass without unauthorized feature work.
+
+## Completion
+
+R1 completed through R1D with the additive migration, deterministic calculation,
+safe ingestion, immutable snapshots, compatible API exposure, OpenAPI audit,
+and reference-web regression validation recorded in
+[V2_R1_COMPLETION_REPORT.md](V2_R1_COMPLETION_REPORT.md). Deferred decisions
+remain deferred; R2 requires separate authorization.

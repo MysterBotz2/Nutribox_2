@@ -613,13 +613,12 @@
           "category": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/components/schemas/NutritionSourceCategory"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Category"
+            ]
           },
           "name": {
             "title": "Name",
@@ -716,13 +715,12 @@
           "category": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/components/schemas/NutritionSourceCategory"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Category"
+            ]
           },
           "is_estimated": {
             "anyOf": [
@@ -1750,6 +1748,17 @@
         ],
         "title": "NutritionReferenceNotFoundMealAnalysis",
         "type": "object"
+      },
+      "NutritionSourceCategory": {
+        "description": "Approved nutrition provenance categories exposed to API clients.",
+        "enum": [
+          "canteen_recipe",
+          "local_database",
+          "USDA",
+          "AI_estimate"
+        ],
+        "title": "NutritionSourceCategory",
+        "type": "string"
       },
       "NutritionTargetResponse": {
         "properties": {

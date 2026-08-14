@@ -1,4 +1,5 @@
 from decimal import Decimal
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -15,6 +16,15 @@ class NutrientValues(BaseModel):
     carbohydrates_g: Decimal
     fat_g: Decimal
     fiber_g: Decimal
+
+
+class NutritionSourceCategory(str, Enum):
+    """Approved nutrition provenance categories exposed to API clients."""
+
+    CANTEEN_RECIPE = "canteen_recipe"
+    LOCAL_DATABASE = "local_database"
+    USDA = "USDA"
+    AI_ESTIMATE = "AI_estimate"
 
 
 class AdditionalNutrientValues(BaseModel):
@@ -77,7 +87,7 @@ class FoodSource(BaseModel):
     name: str
     reference: str | None
     verified: bool
-    category: str | None = None
+    category: NutritionSourceCategory | None = None
 
 
 class FoodResponse(BaseModel):

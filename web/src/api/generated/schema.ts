@@ -627,8 +627,7 @@ export interface components {
          * @description Traceability metadata for a nutrition reference record.
          */
         FoodSource: {
-            /** Category */
-            category?: string | null;
+            category?: components["schemas"]["NutritionSourceCategory"] | null;
             /** Name */
             name: string;
             /** Reference */
@@ -658,8 +657,7 @@ export interface components {
          * @description Immutable provenance snapshot for a saved meal item.
          */
         MealItemNutritionSource: {
-            /** Category */
-            category: string | null;
+            category: components["schemas"]["NutritionSourceCategory"] | null;
             /** Is Estimated */
             is_estimated: boolean | null;
             /** Name */
@@ -939,6 +937,12 @@ export interface components {
              */
             status: "nutrition_reference_not_found";
         };
+        /**
+         * NutritionSourceCategory
+         * @description Approved nutrition provenance categories exposed to API clients.
+         * @enum {string}
+         */
+        NutritionSourceCategory: "canteen_recipe" | "local_database" | "USDA" | "AI_estimate";
         /** NutritionTargetResponse */
         NutritionTargetResponse: {
             /** Calories */

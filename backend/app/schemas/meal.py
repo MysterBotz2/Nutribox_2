@@ -9,6 +9,7 @@ from app.schemas.ai import RecognizedFood
 from app.schemas.nutrition import (
     AdditionalNutrientValues,
     CalculatedFood,
+    NutritionSourceCategory,
     NutrientValues,
     PortionNutrition,
 )
@@ -78,7 +79,7 @@ class MealItemResponse(BaseModel):
 class MealItemNutritionSource(BaseModel):
     """Immutable provenance snapshot for a saved meal item."""
 
-    category: str | None
+    category: NutritionSourceCategory | None
     name: str | None
     reference: str | None
     is_estimated: bool | None
