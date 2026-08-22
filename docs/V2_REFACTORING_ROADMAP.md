@@ -32,6 +32,14 @@ This sequence keeps sensitive storage and AI-context release separate from the
 ordinary-profile foundation. Weight/goal history remains R3; no subphase
 authorizes medical or unvalidated personalization.
 
+## R2 completion checkpoint
+
+R2A, R2B1, R2C, and R2D are complete. The closure evidence is
+[`V2_R2_COMPLETION_REPORT.md`](V2_R2_COMPLETION_REPORT.md). R2B2 remains a
+separately authorized future boundary for sensitive AI/recommendation use, not
+a continuation of R2. R3 remains the next candidate domain only after its own
+scope gate and decision dependencies are accepted.
+
 ## R2B-0 checkpoint
 
 ## R2B1 completion checkpoint

@@ -58,6 +58,28 @@ counts as complete. Sensitive requirements count only while
 can make onboarding incomplete without affecting login or ordinary account use.
 Clients must not calculate or persist their own authoritative completion flag.
 
+## R2 profile handoff and mobile-cache boundary
+
+All R2 profile, consent, and onboarding routes require the same bearer token as
+the rest of the owner-only `/api/users/me/...` API. No request accepts a
+`user_id`; the token subject is the sole resource owner. `PUT` profile,
+consent, and sensitive-profile requests are full replacements, so a client must
+read the current resource before changing only one field.
+
+| Data group | Route/resource | Mobile-cache status |
+| --- | --- | --- |
+| Medical conditions, pregnancy/postpartum, smoking, drinking, ethnicity | Sensitive profile | Backend-only; do not cache in the mobile client. |
+| Body build, allergies, medical needs, lifestyle diets, activity level, budget allotment, nutrition goal | Profile/sensitive profile | Future cache eligible only; FastAPI/PostgreSQL remains authoritative and offline writes are not defined. |
+| Consent states | Profile consent | Read/write only through the backend; do not infer permission from stored declarations. |
+| Completion | Onboarding status | Derived backend metadata only; never persist a client-authoritative completion flag. |
+
+`lifestyle_diets` is the onboarding concept but currently uses the ordinary
+profile field `dietary_restrictions`. This is deliberate R2 technical debt;
+clients should use the documented field today and must not introduce a parallel
+field without a later compatibility decision. No R2 route passes sensitive data
+to the Coach or supports medical recommendations, BMR/TDEE, or target
+prescription.
+
 `POST /api/auth/register` accepts JSON. `POST /api/auth/token` accepts `application/x-www-form-urlencoded`; its `username` field is the user's email. Login returns `access_token` and `token_type` (`bearer`). Send protected requests with:
 
 ```http

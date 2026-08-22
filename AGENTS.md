@@ -166,8 +166,12 @@ Do not skip major prerequisites unless explicitly instructed.
 
 R0, R0.6, and R1 are complete. R1 established the V2 nutrition/data-model foundation; its completion report is `docs/V2_R1_COMPLETION_REPORT.md`. R2 requires explicit authorization and its own profile/onboarding, privacy, and consent decisions. Phase 16E remains the frozen Web Reference Client checkpoint and Phase 16F is postponed. Client V2 sources remain primary; the official companion app is future React Native/Expo, the Raspberry Pi UI/controller is separate, and cloud remains only a possible future deployment option.
 
-R2B1 provides authenticated, storage-only sensitive-profile declarations and purpose-specific product consent. It does not authorize sensitive AI context or medical/personalized recommendation logic. Blood type and somatotype remain unresolved/deferred; R2C remains separate future work.
-
-R2C provides only a derived authenticated mobile-onboarding status contract. It
-adds no mobile source, completion database flag, migration, sensitive AI use, or
-recommendation behavior. R2D remains separate future work.
+R2 is complete through R2D hardening and closure. R2A established the
+owner-only ordinary profile contract; R2B1 established separately stored,
+purpose-specific consent-gated sensitive declarations; and R2C established
+derived onboarding metadata only. R2D records migration, API, privacy, and
+integration evidence. R2B2 (sensitive AI context or recommendation use) remains
+explicitly deferred: it requires separate authorization and approved methodology.
+Blood type, somatotype, BMI, offline mutation/sync, and medical or personalized
+recommendation behavior remain out of scope. Any R3 work needs its own approved
+scope and must not reinterpret R2 storage as authorization for downstream use.

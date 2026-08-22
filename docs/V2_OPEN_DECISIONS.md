@@ -57,6 +57,15 @@ or AI context. The blocking client questions are in
 `V2_R2B_SCOPE_GATE.md`. Consent state, withdrawal, retention, and legal-policy
 details remain separate decisions and `LEGAL_REVIEW_REQUIRED` where applicable.
 
+## R2 closure status
+
+R2 completed only its approved persistence, consent, and derived-onboarding
+contracts. `DEC-PROF-001` remains blocked for recommendation use; legal policy,
+retention, consent evidence, sensitive AI task permission, offline mutation and
+conflict resolution, blood type, somatotype, and BMI are still unresolved or
+deferred. R2B2 therefore remains deferred and must not be inferred from the
+existence of stored sensitive declarations.
+
 ## Immediate priority
 
 **DEC-NUTR-001 is the immediate decision before R1.** It determines the V2 nutrition data model, provenance, snapshot semantics, food-data imports, calculator validity, diagnostics, and research evaluation. DEC-PROF-001 and DEC-DATA-001 should be answered before any sensitive-profile or extended-nutrient migration is proposed.

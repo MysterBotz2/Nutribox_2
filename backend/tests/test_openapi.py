@@ -59,3 +59,38 @@ def test_openapi_exposes_additive_v2_nutrition_fields() -> None:
     assert schema["components"]["schemas"]["NutritionSourceCategory"]["enum"] == [
         "canteen_recipe", "local_database", "USDA", "AI_estimate"
     ]
+
+
+def test_openapi_preserves_r2_profile_privacy_boundaries() -> None:
+    """Protect the owner-only, separated R2 profile contract from accidental drift."""
+    schema = app.openapi()
+    paths = schema["paths"]
+    schemas = schema["components"]["schemas"]
+    bearer_security = [{"OAuth2PasswordBearer": []}]
+
+    for path, methods in {
+        "/api/users/me/profile": ("get", "put"),
+        "/api/users/me/profile-consent": ("get", "put"),
+        "/api/users/me/sensitive-profile": ("get", "put"),
+        "/api/users/me/onboarding-status": ("get",),
+    }.items():
+        for method in methods:
+            assert paths[path][method]["security"] == bearer_security
+
+    assert set(schemas["NutritionProfileUpdateRequest"]["properties"]) == {
+        "age", "height_cm", "weight_kg", "activity_level", "nutrition_goal",
+        "dietary_restrictions", "allergies", "budget_allotment",
+    }
+    assert schemas["ProfileConsentState"]["enum"] == [
+        "not_asked", "granted", "declined", "withdrawn",
+    ]
+    sensitive_properties = schemas["SensitiveProfileUpdateRequest"]["properties"]
+    assert {"blood_type", "somatotype", "bmi", "age", "allergies"}.isdisjoint(sensitive_properties)
+    assert set(schemas["OnboardingStatusResponse"]["properties"]) == {
+        "completed", "missing_required_fields",
+    }
+    assert schemas["OnboardingRequiredField"]["enum"] == [
+        "medical_conditions", "smoking_history", "drinking_history", "body_build",
+        "allergies", "medical_needs", "lifestyle_diets", "activity_level",
+        "budget_allotment", "nutrition_goal",
+    ]
