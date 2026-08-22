@@ -29,6 +29,9 @@ from app.services.image_validation import read_validated_image
 from app.services.meal_analysis_service import MealAnalysisService
 from app.services.meal_service import MealFoodNotFoundError, MealService
 from app.services.nutrition_service import NutritionService
+from app.repositories.leftover_analysis_repository import LeftoverAnalysisRepository
+from app.schemas.leftover_analysis import LeftoverAnalysisProvenance, LeftoverAnalysisResponse, LeftoverNutrition
+from app.services.leftover_analysis_service import DuplicateLeftoverAnalysisError, LeftoverAnalysisConflictError, LeftoverAnalysisService, LeftoverRecognitionError
 
 router = APIRouter(prefix="/api/meals", tags=["meals"])
 
@@ -45,6 +48,46 @@ def get_meal_service(database_session: Annotated[Session, Depends(get_db)]) -> M
         NutritionService(FoodRepository(database_session)),
         MealRepository(database_session),
     )
+
+def get_leftover_analysis_service(database_session: Annotated[Session, Depends(get_db)], meal_analysis_service: Annotated[MealAnalysisService, Depends(get_meal_analysis_service)]) -> LeftoverAnalysisService:
+    return LeftoverAnalysisService(LeftoverAnalysisRepository(database_session), meal_analysis_service)
+
+
+def leftover_analysis_response_from_model(analysis, meal) -> LeftoverAnalysisResponse:
+    initial = LeftoverNutrition(calories=meal.total_calories, protein_g=meal.total_protein_g, carbohydrates_g=meal.total_carbohydrates_g, fat_g=meal.total_fat_g, fiber_g=meal.total_fiber_g)
+    leftovers = LeftoverNutrition(calories=analysis.leftover_calories, protein_g=analysis.leftover_protein_g, carbohydrates_g=analysis.leftover_carbohydrates_g, fat_g=analysis.leftover_fat_g, fiber_g=analysis.leftover_fiber_g)
+    consumed = LeftoverNutrition(calories=analysis.consumed_calories, protein_g=analysis.consumed_protein_g, carbohydrates_g=analysis.consumed_carbohydrates_g, fat_g=analysis.consumed_fat_g, fiber_g=analysis.consumed_fiber_g)
+    return LeftoverAnalysisResponse(id=analysis.id, meal_id=analysis.meal_id, leftover_weight_grams=analysis.leftover_weight_grams, initial_nutrition=initial, leftover_nutrition=leftovers, consumed_nutrition=consumed, provenance=LeftoverAnalysisProvenance(source=analysis.source, recognized_food_name=analysis.recognized_food_name, source_reference=analysis.source_reference), created_at=analysis.created_at)
+
+
+@router.post("/{meal_id}/leftover-analysis", response_model=LeftoverAnalysisResponse, status_code=status.HTTP_201_CREATED)
+async def create_leftover(meal_id: int, current_user: Annotated[User, Depends(get_current_user)], database_session: Annotated[Session, Depends(get_db)], leftover_analysis_service: Annotated[LeftoverAnalysisService, Depends(get_leftover_analysis_service)], leftover_weight_grams: Decimal = Form(ge=0, le=MAXIMUM_PROTOTYPE_WEIGHT_GRAMS), file: UploadFile | None = File(default=None)) -> LeftoverAnalysisResponse:
+    meal = MealRepository(database_session).get_by_id_for_user(meal_id, current_user.id)
+    if meal is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal was not found.")
+    image_bytes = content_type = None
+    if leftover_weight_grams != 0:
+        if file is None:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="A food image is required for non-zero leftovers.")
+        image_bytes, content_type = await read_validated_image(file)
+    try:
+        analysis = leftover_analysis_service.create(meal, leftover_weight_grams, image_bytes, content_type)
+    except (DuplicateLeftoverAnalysisError, LeftoverAnalysisConflictError) as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from None
+    except LeftoverRecognitionError as error:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Leftover recognition could not be completed: {error}.") from None
+    return leftover_analysis_response_from_model(analysis, meal)
+
+
+@router.get("/{meal_id}/leftover-analysis", response_model=LeftoverAnalysisResponse)
+def get_leftover(meal_id: int, current_user: Annotated[User, Depends(get_current_user)], database_session: Annotated[Session, Depends(get_db)]) -> LeftoverAnalysisResponse:
+    meal = MealRepository(database_session).get_by_id_for_user(meal_id, current_user.id)
+    if meal is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal was not found.")
+    analysis = LeftoverAnalysisRepository(database_session).get_by_meal_id(meal.id)
+    if analysis is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Leftover analysis was not found.")
+    return leftover_analysis_response_from_model(analysis, meal)
 
 
 @router.post("/analyze", response_model=MealAnalysisResponse)

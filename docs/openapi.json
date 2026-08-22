@@ -279,6 +279,41 @@
         "title": "Body_analyze_meal_api_meals_analyze_post",
         "type": "object"
       },
+      "Body_create_leftover_api_meals__meal_id__leftover_analysis_post": {
+        "properties": {
+          "file": {
+            "anyOf": [
+              {
+                "format": "binary",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File"
+          },
+          "leftover_weight_grams": {
+            "anyOf": [
+              {
+                "maximum": 5000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "title": "Leftover Weight Grams"
+          }
+        },
+        "required": [
+          "leftover_weight_grams"
+        ],
+        "title": "Body_create_leftover_api_meals__meal_id__leftover_analysis_post",
+        "type": "object"
+      },
       "Body_login_for_access_token_api_auth_token_post": {
         "properties": {
           "client_id": {
@@ -741,6 +776,127 @@
         ],
         "title": "LastAlcoholConsumption",
         "type": "string"
+      },
+      "LeftoverAnalysisProvenance": {
+        "properties": {
+          "recognized_food_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recognized Food Name"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "source_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Reference"
+          }
+        },
+        "required": [
+          "source",
+          "recognized_food_name",
+          "source_reference"
+        ],
+        "title": "LeftoverAnalysisProvenance",
+        "type": "object"
+      },
+      "LeftoverAnalysisResponse": {
+        "properties": {
+          "consumed_nutrition": {
+            "$ref": "#/components/schemas/LeftoverNutrition"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "initial_nutrition": {
+            "$ref": "#/components/schemas/LeftoverNutrition"
+          },
+          "leftover_nutrition": {
+            "$ref": "#/components/schemas/LeftoverNutrition"
+          },
+          "leftover_weight_grams": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Leftover Weight Grams",
+            "type": "string"
+          },
+          "meal_id": {
+            "title": "Meal Id",
+            "type": "integer"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/LeftoverAnalysisProvenance"
+          }
+        },
+        "required": [
+          "id",
+          "meal_id",
+          "leftover_weight_grams",
+          "initial_nutrition",
+          "leftover_nutrition",
+          "consumed_nutrition",
+          "provenance",
+          "created_at"
+        ],
+        "title": "LeftoverAnalysisResponse",
+        "type": "object"
+      },
+      "LeftoverNutrition": {
+        "properties": {
+          "calories": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Calories",
+            "type": "string"
+          },
+          "carbohydrates_g": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Carbohydrates G",
+            "type": "string"
+          },
+          "fat_g": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Fat G",
+            "type": "string"
+          },
+          "fiber_g": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Fiber G",
+            "type": "string"
+          },
+          "protein_g": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Protein G",
+            "type": "string"
+          }
+        },
+        "required": [
+          "calories",
+          "protein_g",
+          "carbohydrates_g",
+          "fat_g",
+          "fiber_g"
+        ],
+        "title": "LeftoverNutrition",
+        "type": "object"
       },
       "MealCreateRequest": {
         "additionalProperties": false,
@@ -4347,6 +4503,108 @@
           }
         ],
         "summary": "Get Meal",
+        "tags": [
+          "meals"
+        ]
+      }
+    },
+    "/api/meals/{meal_id}/leftover-analysis": {
+      "get": {
+        "operationId": "get_leftover_api_meals__meal_id__leftover_analysis_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeftoverAnalysisResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Leftover",
+        "tags": [
+          "meals"
+        ]
+      },
+      "post": {
+        "operationId": "create_leftover_api_meals__meal_id__leftover_analysis_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_leftover_api_meals__meal_id__leftover_analysis_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeftoverAnalysisResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Leftover",
         "tags": [
           "meals"
         ]
