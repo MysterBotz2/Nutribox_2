@@ -352,6 +352,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/me/onboarding-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get My Onboarding Status
+         * @description Return derived mobile-onboarding completion metadata for the token owner.
+         */
+        get: operations["get_my_onboarding_status_api_users_me_onboarding_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/me/profile": {
         parameters: {
             query?: never;
@@ -1089,6 +1109,21 @@ export interface components {
             /** Source Reference */
             source_reference?: string | null;
             source_type: components["schemas"]["TargetSourceType"];
+        };
+        /**
+         * OnboardingRequiredField
+         * @enum {string}
+         */
+        OnboardingRequiredField: "medical_conditions" | "smoking_history" | "drinking_history" | "body_build" | "allergies" | "medical_needs" | "lifestyle_diets" | "activity_level" | "budget_allotment" | "nutrition_goal";
+        /**
+         * OnboardingStatusResponse
+         * @description Derived owner-only completion metadata with no profile values.
+         */
+        OnboardingStatusResponse: {
+            /** Completed */
+            completed: boolean;
+            /** Missing Required Fields */
+            missing_required_fields?: components["schemas"]["OnboardingRequiredField"][];
         };
         /**
          * OptionalNutrientValues
@@ -2041,6 +2076,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicUser"];
+                };
+            };
+        };
+    };
+    get_my_onboarding_status_api_users_me_onboarding_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingStatusResponse"];
                 };
             };
         };

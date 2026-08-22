@@ -13,6 +13,7 @@ from app.repositories.sensitive_profile_repository import SensitiveProfileReposi
 from app.schemas.auth import PublicUser
 from app.schemas.profile import NutritionProfileResponse, NutritionProfileUpdateRequest
 from app.schemas.nutrition_target import NutritionTargetResponse, NutritionTargetUpdateRequest
+from app.schemas.onboarding import OnboardingStatusResponse
 from app.schemas.sensitive_profile import (
     ProfileConsentResponse,
     ProfileConsentState,
@@ -24,6 +25,7 @@ from app.services.profile_consent_service import ProfileConsentService
 from app.services.sensitive_profile_service import SensitiveProfileService
 from app.services.nutrition_profile_service import NutritionProfileService
 from app.services.nutrition_target_service import NutritionTargetService
+from app.services.onboarding_service import OnboardingService
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -55,6 +57,16 @@ def get_sensitive_profile_service(
     return SensitiveProfileService(SensitiveProfileRepository(database_session), consent_service)
 
 
+def get_onboarding_service(
+    database_session: Annotated[Session, Depends(get_db)],
+) -> OnboardingService:
+    return OnboardingService(
+        NutritionProfileRepository(database_session),
+        SensitiveProfileRepository(database_session),
+        get_profile_consent_service(database_session),
+    )
+
+
 @router.get("/me", response_model=PublicUser)
 def get_me(current_user: Annotated[User, Depends(get_current_user)]) -> PublicUser:
     return PublicUser.model_validate(current_user)
@@ -81,6 +93,15 @@ def replace_my_profile(
     return NutritionProfileResponse.model_validate(
         profile_service.replace_profile(current_user.id, request)
     )
+
+
+@router.get("/me/onboarding-status", response_model=OnboardingStatusResponse)
+def get_my_onboarding_status(
+    current_user: Annotated[User, Depends(get_current_user)],
+    onboarding_service: Annotated[OnboardingService, Depends(get_onboarding_service)],
+) -> OnboardingStatusResponse:
+    """Return derived mobile-onboarding completion metadata for the token owner."""
+    return onboarding_service.status_for_user(current_user.id)
 
 
 @router.get("/me/profile-consent", response_model=ProfileConsentResponse)

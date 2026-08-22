@@ -15,6 +15,7 @@ def test_openapi_has_v1_metadata_routes_and_oauth2_security() -> None:
         "/api/auth/token",
         "/api/users/me",
         "/api/users/me/profile",
+        "/api/users/me/onboarding-status",
         "/api/users/me/profile-consent",
         "/api/users/me/sensitive-profile",
         "/api/users/me/targets",
