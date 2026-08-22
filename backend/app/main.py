@@ -17,6 +17,7 @@ from app.routers.nutrition import router as nutrition_router
 from app.routers.progress import router as progress_router
 from app.routers.scheduled_meals import router as scheduled_meals_router
 from app.routers.users import router as users_router
+from app.routers.weight_entries import router as weight_entries_router
 from app.core.config import settings
 
 app = FastAPI(
@@ -48,6 +49,7 @@ app.include_router(nutrition_router)
 app.include_router(meals_router)
 app.include_router(scheduled_meals_router)
 app.include_router(progress_router)
+app.include_router(weight_entries_router)
 
 
 def _json_safe_validation_detail(value: Any) -> Any:

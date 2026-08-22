@@ -33,6 +33,9 @@ def test_openapi_has_v1_metadata_routes_and_oauth2_security() -> None:
         "/api/progress/today",
         "/api/progress/daily",
         "/api/progress/weekly",
+        "/api/progress/weekly-diagnostics",
+        "/api/weight-entries",
+        "/api/weight-entries/{entry_id}",
         "/api/progress/summary",
         "/api/progress/target-status",
     }

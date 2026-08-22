@@ -180,3 +180,7 @@ R3A establishes only the authenticated, user-owned scheduled-meal CRUD and
 date-window foundation. A schedule is planned intent, not a logged Meal: it has
 no nutrition, target, sensitive-profile, AI, or recommendation side effects.
 R3B diagnostics/history remains separate future work.
+
+R3B adds owner-only WeightEntry history and factual weekly diagnostics only.
+It remains non-clinical, uses no sensitive profile or AI/provider context, and
+does not close R3 or authorize R3C.

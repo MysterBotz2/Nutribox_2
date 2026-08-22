@@ -19,6 +19,7 @@ from app.models.profile_consent import ProfileConsent  # noqa: F401, E402
 from app.models.scheduled_meal import ScheduledMeal  # noqa: F401, E402
 from app.models.sensitive_profile_context import SensitiveProfileContext  # noqa: F401, E402
 from app.models.user import User  # noqa: F401, E402
+from app.models.weight_entry import WeightEntry  # noqa: F401, E402
 
 config = context.config
 
