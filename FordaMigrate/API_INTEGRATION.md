@@ -11,26 +11,6 @@ Swagger is at `/docs`, ReDoc is at `/redoc`, and the generated machine-readable 
 
 ## Authentication
 
-## R2B1 sensitive profile and consent
-
-All routes below require a bearer token and operate only on the token owner:
-
-| Method | Route | Purpose |
-| --- | --- | --- |
-| GET / PUT | `/api/users/me/profile-consent` | Read or fully replace `sensitive_storage`, `personalization`, and `ai_context`. |
-| GET / PUT | `/api/users/me/sensitive-profile` | Read or fully replace active sensitive declarations. PUT requires `sensitive_storage: granted` and otherwise returns `403`. |
-
-Missing consent reads as `not_asked` for all three purposes. Storage withdrawal
-deletes the active sensitive context; personalization/AI-context withdrawal does
-not. `null` means unknown or cleared, while a medical condition of `none` is an
-explicit declaration. Sensitive data is never included in food, meal, progress,
-or public APIs, and R2B1 does not pass it to the Coach.
-
-Blood type, somatotype, and BMI fields are unsupported. `budget_allotment` is a
-nullable tier on the ordinary profile; lifestyle diets use existing
-`dietary_restrictions`. R2B1 implements no clinical rules, medical thresholds,
-recommendation logic, or sensitive AI transmission.
-
 `POST /api/auth/register` accepts JSON. `POST /api/auth/token` accepts `application/x-www-form-urlencoded`; its `username` field is the user's email. Login returns `access_token` and `token_type` (`bearer`). Send protected requests with:
 
 ```http

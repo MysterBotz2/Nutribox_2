@@ -15,6 +15,8 @@ from app.models.food_alias import FoodAlias  # noqa: F401, E402
 from app.models.meal import Meal, MealItem  # noqa: F401, E402
 from app.models.nutrition_profile import NutritionProfile  # noqa: F401, E402
 from app.models.nutrition_target import NutritionTarget  # noqa: F401, E402
+from app.models.profile_consent import ProfileConsent  # noqa: F401, E402
+from app.models.sensitive_profile_context import SensitiveProfileContext  # noqa: F401, E402
 from app.models.user import User  # noqa: F401, E402
 
 config = context.config

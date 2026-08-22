@@ -2,8 +2,8 @@
 
 ## Status and reading rule
 
-**Status:** R2A-0 architecture decision record; no persistence or API change is
-authorized by this document. P0--P4 are internal engineering sensitivity levels,
+**Status:** R2A-0/R2B1 architecture and storage record. R2B1 authorizes the
+approved sensitive declaration persistence behind product consent only. P0--P4 are internal engineering sensitivity levels,
 not legal classifications. `UNKNOWN`/not supplied is distinct from `false`,
 `none`, or an empty declaration.
 

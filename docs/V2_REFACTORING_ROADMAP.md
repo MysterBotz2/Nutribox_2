@@ -34,6 +34,14 @@ authorizes medical or unvalidated personalization.
 
 ## R2B-0 checkpoint
 
+## R2B1 completion checkpoint
+
+R2B1 implements the authorized sensitive storage and product-consent foundation
+after the client follow-up response. It is not R2C: no React Native onboarding,
+mobile cache, offline synchronization, or completion-state workflow is added.
+Any later R2B2 work must separately approve AI task minimization and validated
+non-clinical methodology before these declarations affect output.
+
 R2B-0 is a documentation/decision gate between completed R2A and runtime R2B.
 It must resolve field-level storage, cache, AI, recommendation, withdrawal, and
 methodology authorization without changing runtime behavior. R2B cannot start

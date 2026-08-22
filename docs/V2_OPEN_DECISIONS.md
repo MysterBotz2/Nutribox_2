@@ -42,6 +42,14 @@ implementation boundary are documented in `V2_PROFILE_DATA_CLASSIFICATION.md`,
 
 ## R2B-0 sensitive-context gate
 
+## R2B1 update
+
+The accepted follow-up response resolves storage authorization for the R2B1
+declaration set and product consent states. It does not resolve legal
+retention/audit requirements, sensitive AI transmission, clinical or
+recommendation methodology, blood type, somatotypes, BMI, or mobile/offline
+behavior. Those remain open, deferred, or `BLOCKED_BY_RESEARCH_METHOD`.
+
 `DEC-PROF-001` remains **BLOCKED_BY_RESEARCH_METHOD** for recommendation use.
 R2B-0 finds no field-specific authorization for sensitive storage, mobile cache,
 or AI context. The blocking client questions are in

@@ -30,11 +30,10 @@ are **LEGAL_REVIEW_REQUIRED** before release.
 - Existing `NutritionProfile` fields currently have no profile-consent metadata;
   this document does not retroactively assert consent for them.
 
-## R2B-0 purpose-specific state model
+## R2B1 purpose-specific state model
 
-Future sensitive-context implementation must model these independently for
-each applicable purpose: sensitive storage, personalization/recommendation use,
-and AI-context use.
+R2B1 persists these independently for sensitive storage, personalization, and
+AI-context use. The state is application behavior, not legal evidence.
 
 | State | Meaning | Required behavior |
 | --- | --- | --- |
@@ -43,9 +42,10 @@ and AI-context use.
 | `DECLINED` | The user chose not to grant the named purpose. | Do not infer a negative health/lifestyle declaration or a deletion choice. |
 | `WITHDRAWN` | A previously granted purpose was revoked. | Stop future use immediately; stored-data retention/clear behavior remains unresolved. |
 
-Timestamps and consent-version evidence are product/audit design candidates,
-but their retention, wording, and legal significance are `LEGAL_REVIEW_REQUIRED`.
-No single `consent = true` flag is sufficient.
+R2B1 stores an `updated_at` timestamp. Legal evidence/versioning, retention,
+and wording remain `LEGAL_REVIEW_REQUIRED`; no single `consent = true` flag is
+sufficient. Storage withdrawal deletes active sensitive declarations; the other
+two withdrawals do not delete stored data.
 
 ## AI-context minimization boundary
 

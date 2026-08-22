@@ -25,7 +25,7 @@ class NutritionProfile(Base):
         ),
         CheckConstraint(
             "activity_level IS NULL OR activity_level IN "
-            "('sedentary', 'lightly_active', 'moderately_active', 'very_active')",
+            "('sedentary', 'lightly_active', 'moderately_active', 'very_active', 'highly_active')",
             name="ck_profiles_activity_level",
         ),
         CheckConstraint(
@@ -38,6 +38,12 @@ class NutritionProfile(Base):
             name="ck_profiles_dietary_restrictions_array",
         ),
         CheckConstraint("jsonb_typeof(allergies) = 'array'", name="ck_profiles_allergies_array"),
+        CheckConstraint(
+            "budget_allotment IS NULL OR budget_allotment IN "
+            "('under_php_100', 'php_100_to_500', 'php_500_to_1000', "
+            "'php_1000_to_1500', 'more_than_php_1500')",
+            name="ck_profiles_budget_allotment",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -53,6 +59,7 @@ class NutritionProfile(Base):
         JSONB(none_as_null=True), nullable=True
     )
     allergies: Mapped[list[str] | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
+    budget_allotment: Mapped[str | None] = mapped_column(String(32), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

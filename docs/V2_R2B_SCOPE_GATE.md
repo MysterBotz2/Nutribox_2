@@ -9,10 +9,10 @@ consent system only after the client clarifications in
 ## 2–4. Field authorization and unknown semantics
 
 The exact sensitive-field inventory is in `V2_R2B_SENSITIVE_FIELD_REGISTER.md`.
-**No sensitive field is currently authorized for persistence.** Medical
-conditions, pregnancy/postpartum, smoking, drinking, blood type, body type,
-and ethnicity are all optional/unresolved; absence, decline, explicit none,
-and an actual declaration must never collapse into one value.
+R2B1 authorizes storage only for medical conditions, pregnancy/postpartum,
+smoking, drinking, body build, ethnicity, and medical needs. Blood type is
+still unresolved. Absence, decline, explicit none, and an actual declaration
+must never collapse into one value.
 
 ## 5–6. Consent and withdrawal
 
@@ -53,8 +53,8 @@ existing Coach context remains unchanged.
 
 ## 17. Authorized runtime scope
 
-**None until the clarification gate is resolved.** R2B implementation must not
-infer authorization from this design document.
+R2B1 is authorized only for storage/consent runtime. It must not infer
+authorization for AI context, recommendations, legal retention, or R2C work.
 
 ## 18. Prohibited scope
 

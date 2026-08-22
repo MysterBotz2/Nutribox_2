@@ -10,6 +10,7 @@ class ActivityLevel(str, Enum):
     LIGHTLY_ACTIVE = "lightly_active"
     MODERATELY_ACTIVE = "moderately_active"
     VERY_ACTIVE = "very_active"
+    HIGHLY_ACTIVE = "highly_active"
 
 
 class NutritionGoal(str, Enum):
@@ -17,6 +18,14 @@ class NutritionGoal(str, Enum):
     LOSE_WEIGHT = "lose_weight"
     GAIN_WEIGHT = "gain_weight"
     GENERAL_HEALTH = "general_health"
+
+
+class BudgetAllotment(str, Enum):
+    UNDER_PHP_100 = "under_php_100"
+    PHP_100_TO_500 = "php_100_to_500"
+    PHP_500_TO_1000 = "php_500_to_1000"
+    PHP_1000_TO_1500 = "php_1000_to_1500"
+    MORE_THAN_PHP_1500 = "more_than_php_1500"
 
 
 class NutritionProfileUpdateRequest(BaseModel):
@@ -31,6 +40,7 @@ class NutritionProfileUpdateRequest(BaseModel):
     nutrition_goal: NutritionGoal | None = None
     dietary_restrictions: list[str] | None = Field(default=None, max_length=20)
     allergies: list[str] | None = Field(default=None, max_length=20)
+    budget_allotment: BudgetAllotment | None = None
 
     @field_validator("dietary_restrictions", "allergies")
     @classmethod
@@ -54,5 +64,6 @@ class NutritionProfileResponse(BaseModel):
     nutrition_goal: NutritionGoal | None
     dietary_restrictions: list[str] | None
     allergies: list[str] | None
+    budget_allotment: BudgetAllotment | None
     created_at: datetime
     updated_at: datetime

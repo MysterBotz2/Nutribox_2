@@ -2,21 +2,9 @@
 
 ## Status
 
-This is an internal R2B authorization register, not a legal classification.
-R2B1 authorizes storage only for the client-approved declaration set, behind
-purpose-specific product consent. It does not authorize medical recommendation
-logic or sensitive AI transmission.
-
-## R2B1 implementation update
-
-The accepted client response authorizes owner-only storage of medical
-conditions, pregnancy/postpartum context, smoking and drinking history, body
-build, ethnicity, and medical-needs declarations. Medical conditions are
-multi-select and explicit `none` remains distinct from `null`. Pregnancy
-supports `pregnant`, `postpartum`, `none`, and `declined`; timing/due-date data
-is optional storage only. Body build is limited to `lean`, `average`,
-`muscular`, and `stocky`. Blood type, somatotype, BMI, all sensitive AI use, and
-all recommendations remain blocked.
+This is an internal R2B-0 authorization register, not a legal classification
+or runtime contract. No sensitive field is authorized for persistence in R2B
+until the targeted client clarifications are accepted.
 
 | Field / concept | Source | Proposed API name | Data concept | Requiredness | Storage | Mobile cache | Edit / clear | AI context / opt-in | Recommendation / method | Retention/history | Current status / blocking question |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
