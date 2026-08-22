@@ -29,6 +29,9 @@ from app.services.image_validation import read_validated_image
 from app.services.meal_analysis_service import MealAnalysisService
 from app.services.meal_service import MealFoodNotFoundError, MealService
 from app.services.nutrition_service import NutritionService
+from app.services.usda_food_data_client import UsdaFoodDataClient
+from app.services.usda_food_reference_service import UsdaFoodReferenceService
+from app.core.config import settings
 from app.repositories.leftover_analysis_repository import LeftoverAnalysisRepository
 from app.schemas.leftover_analysis import LeftoverAnalysisProvenance, LeftoverAnalysisResponse, LeftoverNutrition
 from app.services.leftover_analysis_service import DuplicateLeftoverAnalysisError, LeftoverAnalysisConflictError, LeftoverAnalysisService, LeftoverRecognitionError
@@ -39,8 +42,22 @@ router = APIRouter(prefix="/api/meals", tags=["meals"])
 def get_meal_analysis_service(
     provider: Annotated[FoodRecognitionProvider, Depends(get_food_recognition_provider)],
     nutrition_service: Annotated[NutritionService, Depends(get_nutrition_service)],
+    database_session: Annotated[Session, Depends(get_db)],
 ) -> MealAnalysisService:
-    return MealAnalysisService(provider, nutrition_service)
+    client = None
+    if settings.usda_fdc_enabled and settings.usda_fdc_api_key:
+        client = UsdaFoodDataClient(
+            api_key=settings.usda_fdc_api_key,
+            base_url=settings.usda_fdc_base_url,
+            timeout_seconds=settings.usda_fdc_timeout_seconds,
+        )
+    return MealAnalysisService(
+        provider,
+        nutrition_service,
+        usda_food_reference_service=UsdaFoodReferenceService(
+            FoodRepository(database_session), client
+        ),
+    )
 
 
 def get_meal_service(database_session: Annotated[Session, Depends(get_db)]) -> MealService:

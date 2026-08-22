@@ -18,6 +18,16 @@ class FoodRepository:
         statement = select(Food).where(Food.normalized_name == normalized_name)
         return self._session.scalar(statement)
 
+    def get_by_source_reference(self, source_reference: str) -> Food | None:
+        statement = select(Food).where(Food.source_reference == source_reference)
+        return self._session.scalar(statement)
+
+    def add(self, food: Food) -> None:
+        self._session.add(food)
+
+    def flush(self) -> None:
+        self._session.flush()
+
     def search(self, query: str) -> list[Food]:
         pattern = f"%{query}%"
         statement = (

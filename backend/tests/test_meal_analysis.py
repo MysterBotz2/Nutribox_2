@@ -16,6 +16,7 @@ from app.services.food_recognition_provider import (
 from app.services.meal_analysis_service import MealAnalysisService
 from app.services.nutrient_calculator import NutrientCalculator
 from app.services.nutrition_service import NutritionService
+from app.services.usda_food_reference_service import UsdaResolution
 
 
 class StubFoodRecognitionProvider(FoodRecognitionProvider):
@@ -92,6 +93,40 @@ def test_single_recognized_food_with_reference_is_calculated() -> None:
         "fat_g": Decimal("5.400"),
         "fiber_g": Decimal("3.600"),
     }
+
+
+def test_local_food_match_does_not_invoke_usda_fallback() -> None:
+    class NoUsdaFallback:
+        def resolve(self, _: str):
+            raise AssertionError("USDA must not be called when local nutrition exists.")
+
+    service = MealAnalysisService(
+        StubFoodRecognitionProvider(("Test Food",)),
+        NutritionService(StubFoodRepository(create_test_food())),  # type: ignore[arg-type]
+        usda_food_reference_service=NoUsdaFallback(),  # type: ignore[arg-type]
+    )
+    assert service.analyze(image_bytes=b"test", content_type="image/jpeg", weight_grams=Decimal("100")).status == "calculated"
+
+
+def test_usda_fallback_uses_existing_calculator_for_measured_weight() -> None:
+    class UsdaFallback:
+        def __init__(self) -> None:
+            self.called = False
+
+        def resolve(self, _: str) -> UsdaResolution:
+            self.called = True
+            return UsdaResolution(food=create_test_food())
+
+    fallback = UsdaFallback()
+    service = MealAnalysisService(
+        StubFoodRecognitionProvider(("Uncached food",)),
+        NutritionService(StubFoodRepository(None)),  # type: ignore[arg-type]
+        usda_food_reference_service=fallback,  # type: ignore[arg-type]
+    )
+    result = service.analyze(image_bytes=b"test", content_type="image/jpeg", weight_grams=Decimal("180"))
+    assert fallback.called is True
+    assert result.status == "calculated"
+    assert result.nutrition.calories == Decimal("180.000")
 
 
 def test_calculated_analysis_exposes_v2_values_without_changing_domain_state() -> None:

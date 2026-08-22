@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = None
     gemini_model: str | None = None
     gemini_timeout_seconds: int = Field(default=20, gt=0, le=120)
+    usda_fdc_enabled: bool = False
+    usda_fdc_api_key: str | None = None
+    usda_fdc_base_url: str = "https://api.nal.usda.gov/fdc/v1"
+    usda_fdc_timeout_seconds: int = Field(default=10, gt=0, le=60)
     nutrition_coach_provider: str = "mock"
     jwt_secret_key: str | None = None
     jwt_algorithm: str = "HS256"

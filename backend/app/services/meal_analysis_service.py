@@ -13,6 +13,7 @@ from app.schemas.nutrition import CalculatedFood, PortionNutrition
 from app.services.food_recognition_provider import FoodRecognitionProvider
 from app.services.nutrient_calculator import NutrientCalculator
 from app.services.nutrition_service import NutritionService
+from app.services.usda_food_reference_service import UsdaFoodReferenceService
 
 
 class MealAnalysisService:
@@ -23,10 +24,12 @@ class MealAnalysisService:
         food_recognition_provider: FoodRecognitionProvider,
         nutrition_service: NutritionService,
         nutrient_calculator: NutrientCalculator | None = None,
+        usda_food_reference_service: UsdaFoodReferenceService | None = None,
     ) -> None:
         self._food_recognition_provider = food_recognition_provider
         self._nutrition_service = nutrition_service
         self._nutrient_calculator = nutrient_calculator or NutrientCalculator()
+        self._usda_food_reference_service = usda_food_reference_service
 
     def analyze(
         self, *, image_bytes: bytes, content_type: str, weight_grams: Decimal
@@ -54,6 +57,15 @@ class MealAnalysisService:
         food = self._nutrition_service.get_food_by_recognized_name(
             recognized_foods[0].name
         )
+        if food is None and self._usda_food_reference_service is not None:
+            usda_resolution = self._usda_food_reference_service.resolve(recognized_foods[0].name)
+            if usda_resolution.candidate_names:
+                return RequiresFoodSelectionMealAnalysis(
+                    status=MealAnalysisStatus.REQUIRES_FOOD_SELECTION,
+                    recognized_foods=[RecognizedFood(name=name) for name in usda_resolution.candidate_names],
+                    recognition_source=recognition.source,
+                )
+            food = usda_resolution.food
         if food is None:
             return NutritionReferenceNotFoundMealAnalysis(
                 status=MealAnalysisStatus.NUTRITION_REFERENCE_NOT_FOUND,
