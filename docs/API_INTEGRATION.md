@@ -31,6 +31,33 @@ nullable tier on the ordinary profile; lifestyle diets use existing
 `dietary_restrictions`. R2B1 implements no clinical rules, medical thresholds,
 recommendation logic, or sensitive AI transmission.
 
+## R2C mobile onboarding status
+
+`GET /api/users/me/onboarding-status` is an authenticated, read-only,
+backend-authoritative completion contract for the future React Native/Expo
+client. It returns only:
+
+```json
+{
+  "completed": false,
+  "missing_required_fields": ["medical_conditions", "smoking_history"]
+}
+```
+
+It never returns profile values, consent values, or any sensitive declaration.
+The deterministic required concepts are `medical_conditions`,
+`smoking_history`, `drinking_history`, `body_build`, `allergies`,
+`medical_needs`, `lifestyle_diets`, `activity_level`, `budget_allotment`, and
+`nutrition_goal`. `pregnancy_postpartum` and `ethnicity` are optional.
+
+`null` means missing/unknown and is incomplete. Existing explicitly empty label
+arrays mean “none selected” for allergies, lifestyle diets, and medical needs.
+Medical conditions require a non-empty valid declaration, so explicit `none`
+counts as complete. Sensitive requirements count only while
+`sensitive_storage` is `granted`; withdrawal clears active sensitive values and
+can make onboarding incomplete without affecting login or ordinary account use.
+Clients must not calculate or persist their own authoritative completion flag.
+
 `POST /api/auth/register` accepts JSON. `POST /api/auth/token` accepts `application/x-www-form-urlencoded`; its `username` field is the user's email. Login returns `access_token` and `token_type` (`bearer`). Send protected requests with:
 
 ```http

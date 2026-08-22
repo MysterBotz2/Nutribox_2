@@ -2159,6 +2159,43 @@
         "title": "NutritionTargetUpdateRequest",
         "type": "object"
       },
+      "OnboardingRequiredField": {
+        "enum": [
+          "medical_conditions",
+          "smoking_history",
+          "drinking_history",
+          "body_build",
+          "allergies",
+          "medical_needs",
+          "lifestyle_diets",
+          "activity_level",
+          "budget_allotment",
+          "nutrition_goal"
+        ],
+        "title": "OnboardingRequiredField",
+        "type": "string"
+      },
+      "OnboardingStatusResponse": {
+        "description": "Derived owner-only completion metadata with no profile values.",
+        "properties": {
+          "completed": {
+            "title": "Completed",
+            "type": "boolean"
+          },
+          "missing_required_fields": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingRequiredField"
+            },
+            "title": "Missing Required Fields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "completed"
+        ],
+        "title": "OnboardingStatusResponse",
+        "type": "object"
+      },
       "OptionalNutrientValues": {
         "description": "Nullable neutral comparison values; remaining amounts may be negative.",
         "properties": {
@@ -4328,6 +4365,33 @@
           }
         ],
         "summary": "Get Me",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/me/onboarding-status": {
+      "get": {
+        "description": "Return derived mobile-onboarding completion metadata for the token owner.",
+        "operationId": "get_my_onboarding_status_api_users_me_onboarding_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get My Onboarding Status",
         "tags": [
           "users"
         ]
