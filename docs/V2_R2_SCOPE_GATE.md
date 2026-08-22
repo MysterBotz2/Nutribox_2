@@ -94,3 +94,13 @@ authentication and ownership tests, explicit unknown/clear behavior, reviewed
 migration/API compatibility, documented mobile contract, and no unauthorized
 personalization or AI context. R2A specifically needs a separate human
 authorization after this documentation is accepted.
+
+## R2D closure
+
+R2 is complete through R2D. The implemented system separates ordinary
+`NutritionProfile`, sensitive `SensitiveProfileContext`, and purpose-specific
+`ProfileConsent`; onboarding status is derived and owner-only. R2D validates the
+API/OpenAPI, migration path, ownership/privacy boundaries, and client handoff.
+It does not authorize R2B2 sensitive AI use, recommendations, medical logic,
+offline mutation, or any R3 work. The controlled evidence is recorded in
+`V2_R2_COMPLETION_REPORT.md`.

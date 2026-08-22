@@ -75,3 +75,12 @@ storage, a data shape, requiredness, clear/withdrawal behavior, mobile cache
 permission, and AI permission. Any recommendation use additionally needs a
 field-level approved methodology. Legal/policy topics require review without
 claiming compliance.
+
+## R2B1 completion and R2B2 deferral
+
+R2B1 is complete as a storage-and-consent foundation. It persists only the
+approved declaration set behind owner authentication and `sensitive_storage`.
+Storage withdrawal clears the active sensitive context; personalization and
+AI-context withdrawal preserve it. R2B2 is not authorized: no sensitive field
+may be transmitted to an AI provider or used for recommendations until separate
+task-minimization, consent, and validated methodology decisions are approved.

@@ -127,3 +127,12 @@ implemented within the R1 scope: approved reference data plus deterministic
 Decimal scaling is authoritative; no live AI numerical fallback is used. The
 completion evidence and deliberate deferrals are recorded in
 [V2_R1_COMPLETION_REPORT.md](V2_R1_COMPLETION_REPORT.md).
+
+## R2 completion status
+
+R2 is complete through R2D. R2A hardened the eight-field ordinary profile
+contract (including budget allotment); R2B1 added separate sensitive storage
+and three purpose states; R2C added derived owner-only onboarding metadata; and
+R2D validated migration, privacy, OpenAPI, and integration handoff. This does
+not change the status of recommendation, clinical, offline-sync, or AI-context
+requirements: R2B2 is deferred pending explicit approval and methodology.
