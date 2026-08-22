@@ -24,7 +24,8 @@
           "sedentary",
           "lightly_active",
           "moderately_active",
-          "very_active"
+          "very_active",
+          "highly_active"
         ],
         "title": "ActivityLevel",
         "type": "string"
@@ -228,6 +229,26 @@
         "title": "AdditionalNutrientValues",
         "type": "object"
       },
+      "AlcoholType": {
+        "enum": [
+          "beer",
+          "wine",
+          "spirits",
+          "mixed_drinks"
+        ],
+        "title": "AlcoholType",
+        "type": "string"
+      },
+      "BodyBuild": {
+        "enum": [
+          "lean",
+          "average",
+          "muscular",
+          "stocky"
+        ],
+        "title": "BodyBuild",
+        "type": "string"
+      },
       "Body_analyze_meal_api_meals_analyze_post": {
         "properties": {
           "file": {
@@ -329,6 +350,17 @@
         ],
         "title": "Body_recognize_food_api_ai_recognize_food_post",
         "type": "object"
+      },
+      "BudgetAllotment": {
+        "enum": [
+          "under_php_100",
+          "php_100_to_500",
+          "php_500_to_1000",
+          "php_1000_to_1500",
+          "more_than_php_1500"
+        ],
+        "title": "BudgetAllotment",
+        "type": "string"
       },
       "CalculatedFood": {
         "description": "The canonical food reference used for a portion calculation.",
@@ -491,6 +523,44 @@
         ],
         "title": "DeviceSimulationRequest",
         "type": "object"
+      },
+      "DrinkingAverageIntake": {
+        "enum": [
+          "one_to_two",
+          "three_to_four",
+          "five_or_more"
+        ],
+        "title": "DrinkingAverageIntake",
+        "type": "string"
+      },
+      "DrinkingFrequency": {
+        "enum": [
+          "daily",
+          "weekly",
+          "monthly",
+          "occasionally",
+          "rarely"
+        ],
+        "title": "DrinkingFrequency",
+        "type": "string"
+      },
+      "DrinkingStatus": {
+        "enum": [
+          "never",
+          "former",
+          "current"
+        ],
+        "title": "DrinkingStatus",
+        "type": "string"
+      },
+      "Ethnicity": {
+        "enum": [
+          "filipino",
+          "other",
+          "declined"
+        ],
+        "title": "Ethnicity",
+        "type": "string"
       },
       "FoodListResponse": {
         "description": "Collection response for food reference searches.",
@@ -660,6 +730,17 @@
         },
         "title": "HTTPValidationError",
         "type": "object"
+      },
+      "LastAlcoholConsumption": {
+        "enum": [
+          "last_24_hours",
+          "last_7_days",
+          "last_30_days",
+          "more_than_30_days_ago",
+          "never"
+        ],
+        "title": "LastAlcoholConsumption",
+        "type": "string"
       },
       "MealCreateRequest": {
         "additionalProperties": false,
@@ -1153,6 +1234,33 @@
         "title": "MealTotals",
         "type": "object"
       },
+      "MedicalCondition": {
+        "enum": [
+          "obesity",
+          "diabetes",
+          "hypertension",
+          "hyperlipidemia",
+          "anorexia_nervosa",
+          "bulimia",
+          "other",
+          "none"
+        ],
+        "title": "MedicalCondition",
+        "type": "string"
+      },
+      "MedicalNeed": {
+        "enum": [
+          "diabetic_friendly",
+          "low_sodium",
+          "heart_friendly",
+          "renal_friendly",
+          "pregnancy_friendly",
+          "gluten_free",
+          "lactose_free"
+        ],
+        "title": "MedicalNeed",
+        "type": "string"
+      },
       "NutrientTotals": {
         "description": "Stored-meal nutrient totals aggregated for a reporting period.",
         "properties": {
@@ -1563,6 +1671,16 @@
             ],
             "title": "Allergies"
           },
+          "budget_allotment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BudgetAllotment"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -1640,6 +1758,7 @@
           "nutrition_goal",
           "dietary_restrictions",
           "allergies",
+          "budget_allotment",
           "created_at",
           "updated_at"
         ],
@@ -1687,6 +1806,16 @@
               }
             ],
             "title": "Allergies"
+          },
+          "budget_allotment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BudgetAllotment"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "dietary_restrictions": {
             "anyOf": [
@@ -2389,6 +2518,95 @@
         "title": "PortionNutrition",
         "type": "object"
       },
+      "PregnancyDurationUnit": {
+        "enum": [
+          "weeks",
+          "months"
+        ],
+        "title": "PregnancyDurationUnit",
+        "type": "string"
+      },
+      "PregnancyStatus": {
+        "enum": [
+          "pregnant",
+          "postpartum",
+          "none",
+          "declined"
+        ],
+        "title": "PregnancyStatus",
+        "type": "string"
+      },
+      "ProfileConsentResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "ai_context": {
+            "$ref": "#/components/schemas/ProfileConsentState"
+          },
+          "personalization": {
+            "$ref": "#/components/schemas/ProfileConsentState"
+          },
+          "sensitive_storage": {
+            "$ref": "#/components/schemas/ProfileConsentState"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sensitive_storage",
+          "personalization",
+          "ai_context",
+          "user_id",
+          "updated_at"
+        ],
+        "title": "ProfileConsentResponse",
+        "type": "object"
+      },
+      "ProfileConsentState": {
+        "enum": [
+          "not_asked",
+          "granted",
+          "declined",
+          "withdrawn"
+        ],
+        "title": "ProfileConsentState",
+        "type": "string"
+      },
+      "ProfileConsentUpdateRequest": {
+        "additionalProperties": false,
+        "description": "Full replacement of three independent product permission states.",
+        "properties": {
+          "ai_context": {
+            "$ref": "#/components/schemas/ProfileConsentState"
+          },
+          "personalization": {
+            "$ref": "#/components/schemas/ProfileConsentState"
+          },
+          "sensitive_storage": {
+            "$ref": "#/components/schemas/ProfileConsentState"
+          }
+        },
+        "required": [
+          "sensitive_storage",
+          "personalization",
+          "ai_context"
+        ],
+        "title": "ProfileConsentUpdateRequest",
+        "type": "object"
+      },
       "ProgressSummaryResponse": {
         "properties": {
           "daily": {
@@ -2517,6 +2735,416 @@
         ],
         "title": "RequiresFoodSelectionMealAnalysis",
         "type": "object"
+      },
+      "SensitiveProfileResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "alcohol_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AlcoholType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "body_build": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BodyBuild"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "drinking_average_intake": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DrinkingAverageIntake"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "drinking_frequency": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DrinkingFrequency"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "drinking_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DrinkingStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ethnicity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Ethnicity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_alcohol_consumption": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LastAlcoholConsumption"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "medical_conditions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MedicalCondition"
+                },
+                "maxItems": 8,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medical Conditions"
+          },
+          "medical_conditions_other": {
+            "anyOf": [
+              {
+                "maxLength": 250,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medical Conditions Other"
+          },
+          "medical_needs": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MedicalNeed"
+                },
+                "maxItems": 7,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medical Needs"
+          },
+          "pregnancy_due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pregnancy Due Date"
+          },
+          "pregnancy_duration_unit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PregnancyDurationUnit"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pregnancy_duration_value": {
+            "anyOf": [
+              {
+                "maximum": 1000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pregnancy Duration Value"
+          },
+          "pregnancy_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PregnancyStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "smoking_method": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmokingMethod"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "smoking_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmokingStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SensitiveProfileResponse",
+        "type": "object"
+      },
+      "SensitiveProfileUpdateRequest": {
+        "additionalProperties": false,
+        "description": "Full replacement of active sensitive declarations; null means unknown or cleared.",
+        "properties": {
+          "alcohol_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AlcoholType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "body_build": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BodyBuild"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "drinking_average_intake": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DrinkingAverageIntake"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "drinking_frequency": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DrinkingFrequency"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "drinking_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DrinkingStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ethnicity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Ethnicity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_alcohol_consumption": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LastAlcoholConsumption"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "medical_conditions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MedicalCondition"
+                },
+                "maxItems": 8,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medical Conditions"
+          },
+          "medical_conditions_other": {
+            "anyOf": [
+              {
+                "maxLength": 250,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medical Conditions Other"
+          },
+          "medical_needs": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MedicalNeed"
+                },
+                "maxItems": 7,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medical Needs"
+          },
+          "pregnancy_due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pregnancy Due Date"
+          },
+          "pregnancy_duration_unit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PregnancyDurationUnit"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pregnancy_duration_value": {
+            "anyOf": [
+              {
+                "maximum": 1000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pregnancy Duration Value"
+          },
+          "pregnancy_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PregnancyStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "smoking_method": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmokingMethod"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "smoking_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmokingStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "SensitiveProfileUpdateRequest",
+        "type": "object"
+      },
+      "SmokingMethod": {
+        "enum": [
+          "cigarettes",
+          "alternative_tobacco",
+          "vaping",
+          "e_cigarettes",
+          "cannabis",
+          "none"
+        ],
+        "title": "SmokingMethod",
+        "type": "string"
+      },
+      "SmokingStatus": {
+        "enum": [
+          "never",
+          "last_6_months",
+          "last_12_months",
+          "more_than_12_months_ago"
+        ],
+        "title": "SmokingStatus",
+        "type": "string"
       },
       "TargetNutrientValues": {
         "properties": {
@@ -3771,6 +4399,148 @@
           }
         ],
         "summary": "Replace My Profile",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/me/profile-consent": {
+      "get": {
+        "operationId": "get_my_profile_consent_api_users_me_profile_consent_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileConsentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get My Profile Consent",
+        "tags": [
+          "users"
+        ]
+      },
+      "put": {
+        "description": "Replace independent product permission states for the authenticated user.",
+        "operationId": "replace_my_profile_consent_api_users_me_profile_consent_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileConsentUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileConsentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Replace My Profile Consent",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/me/sensitive-profile": {
+      "get": {
+        "operationId": "get_my_sensitive_profile_api_users_me_sensitive_profile_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensitiveProfileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get My Sensitive Profile",
+        "tags": [
+          "users"
+        ]
+      },
+      "put": {
+        "description": "Replace active sensitive declarations when storage consent is granted.",
+        "operationId": "replace_my_sensitive_profile_api_users_me_sensitive_profile_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SensitiveProfileUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensitiveProfileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Replace My Sensitive Profile",
         "tags": [
           "users"
         ]

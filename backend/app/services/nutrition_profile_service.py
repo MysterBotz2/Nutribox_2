@@ -31,5 +31,8 @@ class NutritionProfileService:
             profile.nutrition_goal = request.nutrition_goal.value if request.nutrition_goal else None
             profile.dietary_restrictions = request.dietary_restrictions
             profile.allergies = request.allergies
+            profile.budget_allotment = (
+                request.budget_allotment.value if request.budget_allotment is not None else None
+            )
             session.flush()
         return profile

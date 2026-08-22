@@ -31,6 +31,13 @@ This is a domain impact assessment, not a final SQL design. “Likely” indicat
 
 ## R2A-0 profile impact
 
+## R2B1 domain impact
+
+R2B1 adds owner-scoped `SensitiveProfileContext` and `ProfileConsent` domains.
+It extends `NutritionProfile` only with a nullable budget tier; lifestyle diet
+labels remain in its existing dietary-restrictions domain. Coach context,
+diagnostics, recommendations, histories, and mobile domains are unchanged.
+
 The R2 field register is deliberately a domain boundary rather than a proposed
 table layout. `User` remains the account/identity owner; profile, health/dietary
 declarations, consent/preference state, and AI context are separate concerns.

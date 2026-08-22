@@ -4,6 +4,11 @@
 
 This R0 baseline is analysis only. Client-provided sources take precedence over the current implementation. The supplied source set was inspected outside the repository: **Nutri-Box V2 Development Roadmap.pdf**, **Nutri-Box Flowchart App.png**, **Nutri-Box Flowchart Device.png**, **Flowchart 4C.png** (Settings), **Flowchart 5.png** (Diagnostics), and **Nutri-Box Flowchart FINAL.png** (combined flow). The three full/combined charts duplicate and connect the focused flows. The roadmap PDF is recorded by title because the local PDF reader did not complete text extraction; its requirements are traced only where corroborated by the client flowcharts or explicitly stated in the R0 brief. No requirement was invented to fill an unreadable roadmap section.
 
+R2B1 additionally traces the accepted `FollowUpQuestions-Answers.docx` response.
+It authorizes storage and product consent only. Client-described medical,
+diagnostic, calculator, AI, and recommendation behavior remains unimplemented
+pending approved methodology.
+
 **Surfaces:** Shared Backend (B), Companion Mobile (M), Raspberry Pi Device (P), Reference Web (W). “DB/API” state likely impact, not an approved design. Current implementation references actual repository code as of Alembic head `a13f00d4a1a3`.
 
 | ID | Client source / location | Requirement statement | Primary | B / DB / API impact | Current mapping | Status | Risk | Clarification / notes |

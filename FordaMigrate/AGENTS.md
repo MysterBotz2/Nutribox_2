@@ -165,5 +165,3 @@ Do not skip major prerequisites unless explicitly instructed.
 ## V2 re-baseline
 
 R0, R0.6, and R1 are complete. R1 established the V2 nutrition/data-model foundation; its completion report is `docs/V2_R1_COMPLETION_REPORT.md`. R2 requires explicit authorization and its own profile/onboarding, privacy, and consent decisions. Phase 16E remains the frozen Web Reference Client checkpoint and Phase 16F is postponed. Client V2 sources remain primary; the official companion app is future React Native/Expo, the Raspberry Pi UI/controller is separate, and cloud remains only a possible future deployment option.
-
-R2B1 provides authenticated, storage-only sensitive-profile declarations and purpose-specific product consent. It does not authorize sensitive AI context or medical/personalized recommendation logic. Blood type and somatotype remain unresolved/deferred; R2C remains separate future work.

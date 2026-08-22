@@ -30,4 +30,10 @@ class User(Base):
     nutrition_target: Mapped["NutritionTarget | None"] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan", passive_deletes=True
     )
+    sensitive_profile_context: Mapped["SensitiveProfileContext | None"] = relationship(
+        back_populates="user", uselist=False, cascade="all, delete-orphan", passive_deletes=True
+    )
+    profile_consent: Mapped["ProfileConsent | None"] = relationship(
+        back_populates="user", uselist=False, cascade="all, delete-orphan", passive_deletes=True
+    )
     meals: Mapped[list["Meal"]] = relationship(back_populates="user")

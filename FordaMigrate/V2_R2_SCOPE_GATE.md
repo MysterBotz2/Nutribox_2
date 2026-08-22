@@ -64,16 +64,6 @@ DEC-GOAL-001, DEC-TARGET-001, and DEC-SET-001 remain as listed in
 
 ## 20. R2A authorization gate
 
-## R2B1 authorization update
-
-The accepted client follow-up response authorizes R2B1 to persist the approved
-sensitive declaration set through a separate owner-only context and to persist
-three independent product-purpose consent states. Existing core profile fields
-remain canonical; budget is an ordinary-profile tier and lifestyle diets remain
-dietary restriction labels. Storage authorization does not authorize sensitive
-AI context, clinical/personalized recommendations, blood type, somatotypes,
-BMI, mobile onboarding, or offline behavior.
-
 **Human-approved R2A field set:** `age`, `height_cm`, `weight_kg`,
 `activity_level`, `nutrition_goal`, `dietary_restrictions`, and `allergies`.
 This is complete and exclusive. R2A adds no new profile-field requirement;

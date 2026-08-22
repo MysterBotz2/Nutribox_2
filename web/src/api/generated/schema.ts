@@ -373,6 +373,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/me/profile-consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get My Profile Consent */
+        get: operations["get_my_profile_consent_api_users_me_profile_consent_get"];
+        /**
+         * Replace My Profile Consent
+         * @description Replace independent product permission states for the authenticated user.
+         */
+        put: operations["replace_my_profile_consent_api_users_me_profile_consent_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/me/sensitive-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get My Sensitive Profile */
+        get: operations["get_my_sensitive_profile_api_users_me_sensitive_profile_get"];
+        /**
+         * Replace My Sensitive Profile
+         * @description Replace active sensitive declarations when storage consent is granted.
+         */
+        put: operations["replace_my_sensitive_profile_api_users_me_sensitive_profile_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/me/targets": {
         parameters: {
             query?: never;
@@ -412,7 +454,7 @@ export interface components {
          * ActivityLevel
          * @enum {string}
          */
-        ActivityLevel: "sedentary" | "lightly_active" | "moderately_active" | "very_active";
+        ActivityLevel: "sedentary" | "lightly_active" | "moderately_active" | "very_active" | "highly_active";
         /**
          * AdditionalNutrientValues
          * @description Nullable V2 nutrients in their canonical units; ``None`` means unknown.
@@ -451,6 +493,16 @@ export interface components {
             /** Zinc Mg */
             zinc_mg?: string | null;
         };
+        /**
+         * AlcoholType
+         * @enum {string}
+         */
+        AlcoholType: "beer" | "wine" | "spirits" | "mixed_drinks";
+        /**
+         * BodyBuild
+         * @enum {string}
+         */
+        BodyBuild: "lean" | "average" | "muscular" | "stocky";
         /** Body_analyze_meal_api_meals_analyze_post */
         Body_analyze_meal_api_meals_analyze_post: {
             /**
@@ -489,6 +541,11 @@ export interface components {
              */
             file: string;
         };
+        /**
+         * BudgetAllotment
+         * @enum {string}
+         */
+        BudgetAllotment: "under_php_100" | "php_100_to_500" | "php_500_to_1000" | "php_1000_to_1500" | "more_than_php_1500";
         /**
          * CalculatedFood
          * @description The canonical food reference used for a portion calculation.
@@ -574,6 +631,26 @@ export interface components {
             weight_grams: number;
         };
         /**
+         * DrinkingAverageIntake
+         * @enum {string}
+         */
+        DrinkingAverageIntake: "one_to_two" | "three_to_four" | "five_or_more";
+        /**
+         * DrinkingFrequency
+         * @enum {string}
+         */
+        DrinkingFrequency: "daily" | "weekly" | "monthly" | "occasionally" | "rarely";
+        /**
+         * DrinkingStatus
+         * @enum {string}
+         */
+        DrinkingStatus: "never" | "former" | "current";
+        /**
+         * Ethnicity
+         * @enum {string}
+         */
+        Ethnicity: "filipino" | "other" | "declined";
+        /**
          * FoodListResponse
          * @description Collection response for food reference searches.
          */
@@ -640,6 +717,11 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * LastAlcoholConsumption
+         * @enum {string}
+         */
+        LastAlcoholConsumption: "last_24_hours" | "last_7_days" | "last_30_days" | "more_than_30_days_ago" | "never";
         /** MealCreateRequest */
         MealCreateRequest: {
             /** Items */
@@ -772,6 +854,16 @@ export interface components {
             zinc_mg?: string | null;
         };
         /**
+         * MedicalCondition
+         * @enum {string}
+         */
+        MedicalCondition: "obesity" | "diabetes" | "hypertension" | "hyperlipidemia" | "anorexia_nervosa" | "bulimia" | "other" | "none";
+        /**
+         * MedicalNeed
+         * @enum {string}
+         */
+        MedicalNeed: "diabetic_friendly" | "low_sodium" | "heart_friendly" | "renal_friendly" | "pregnancy_friendly" | "gluten_free" | "lactose_free";
+        /**
          * NutrientTotals
          * @description Stored-meal nutrient totals aggregated for a reporting period.
          */
@@ -885,6 +977,7 @@ export interface components {
             age: number | null;
             /** Allergies */
             allergies: string[] | null;
+            budget_allotment: components["schemas"]["BudgetAllotment"] | null;
             /**
              * Created At
              * Format: date-time
@@ -917,6 +1010,7 @@ export interface components {
             age?: number | null;
             /** Allergies */
             allergies?: string[] | null;
+            budget_allotment?: components["schemas"]["BudgetAllotment"] | null;
             /** Dietary Restrictions */
             dietary_restrictions?: string[] | null;
             /** Height Cm */
@@ -1083,6 +1177,40 @@ export interface components {
             /** Zinc Mg */
             zinc_mg?: string | null;
         };
+        /**
+         * PregnancyDurationUnit
+         * @enum {string}
+         */
+        PregnancyDurationUnit: "weeks" | "months";
+        /**
+         * PregnancyStatus
+         * @enum {string}
+         */
+        PregnancyStatus: "pregnant" | "postpartum" | "none" | "declined";
+        /** ProfileConsentResponse */
+        ProfileConsentResponse: {
+            ai_context: components["schemas"]["ProfileConsentState"];
+            personalization: components["schemas"]["ProfileConsentState"];
+            sensitive_storage: components["schemas"]["ProfileConsentState"];
+            /** Updated At */
+            updated_at: string | null;
+            /** User Id */
+            user_id: number;
+        };
+        /**
+         * ProfileConsentState
+         * @enum {string}
+         */
+        ProfileConsentState: "not_asked" | "granted" | "declined" | "withdrawn";
+        /**
+         * ProfileConsentUpdateRequest
+         * @description Full replacement of three independent product permission states.
+         */
+        ProfileConsentUpdateRequest: {
+            ai_context: components["schemas"]["ProfileConsentState"];
+            personalization: components["schemas"]["ProfileConsentState"];
+            sensitive_storage: components["schemas"]["ProfileConsentState"];
+        };
         /** ProgressSummaryResponse */
         ProgressSummaryResponse: {
             /** Daily */
@@ -1145,6 +1273,79 @@ export interface components {
              */
             status: "requires_food_selection";
         };
+        /** SensitiveProfileResponse */
+        SensitiveProfileResponse: {
+            alcohol_type?: components["schemas"]["AlcoholType"] | null;
+            body_build?: components["schemas"]["BodyBuild"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            drinking_average_intake?: components["schemas"]["DrinkingAverageIntake"] | null;
+            drinking_frequency?: components["schemas"]["DrinkingFrequency"] | null;
+            drinking_status?: components["schemas"]["DrinkingStatus"] | null;
+            ethnicity?: components["schemas"]["Ethnicity"] | null;
+            last_alcohol_consumption?: components["schemas"]["LastAlcoholConsumption"] | null;
+            /** Medical Conditions */
+            medical_conditions?: components["schemas"]["MedicalCondition"][] | null;
+            /** Medical Conditions Other */
+            medical_conditions_other?: string | null;
+            /** Medical Needs */
+            medical_needs?: components["schemas"]["MedicalNeed"][] | null;
+            /** Pregnancy Due Date */
+            pregnancy_due_date?: string | null;
+            pregnancy_duration_unit?: components["schemas"]["PregnancyDurationUnit"] | null;
+            /** Pregnancy Duration Value */
+            pregnancy_duration_value?: number | null;
+            pregnancy_status?: components["schemas"]["PregnancyStatus"] | null;
+            smoking_method?: components["schemas"]["SmokingMethod"] | null;
+            smoking_status?: components["schemas"]["SmokingStatus"] | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** User Id */
+            user_id: number;
+        };
+        /**
+         * SensitiveProfileUpdateRequest
+         * @description Full replacement of active sensitive declarations; null means unknown or cleared.
+         */
+        SensitiveProfileUpdateRequest: {
+            alcohol_type?: components["schemas"]["AlcoholType"] | null;
+            body_build?: components["schemas"]["BodyBuild"] | null;
+            drinking_average_intake?: components["schemas"]["DrinkingAverageIntake"] | null;
+            drinking_frequency?: components["schemas"]["DrinkingFrequency"] | null;
+            drinking_status?: components["schemas"]["DrinkingStatus"] | null;
+            ethnicity?: components["schemas"]["Ethnicity"] | null;
+            last_alcohol_consumption?: components["schemas"]["LastAlcoholConsumption"] | null;
+            /** Medical Conditions */
+            medical_conditions?: components["schemas"]["MedicalCondition"][] | null;
+            /** Medical Conditions Other */
+            medical_conditions_other?: string | null;
+            /** Medical Needs */
+            medical_needs?: components["schemas"]["MedicalNeed"][] | null;
+            /** Pregnancy Due Date */
+            pregnancy_due_date?: string | null;
+            pregnancy_duration_unit?: components["schemas"]["PregnancyDurationUnit"] | null;
+            /** Pregnancy Duration Value */
+            pregnancy_duration_value?: number | null;
+            pregnancy_status?: components["schemas"]["PregnancyStatus"] | null;
+            smoking_method?: components["schemas"]["SmokingMethod"] | null;
+            smoking_status?: components["schemas"]["SmokingStatus"] | null;
+        };
+        /**
+         * SmokingMethod
+         * @enum {string}
+         */
+        SmokingMethod: "cigarettes" | "alternative_tobacco" | "vaping" | "e_cigarettes" | "cannabis" | "none";
+        /**
+         * SmokingStatus
+         * @enum {string}
+         */
+        SmokingStatus: "never" | "last_6_months" | "last_12_months" | "more_than_12_months_ago";
         /** TargetNutrientValues */
         TargetNutrientValues: {
             /** Calories */
@@ -1884,6 +2085,112 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NutritionProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_my_profile_consent_api_users_me_profile_consent_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileConsentResponse"];
+                };
+            };
+        };
+    };
+    replace_my_profile_consent_api_users_me_profile_consent_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileConsentUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileConsentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_my_sensitive_profile_api_users_me_sensitive_profile_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SensitiveProfileResponse"];
+                };
+            };
+        };
+    };
+    replace_my_sensitive_profile_api_users_me_sensitive_profile_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SensitiveProfileUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SensitiveProfileResponse"];
                 };
             };
             /** @description Validation Error */
