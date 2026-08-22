@@ -28,6 +28,8 @@ def test_openapi_has_v1_metadata_routes_and_oauth2_security() -> None:
         "/api/meals/analyze",
         "/api/meals",
         "/api/meals/{meal_id}",
+        "/api/scheduled-meals",
+        "/api/scheduled-meals/{scheduled_meal_id}",
         "/api/progress/today",
         "/api/progress/daily",
         "/api/progress/weekly",
@@ -94,3 +96,23 @@ def test_openapi_preserves_r2_profile_privacy_boundaries() -> None:
         "allergies", "medical_needs", "lifestyle_diets", "activity_level",
         "budget_allotment", "nutrition_goal",
     ]
+
+
+def test_openapi_exposes_owner_only_r3a_scheduled_meal_contract() -> None:
+    schema = app.openapi()
+    paths = schema["paths"]
+    schemas = schema["components"]["schemas"]
+    bearer_security = [{"OAuth2PasswordBearer": []}]
+
+    for path, methods in {
+        "/api/scheduled-meals": ("get", "post"),
+        "/api/scheduled-meals/{scheduled_meal_id}": ("get", "put", "delete"),
+    }.items():
+        for method in methods:
+            assert paths[path][method]["security"] == bearer_security
+
+    write_properties = schemas["ScheduledMealCreateRequest"]["properties"]
+    assert set(write_properties) == {"scheduled_for", "title", "notes"}
+    assert {"user_id", "food_id", "planned_calories", "medical_conditions"}.isdisjoint(write_properties)
+    assert paths["/api/scheduled-meals"]["get"]["parameters"][-2]["name"] == "limit"
+    assert paths["/api/scheduled-meals/{scheduled_meal_id}"]["delete"]["responses"]["204"]

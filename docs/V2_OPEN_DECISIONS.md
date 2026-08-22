@@ -66,6 +66,14 @@ conflict resolution, blood type, somatotype, and BMI are still unresolved or
 deferred. R2B2 therefore remains deferred and must not be inferred from the
 existence of stored sensitive declarations.
 
+## R3A schedule boundary
+
+R3A resolves only the storage and owner/time-window mechanics of a planned
+meal. Meal-type/slot taxonomy, cancellation/completion semantics,
+schedule-to-logged-meal matching, reminders, missed-meal metrics, diagnostic
+definitions, and planned nutrition/recommendation attachment remain open or
+deferred. No timestamp-based actual-meal inference is authorized.
+
 ## Immediate priority
 
 **DEC-NUTR-001 is the immediate decision before R1.** It determines the V2 nutrition data model, provenance, snapshot semantics, food-data imports, calculator validity, diagnostics, and research evaluation. DEC-PROF-001 and DEC-DATA-001 should be answered before any sensitive-profile or extended-nutrient migration is proposed.

@@ -175,3 +175,8 @@ explicitly deferred: it requires separate authorization and approved methodology
 Blood type, somatotype, BMI, offline mutation/sync, and medical or personalized
 recommendation behavior remain out of scope. Any R3 work needs its own approved
 scope and must not reinterpret R2 storage as authorization for downstream use.
+
+R3A establishes only the authenticated, user-owned scheduled-meal CRUD and
+date-window foundation. A schedule is planned intent, not a logged Meal: it has
+no nutrition, target, sensitive-profile, AI, or recommendation side effects.
+R3B diagnostics/history remains separate future work.

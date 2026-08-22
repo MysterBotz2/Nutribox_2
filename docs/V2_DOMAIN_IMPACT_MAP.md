@@ -12,7 +12,7 @@ This is a domain impact assessment, not a final SQL design. “Likely” indicat
 | Ingredient/Recipe/Menu | none | NEW | Ingredient, recipe version, recipe ingredient, canteen menu/schedule | Likely | Likely | B/M/P |
 | Nutrition Reference | five fixed nutrient columns | REFACTOR | Confirmed V2 nutrient dictionary and provenance/completeness strategy | Likely | Likely | B/M/P |
 | Meal | `Meal`, `MealItem` immutable snapshots | KEEP | Meal type/slot and capture metadata only if requirements approved | Possible | Likely | B/M/P |
-| Meal Schedule | none | NEW | Planned meal, slot, expected intake, completion/missed status | Likely | Likely | B/M |
+| Meal Schedule | `ScheduledMeal` planned label/time/notes | EXTEND | Future slot, expected intake, completion/missed status only after scope approval | No new R3A API migration expected beyond foundation | Likely | B/M |
 | Meal Analysis | `MealAnalysisService`, image validation | EXTEND | Device capture transaction, confirmation, multi-food portion workflow | Possible | Likely | B/P/M |
 | Portion/Leftover | manual measured portion only | NEW | Leftover scan/measurement/matching after DEC-LOSS-001 | Likely | Likely | B/P |
 | Nutrition Target | `NutritionTarget`, source type | KEEP | History/versioning, possibly broader nutrient scope | Likely | Likely | B/M |

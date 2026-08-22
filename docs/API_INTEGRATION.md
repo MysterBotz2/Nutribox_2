@@ -150,6 +150,65 @@ characters. Unsupported fields are rejected with `422`.
 R2A does not add consent runtime, sensitive health/lifestyle fields,
 recommendation logic, weight/goal history, or additional AI Coach context.
 
+## R3A scheduled meals
+
+Scheduled meals are authenticated, user-owned planned intent. They are separate
+from logged `Meal` records: schedule CRUD does not create a meal, modify a
+`NutritionTarget`, calculate nutrition, resolve Food data, read sensitive
+profiles, or call an AI provider.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | `/api/scheduled-meals` | Create a planned label. |
+| GET | `/api/scheduled-meals` | List the token owner's schedule entries. |
+| GET | `/api/scheduled-meals/{scheduled_meal_id}` | Read one owned entry. |
+| PUT | `/api/scheduled-meals/{scheduled_meal_id}` | Fully replace one owned entry. |
+| DELETE | `/api/scheduled-meals/{scheduled_meal_id}` | Permanently remove one owned entry. |
+
+Write bodies contain only `scheduled_for`, `title`, and optional `notes`.
+`scheduled_for` must be an ISO-8601 datetime with an explicit timezone offset;
+the API normalizes the returned instant to UTC (`Z`). `title` is 1-160 trimmed
+characters and `notes`, when supplied, is 1-1000 trimmed characters. Past
+instants are allowed. Unknown fields, including `user_id`, food IDs, nutrition
+values, sensitive profile data, and AI instructions, return `422`.
+
+`GET /api/scheduled-meals` accepts optional inclusive `scheduled_from` and
+`scheduled_to` ISO-8601 instants, plus existing `limit` (1-100, default 20) and
+`offset` (default 0) pagination. Bounds must include offsets and
+`scheduled_from` must not be later than `scheduled_to`. Results are ordered by
+`scheduled_for` ascending and then `id` ascending. A missing or unowned entry
+returns `404`, avoiding user/resource enumeration; another user's entries never
+appear in a list.
+
+Example create request:
+
+```json
+{
+  "scheduled_for": "2026-08-24T12:30:00+08:00",
+  "title": "Lunch",
+  "notes": "Bring a packed meal."
+}
+```
+
+Example response:
+
+```json
+{
+  "id": 42,
+  "scheduled_for": "2026-08-24T04:30:00Z",
+  "title": "Lunch",
+  "notes": "Bring a packed meal.",
+  "created_at": "2026-08-22T12:00:00Z",
+  "updated_at": "2026-08-22T12:00:00Z"
+}
+```
+
+R3A uses hard deletion (`204 No Content`), not cancellation status or
+soft-delete behavior. It has no explicit link to an actual Meal; timestamp
+proximity must never be used to infer one. Future mobile clients should treat
+FastAPI/PostgreSQL as authoritative and may use the time-window list endpoint
+for today, tomorrow, week, and upcoming views.
+
 ## Progress and targets
 
 ### V2 additive nutrition fields
