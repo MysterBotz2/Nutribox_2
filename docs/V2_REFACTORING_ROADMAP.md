@@ -40,6 +40,13 @@ separately authorized future boundary for sensitive AI/recommendation use, not
 a continuation of R2. R3 remains the next candidate domain only after its own
 scope gate and decision dependencies are accepted.
 
+## R3A checkpoint
+
+R3A implements the minimal owner-scoped planned-meal schedule foundation:
+timestamped labels, bounded notes, chronological window retrieval, update, and
+hard deletion. It does not implement R3B diagnostics, schedule-versus-logged
+analytics, weight/goal history, recommendations, or AI planning.
+
 ## R2B-0 checkpoint
 
 ## R2B1 completion checkpoint

@@ -335,6 +335,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/scheduled-meals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Scheduled Meals */
+        get: operations["list_scheduled_meals_api_scheduled_meals_get"];
+        put?: never;
+        /** Create Scheduled Meal */
+        post: operations["create_scheduled_meal_api_scheduled_meals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/scheduled-meals/{scheduled_meal_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Scheduled Meal */
+        get: operations["get_scheduled_meal_api_scheduled_meals__scheduled_meal_id__get"];
+        /** Update Scheduled Meal */
+        put: operations["update_scheduled_meal_api_scheduled_meals__scheduled_meal_id__put"];
+        post?: never;
+        /** Delete Scheduled Meal */
+        delete: operations["delete_scheduled_meal_api_scheduled_meals__scheduled_meal_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/me": {
         parameters: {
             query?: never;
@@ -1308,6 +1345,63 @@ export interface components {
              */
             status: "requires_food_selection";
         };
+        /** ScheduledMealCreateRequest */
+        ScheduledMealCreateRequest: {
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Scheduled For
+             * Format: date-time
+             */
+            scheduled_for: string;
+            /** Title */
+            title: string;
+        };
+        /** ScheduledMealListResponse */
+        ScheduledMealListResponse: {
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Scheduled Meals */
+            scheduled_meals: components["schemas"]["ScheduledMealResponse"][];
+        };
+        /** ScheduledMealResponse */
+        ScheduledMealResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /** Notes */
+            notes: string | null;
+            /**
+             * Scheduled For
+             * Format: date-time
+             */
+            scheduled_for: string;
+            /** Title */
+            title: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ScheduledMealUpdateRequest */
+        ScheduledMealUpdateRequest: {
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Scheduled For
+             * Format: date-time
+             */
+            scheduled_for: string;
+            /** Title */
+            title: string;
+        };
         /** SensitiveProfileResponse */
         SensitiveProfileResponse: {
             alcohol_type?: components["schemas"]["AlcoholType"] | null;
@@ -2048,6 +2142,168 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["WeeklyProgressResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_scheduled_meals_api_scheduled_meals_get: {
+        parameters: {
+            query?: {
+                scheduled_from?: string | null;
+                scheduled_to?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduledMealListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_scheduled_meal_api_scheduled_meals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduledMealCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduledMealResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_scheduled_meal_api_scheduled_meals__scheduled_meal_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheduled_meal_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduledMealResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_scheduled_meal_api_scheduled_meals__scheduled_meal_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheduled_meal_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduledMealUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduledMealResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_scheduled_meal_api_scheduled_meals__scheduled_meal_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheduled_meal_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

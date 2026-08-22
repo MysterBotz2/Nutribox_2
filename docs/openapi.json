@@ -2773,6 +2773,150 @@
         "title": "RequiresFoodSelectionMealAnalysis",
         "type": "object"
       },
+      "ScheduledMealCreateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "scheduled_for": {
+            "format": "date-time",
+            "title": "Scheduled For",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scheduled_for",
+          "title"
+        ],
+        "title": "ScheduledMealCreateRequest",
+        "type": "object"
+      },
+      "ScheduledMealListResponse": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "scheduled_meals": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduledMealResponse"
+            },
+            "title": "Scheduled Meals",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scheduled_meals",
+          "limit",
+          "offset"
+        ],
+        "title": "ScheduledMealListResponse",
+        "type": "object"
+      },
+      "ScheduledMealResponse": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "scheduled_for": {
+            "format": "date-time",
+            "title": "Scheduled For",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scheduled_for",
+          "title",
+          "notes",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ScheduledMealResponse",
+        "type": "object"
+      },
+      "ScheduledMealUpdateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "scheduled_for": {
+            "format": "date-time",
+            "title": "Scheduled For",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scheduled_for",
+          "title"
+        ],
+        "title": "ScheduledMealUpdateRequest",
+        "type": "object"
+      },
       "SensitiveProfileResponse": {
         "additionalProperties": false,
         "properties": {
@@ -4341,6 +4485,285 @@
         "summary": "Get Weekly Progress",
         "tags": [
           "progress"
+        ]
+      }
+    },
+    "/api/scheduled-meals": {
+      "get": {
+        "operationId": "list_scheduled_meals_api_scheduled_meals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scheduled_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scheduled From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scheduled_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scheduled To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledMealListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Scheduled Meals",
+        "tags": [
+          "scheduled meals"
+        ]
+      },
+      "post": {
+        "operationId": "create_scheduled_meal_api_scheduled_meals_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduledMealCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledMealResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Scheduled Meal",
+        "tags": [
+          "scheduled meals"
+        ]
+      }
+    },
+    "/api/scheduled-meals/{scheduled_meal_id}": {
+      "delete": {
+        "operationId": "delete_scheduled_meal_api_scheduled_meals__scheduled_meal_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduled_meal_id",
+            "required": true,
+            "schema": {
+              "title": "Scheduled Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Scheduled Meal",
+        "tags": [
+          "scheduled meals"
+        ]
+      },
+      "get": {
+        "operationId": "get_scheduled_meal_api_scheduled_meals__scheduled_meal_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduled_meal_id",
+            "required": true,
+            "schema": {
+              "title": "Scheduled Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledMealResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Scheduled Meal",
+        "tags": [
+          "scheduled meals"
+        ]
+      },
+      "put": {
+        "operationId": "update_scheduled_meal_api_scheduled_meals__scheduled_meal_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduled_meal_id",
+            "required": true,
+            "schema": {
+              "title": "Scheduled Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduledMealUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledMealResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Scheduled Meal",
+        "tags": [
+          "scheduled meals"
         ]
       }
     },

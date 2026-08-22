@@ -15,6 +15,7 @@ from app.routers.health import router as health_router
 from app.routers.meals import router as meals_router
 from app.routers.nutrition import router as nutrition_router
 from app.routers.progress import router as progress_router
+from app.routers.scheduled_meals import router as scheduled_meals_router
 from app.routers.users import router as users_router
 from app.core.config import settings
 
@@ -32,7 +33,7 @@ def configure_cors(application: FastAPI, allowed_origins: list[str]) -> None:
             CORSMiddleware,
             allow_origins=allowed_origins,
             allow_credentials=False,
-            allow_methods=["GET", "POST", "PUT", "OPTIONS"],
+            allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             allow_headers=["Authorization", "Content-Type"],
         )
 
@@ -45,6 +46,7 @@ app.include_router(device_router)
 app.include_router(ai_router)
 app.include_router(nutrition_router)
 app.include_router(meals_router)
+app.include_router(scheduled_meals_router)
 app.include_router(progress_router)
 
 

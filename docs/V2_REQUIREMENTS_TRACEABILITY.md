@@ -136,3 +136,12 @@ and three purpose states; R2C added derived owner-only onboarding metadata; and
 R2D validated migration, privacy, OpenAPI, and integration handoff. This does
 not change the status of recommendation, clinical, offline-sync, or AI-context
 requirements: R2B2 is deferred pending explicit approval and methodology.
+
+## R3A scheduling status
+
+`HOME-002` and the schedule foundation required by `MEAL-003` are now partially
+implemented through an authenticated owner-only `ScheduledMeal` resource. It
+supports planned labels, date/time windows, chronological retrieval, update,
+and deletion, but no meal slot taxonomy, notifications, scheduled-versus-logged
+comparison, missed-meal classification, or diagnostics. Those remain R3B or
+later work.
