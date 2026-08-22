@@ -1339,6 +1339,26 @@
         "title": "NutrientValues",
         "type": "object"
       },
+      "NutrientWeekMetric": {
+        "properties": {
+          "daily_average": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Daily Average",
+            "type": "string"
+          },
+          "total": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total",
+            "type": "string"
+          }
+        },
+        "required": [
+          "total",
+          "daily_average"
+        ],
+        "title": "NutrientWeekMetric",
+        "type": "object"
+      },
       "NutritionCoachRequest": {
         "additionalProperties": false,
         "description": "Optional user-facing context; authoritative nutrition values stay server-side.",
@@ -3528,6 +3548,73 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "WeeklyDiagnosticsResponse": {
+        "properties": {
+          "days_in_period": {
+            "title": "Days In Period",
+            "type": "integer"
+          },
+          "days_with_logged_meals": {
+            "title": "Days With Logged Meals",
+            "type": "integer"
+          },
+          "days_with_scheduled_meals": {
+            "title": "Days With Scheduled Meals",
+            "type": "integer"
+          },
+          "logging_days_ratio": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Logging Days Ratio",
+            "type": "string"
+          },
+          "meals_logged": {
+            "title": "Meals Logged",
+            "type": "integer"
+          },
+          "nutrition": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/NutrientWeekMetric"
+            },
+            "title": "Nutrition",
+            "type": "object"
+          },
+          "period_end": {
+            "format": "date-time",
+            "title": "Period End",
+            "type": "string"
+          },
+          "period_start": {
+            "format": "date-time",
+            "title": "Period Start",
+            "type": "string"
+          },
+          "scheduled_meals": {
+            "title": "Scheduled Meals",
+            "type": "integer"
+          },
+          "target_comparison": {
+            "$ref": "#/components/schemas/WeeklyTargetComparison"
+          },
+          "weight": {
+            "$ref": "#/components/schemas/WeeklyWeightSummary"
+          }
+        },
+        "required": [
+          "period_start",
+          "period_end",
+          "meals_logged",
+          "days_with_logged_meals",
+          "days_in_period",
+          "logging_days_ratio",
+          "scheduled_meals",
+          "days_with_scheduled_meals",
+          "nutrition",
+          "weight",
+          "target_comparison"
+        ],
+        "title": "WeeklyDiagnosticsResponse",
+        "type": "object"
+      },
       "WeeklyProgressResponse": {
         "properties": {
           "daily": {
@@ -3565,6 +3652,195 @@
           "daily"
         ],
         "title": "WeeklyProgressResponse",
+        "type": "object"
+      },
+      "WeeklyTargetComparison": {
+        "properties": {
+          "calories": {
+            "$ref": "#/components/schemas/WeeklyTargetMetric"
+          },
+          "carbohydrates_g": {
+            "$ref": "#/components/schemas/WeeklyTargetMetric"
+          },
+          "fat_g": {
+            "$ref": "#/components/schemas/WeeklyTargetMetric"
+          },
+          "fiber_g": {
+            "$ref": "#/components/schemas/WeeklyTargetMetric"
+          },
+          "protein_g": {
+            "$ref": "#/components/schemas/WeeklyTargetMetric"
+          }
+        },
+        "required": [
+          "calories",
+          "protein_g",
+          "carbohydrates_g",
+          "fat_g",
+          "fiber_g"
+        ],
+        "title": "WeeklyTargetComparison",
+        "type": "object"
+      },
+      "WeeklyTargetMetric": {
+        "properties": {
+          "reference": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "state"
+        ],
+        "title": "WeeklyTargetMetric",
+        "type": "object"
+      },
+      "WeeklyWeightSummary": {
+        "properties": {
+          "first_weight_kg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Weight Kg"
+          },
+          "latest_weight_kg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Weight Kg"
+          },
+          "weight_change_kg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Change Kg"
+          }
+        },
+        "required": [
+          "first_weight_kg",
+          "latest_weight_kg",
+          "weight_change_kg"
+        ],
+        "title": "WeeklyWeightSummary",
+        "type": "object"
+      },
+      "WeightEntryList": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/WeightEntryResponse"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "entries",
+          "limit",
+          "offset"
+        ],
+        "title": "WeightEntryList",
+        "type": "object"
+      },
+      "WeightEntryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "measured_at": {
+            "format": "date-time",
+            "title": "Measured At",
+            "type": "string"
+          },
+          "weight_kg": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Weight Kg",
+            "type": "string"
+          }
+        },
+        "required": [
+          "weight_kg",
+          "measured_at",
+          "id",
+          "created_at"
+        ],
+        "title": "WeightEntryResponse",
+        "type": "object"
+      },
+      "WeightEntryWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "measured_at": {
+            "format": "date-time",
+            "title": "Measured At",
+            "type": "string"
+          },
+          "weight_kg": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 500.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "title": "Weight Kg"
+          }
+        },
+        "required": [
+          "weight_kg",
+          "measured_at"
+        ],
+        "title": "WeightEntryWrite",
         "type": "object"
       }
     },
@@ -4488,6 +4764,54 @@
         ]
       }
     },
+    "/api/progress/weekly-diagnostics": {
+      "get": {
+        "operationId": "weekly_diagnostics_api_progress_weekly_diagnostics_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "week_start",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Week Start",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklyDiagnosticsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Weekly Diagnostics",
+        "tags": [
+          "progress"
+        ]
+      }
+    },
     "/api/scheduled-meals": {
       "get": {
         "operationId": "list_scheduled_meals_api_scheduled_meals_get",
@@ -5101,6 +5425,285 @@
         "summary": "Replace My Targets",
         "tags": [
           "users"
+        ]
+      }
+    },
+    "/api/weight-entries": {
+      "get": {
+        "operationId": "list_entries_api_weight_entries_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "measured_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Measured From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "measured_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Measured To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeightEntryList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Entries",
+        "tags": [
+          "weight entries"
+        ]
+      },
+      "post": {
+        "operationId": "create_api_weight_entries_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WeightEntryWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeightEntryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create",
+        "tags": [
+          "weight entries"
+        ]
+      }
+    },
+    "/api/weight-entries/{entry_id}": {
+      "delete": {
+        "operationId": "delete_api_weight_entries__entry_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete",
+        "tags": [
+          "weight entries"
+        ]
+      },
+      "get": {
+        "operationId": "get_api_weight_entries__entry_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeightEntryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get",
+        "tags": [
+          "weight entries"
+        ]
+      },
+      "put": {
+        "operationId": "update_api_weight_entries__entry_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WeightEntryWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeightEntryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update",
+        "tags": [
+          "weight entries"
         ]
       }
     }

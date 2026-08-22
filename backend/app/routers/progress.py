@@ -17,6 +17,10 @@ from app.schemas.progress import (
 )
 from app.services.nutrition_target_comparison_service import NutritionTargetComparisonService
 from app.services.progress_service import InvalidTimezoneError, ProgressService
+from app.repositories.scheduled_meal_repository import ScheduledMealRepository
+from app.repositories.weight_entry_repository import WeightEntryRepository
+from app.schemas.weekly_diagnostics import WeeklyDiagnosticsResponse
+from app.services.weekly_diagnostics_service import WeeklyDiagnosticsService
 
 router = APIRouter(prefix="/api/progress", tags=["progress"])
 
@@ -36,6 +40,13 @@ def get_target_comparison_service(
 
 def _progress_error(error: ValueError) -> HTTPException:
     return HTTPException(status_code=422, detail=str(error))
+
+@router.get("/weekly-diagnostics", response_model=WeeklyDiagnosticsResponse)
+def weekly_diagnostics(week_start: date, current_user: Annotated[User, Depends(get_current_user)], database_session: Annotated[Session, Depends(get_db)]):
+    try:
+        return WeeklyDiagnosticsService(MealRepository(database_session), ScheduledMealRepository(database_session), WeightEntryRepository(database_session), NutritionTargetRepository(database_session)).weekly(current_user.id, week_start)
+    except ValueError as error:
+        raise _progress_error(error) from None
 
 
 @router.get("/today", response_model=DailyProgressResponse)

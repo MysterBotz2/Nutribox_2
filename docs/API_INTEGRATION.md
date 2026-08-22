@@ -211,6 +211,22 @@ for today, tomorrow, week, and upcoming views.
 
 ## Progress and targets
 
+## R3B weight history and weekly diagnostics
+
+`/api/weight-entries` is bearer-owner-only historical observation CRUD. Its
+`weight_kg` and offset-aware `measured_at` are separate from the current
+`NutritionProfile.weight_kg`; no automatic synchronization occurs.
+
+`GET /api/progress/weekly-diagnostics?week_start=YYYY-MM-DD` is bearer-only,
+read-only, and accepts Monday dates. It covers UTC Monday 00:00 inclusive to
+the next Monday exclusive. It reports five-nutrient logged totals and totals/7
+calendar-day averages, logging-day ratio, factual schedule counts only, and
+factual earliest/latest weight change. Zero logged nutrition means no nutrition
+was logged, not proof of physical consumption. Existing daily targets are
+compared as daily target x 7 with only `below_target`, `met_or_above_target`, or
+`target_unavailable`; no tolerance, clinical interpretation, sensitive profile,
+or AI/provider use is involved.
+
 ### V2 additive nutrition fields
 
 `FoodResponse.nutrition_per_100g`, `PortionCalculationResponse.nutrition`, and

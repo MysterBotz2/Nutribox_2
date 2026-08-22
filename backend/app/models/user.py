@@ -40,3 +40,4 @@ class User(Base):
     scheduled_meals: Mapped[list["ScheduledMeal"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
+    weight_entries: Mapped[list["WeightEntry"]] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True)
