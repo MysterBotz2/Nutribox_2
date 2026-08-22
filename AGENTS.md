@@ -184,3 +184,7 @@ R3B diagnostics/history remains separate future work.
 R3B adds owner-only WeightEntry history and factual weekly diagnostics only.
 It remains non-clinical, uses no sensitive profile or AI/provider context, and
 does not close R3 or authorize R3C.
+
+R4A adds one owner-only immutable leftover analysis per recorded Meal. It
+derives consumed five-nutrient totals as initial Meal snapshot minus leftover
+snapshot, uses no clinical interpretation, and must never mutate the Meal.

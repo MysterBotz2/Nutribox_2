@@ -262,6 +262,20 @@ the new fields.
 
 `timezone` is an IANA identifier such as `Asia/Manila`; omitted timezone is UTC. Weeks run Monday–Sunday; weekly results always include seven zero-filled daily points. Summary `days` is bounded to 1–365 and `daily_average` divides by all calendar days in the period, including empty days. Target status is neutral arithmetic from stored meal snapshots and configured targets.
 
+## R4A leftover analysis
+
+`POST /api/meals/{meal_id}/leftover-analysis` and `GET
+/api/meals/{meal_id}/leftover-analysis` require the meal owner's bearer token.
+The POST multipart request includes `leftover_weight_grams` and an optional
+`file`. At zero weight no image or recognition call is required; at non-zero
+weight an image is required and the existing recognition/reference pipeline is
+used. The persisted result returns five-nutrient `initial_nutrition`,
+`leftover_nutrition`, and `consumed_nutrition` snapshots plus provenance.
+Consumed equals initial minus leftover. A negative result is HTTP 409: values
+are never clamped and nothing is persisted. One finalized analysis is allowed
+per meal; the original Meal and MealItems remain immutable. No clinical
+interpretation is made.
+
 ## Error contract
 
 The stable safe error shape is normally `{"detail": "..."}`. FastAPI/Pydantic validation errors use `{"detail": [...]}` with HTTP `422`. Common client actions:

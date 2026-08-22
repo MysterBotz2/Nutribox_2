@@ -39,6 +39,7 @@ class Meal(Base):
         back_populates="meal", cascade="all, delete-orphan", passive_deletes=True
     )
     user: Mapped["User | None"] = relationship(back_populates="meals")
+    leftover_analysis: Mapped["LeftoverAnalysis | None"] = relationship(back_populates="meal", uselist=False, cascade="all, delete-orphan", passive_deletes=True)
 
 
 class MealItem(Base):

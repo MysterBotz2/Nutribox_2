@@ -145,3 +145,10 @@ supports planned labels, date/time windows, chronological retrieval, update,
 and deletion, but no meal slot taxonomy, notifications, scheduled-versus-logged
 comparison, missed-meal classification, or diagnostics. Those remain R3B or
 later work.
+
+## R4A leftover-analysis status
+
+R4A implements one owner-only immutable post-meal leftover analysis per Meal:
+`consumed = initial snapshot - leftover snapshot`. Zero leftover bypasses
+recognition, while non-zero uses the existing recognition/reference pipeline.
+Negative results conflict rather than clamp; no clinical interpretation occurs.

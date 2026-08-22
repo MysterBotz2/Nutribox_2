@@ -190,6 +190,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meals/{meal_id}/leftover-analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Leftover */
+        get: operations["get_leftover_api_meals__meal_id__leftover_analysis_get"];
+        put?: never;
+        /** Create Leftover */
+        post: operations["create_leftover_api_meals__meal_id__leftover_analysis_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/nutrition/calculate": {
         parameters: {
             query?: never;
@@ -327,6 +345,23 @@ export interface paths {
         };
         /** Get Weekly Progress */
         get: operations["get_weekly_progress_api_progress_weekly_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/progress/weekly-diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Weekly Diagnostics */
+        get: operations["weekly_diagnostics_api_progress_weekly_diagnostics_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -493,6 +528,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/weight-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Entries */
+        get: operations["list_entries_api_weight_entries_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_api_weight_entries_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/weight-entries/{entry_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["get_api_weight_entries__entry_id__get"];
+        /** Update */
+        put: operations["update_api_weight_entries__entry_id__put"];
+        post?: never;
+        /** Delete */
+        delete: operations["delete_api_weight_entries__entry_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -570,6 +642,13 @@ export interface components {
             file: string;
             /** Weight Grams */
             weight_grams: number | string;
+        };
+        /** Body_create_leftover_api_meals__meal_id__leftover_analysis_post */
+        Body_create_leftover_api_meals__meal_id__leftover_analysis_post: {
+            /** File */
+            file?: string | null;
+            /** Leftover Weight Grams */
+            leftover_weight_grams: number | string;
         };
         /** Body_login_for_access_token_api_auth_token_post */
         Body_login_for_access_token_api_auth_token_post: {
@@ -779,6 +858,46 @@ export interface components {
          * @enum {string}
          */
         LastAlcoholConsumption: "last_24_hours" | "last_7_days" | "last_30_days" | "more_than_30_days_ago" | "never";
+        /** LeftoverAnalysisProvenance */
+        LeftoverAnalysisProvenance: {
+            /** Recognized Food Name */
+            recognized_food_name: string | null;
+            /** Source */
+            source: string;
+            /** Source Reference */
+            source_reference: string | null;
+        };
+        /** LeftoverAnalysisResponse */
+        LeftoverAnalysisResponse: {
+            consumed_nutrition: components["schemas"]["LeftoverNutrition"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            initial_nutrition: components["schemas"]["LeftoverNutrition"];
+            leftover_nutrition: components["schemas"]["LeftoverNutrition"];
+            /** Leftover Weight Grams */
+            leftover_weight_grams: string;
+            /** Meal Id */
+            meal_id: number;
+            provenance: components["schemas"]["LeftoverAnalysisProvenance"];
+        };
+        /** LeftoverNutrition */
+        LeftoverNutrition: {
+            /** Calories */
+            calories: string;
+            /** Carbohydrates G */
+            carbohydrates_g: string;
+            /** Fat G */
+            fat_g: string;
+            /** Fiber G */
+            fiber_g: string;
+            /** Protein G */
+            protein_g: string;
+        };
         /** MealCreateRequest */
         MealCreateRequest: {
             /** Items */
@@ -951,6 +1070,13 @@ export interface components {
             fiber_g: string;
             /** Protein G */
             protein_g: string;
+        };
+        /** NutrientWeekMetric */
+        NutrientWeekMetric: {
+            /** Daily Average */
+            daily_average: string;
+            /** Total */
+            total: string;
         };
         /**
          * NutritionCoachRequest
@@ -1536,6 +1662,37 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** WeeklyDiagnosticsResponse */
+        WeeklyDiagnosticsResponse: {
+            /** Days In Period */
+            days_in_period: number;
+            /** Days With Logged Meals */
+            days_with_logged_meals: number;
+            /** Days With Scheduled Meals */
+            days_with_scheduled_meals: number;
+            /** Logging Days Ratio */
+            logging_days_ratio: string;
+            /** Meals Logged */
+            meals_logged: number;
+            /** Nutrition */
+            nutrition: {
+                [key: string]: components["schemas"]["NutrientWeekMetric"];
+            };
+            /**
+             * Period End
+             * Format: date-time
+             */
+            period_end: string;
+            /**
+             * Period Start
+             * Format: date-time
+             */
+            period_start: string;
+            /** Scheduled Meals */
+            scheduled_meals: number;
+            target_comparison: components["schemas"]["WeeklyTargetComparison"];
+            weight: components["schemas"]["WeeklyWeightSummary"];
+        };
         /** WeeklyProgressResponse */
         WeeklyProgressResponse: {
             /** Daily */
@@ -1553,6 +1710,66 @@ export interface components {
              * Format: date
              */
             week_start: string;
+        };
+        /** WeeklyTargetComparison */
+        WeeklyTargetComparison: {
+            calories: components["schemas"]["WeeklyTargetMetric"];
+            carbohydrates_g: components["schemas"]["WeeklyTargetMetric"];
+            fat_g: components["schemas"]["WeeklyTargetMetric"];
+            fiber_g: components["schemas"]["WeeklyTargetMetric"];
+            protein_g: components["schemas"]["WeeklyTargetMetric"];
+        };
+        /** WeeklyTargetMetric */
+        WeeklyTargetMetric: {
+            /** Reference */
+            reference: string | null;
+            /** State */
+            state: string;
+        };
+        /** WeeklyWeightSummary */
+        WeeklyWeightSummary: {
+            /** First Weight Kg */
+            first_weight_kg: string | null;
+            /** Latest Weight Kg */
+            latest_weight_kg: string | null;
+            /** Weight Change Kg */
+            weight_change_kg: string | null;
+        };
+        /** WeightEntryList */
+        WeightEntryList: {
+            /** Entries */
+            entries: components["schemas"]["WeightEntryResponse"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** WeightEntryResponse */
+        WeightEntryResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /**
+             * Measured At
+             * Format: date-time
+             */
+            measured_at: string;
+            /** Weight Kg */
+            weight_kg: string;
+        };
+        /** WeightEntryWrite */
+        WeightEntryWrite: {
+            /**
+             * Measured At
+             * Format: date-time
+             */
+            measured_at: string;
+            /** Weight Kg */
+            weight_kg: number | string;
         };
     };
     responses: never;
@@ -1901,6 +2118,72 @@ export interface operations {
             };
         };
     };
+    get_leftover_api_meals__meal_id__leftover_analysis_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                meal_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeftoverAnalysisResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_leftover_api_meals__meal_id__leftover_analysis_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                meal_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_create_leftover_api_meals__meal_id__leftover_analysis_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeftoverAnalysisResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     calculate_portion_api_nutrition_calculate_post: {
         parameters: {
             query?: never;
@@ -2141,6 +2424,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WeeklyProgressResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    weekly_diagnostics_api_progress_weekly_diagnostics_get: {
+        parameters: {
+            query: {
+                week_start: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeeklyDiagnosticsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2556,6 +2870,168 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["NutritionTargetResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_entries_api_weight_entries_get: {
+        parameters: {
+            query?: {
+                measured_from?: string | null;
+                measured_to?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeightEntryList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_api_weight_entries_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WeightEntryWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeightEntryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_api_weight_entries__entry_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeightEntryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_api_weight_entries__entry_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WeightEntryWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeightEntryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_api_weight_entries__entry_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

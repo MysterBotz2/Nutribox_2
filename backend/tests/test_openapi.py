@@ -28,6 +28,7 @@ def test_openapi_has_v1_metadata_routes_and_oauth2_security() -> None:
         "/api/meals/analyze",
         "/api/meals",
         "/api/meals/{meal_id}",
+        "/api/meals/{meal_id}/leftover-analysis",
         "/api/scheduled-meals",
         "/api/scheduled-meals/{scheduled_meal_id}",
         "/api/progress/today",
@@ -119,3 +120,16 @@ def test_openapi_exposes_owner_only_r3a_scheduled_meal_contract() -> None:
     assert {"user_id", "food_id", "planned_calories", "medical_conditions"}.isdisjoint(write_properties)
     assert paths["/api/scheduled-meals"]["get"]["parameters"][-2]["name"] == "limit"
     assert paths["/api/scheduled-meals/{scheduled_meal_id}"]["delete"]["responses"]["204"]
+
+
+def test_openapi_exposes_owner_only_r4a_leftover_analysis_contract() -> None:
+    schema = app.openapi()
+    operation = schema["paths"]["/api/meals/{meal_id}/leftover-analysis"]
+    bearer_security = [{"OAuth2PasswordBearer": []}]
+
+    assert operation["post"]["security"] == bearer_security
+    assert operation["get"]["security"] == bearer_security
+    assert "multipart/form-data" in operation["post"]["requestBody"]["content"]
+    response_schema = operation["post"]["responses"]["201"]["content"]["application/json"]["schema"]
+    assert response_schema["$ref"].endswith("/LeftoverAnalysisResponse")
+    assert {"initial_nutrition", "leftover_nutrition", "consumed_nutrition", "provenance"} <= set(schema["components"]["schemas"]["LeftoverAnalysisResponse"]["properties"])

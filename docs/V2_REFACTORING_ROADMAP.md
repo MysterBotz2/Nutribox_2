@@ -71,4 +71,10 @@ and profile-field decisions stated in its roadmap dependency.
 
 ## R0.6 priority re-baseline
 
+## R4A leftover-analysis checkpoint
+
+R4A establishes an owner-only immutable leftover analysis per recorded Meal.
+It stores five-nutrient leftover and consumed snapshots, does not mutate Meals
+or MealItems, and adds no clinical interpretation or R4B functionality.
+
 R1 remains Nutrition/Data Model Foundation and may implement the resolved nutrition foundation in [V2 R1 Scope Gate](V2_R1_SCOPE_GATE.md). R2–R8 retain their dependency ordering, but first-priority scheduling, non-clinical weekly diagnostics, leftovers, ingredient identification, chat/history, notifications, device sync, and heating must be scheduled ahead of second-priority calculators, alternative recommendations, and account-security expansion where dependencies permit. R1 must not absorb full recipe/ingredient functionality, calculators, diagnostics, leftover runtime, chat persistence, notifications, pairing, heating, or mobile/Pi work.
