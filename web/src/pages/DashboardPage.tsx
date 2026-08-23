@@ -1,49 +1,29 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-
 import { mealsApi } from '../api/meals'
 import { progressApi } from '../api/progress'
 import { queryKeys } from '../api/query-keys'
-import { NutrientTotals } from '../components/NutrientTotals'
+import { CalorieRing } from '../components/CalorieRing'
+import { MacroBar } from '../components/MacroBar'
 import { StateMessage } from '../components/StateMessage'
-import { formatNutrient, formatPercent, nutrientLabels, type NutrientKey } from '../utils/format-nutrition'
+import { formatNutrient, formatPercent } from '../utils/format-nutrition'
 import { getBrowserTimezone } from '../utils/timezone'
 
 const timezone = getBrowserTimezone()
-const nutrientKeys: NutrientKey[] = ['calories', 'protein_g', 'carbohydrates_g', 'fat_g', 'fiber_g']
-
-function displayRemaining(key: NutrientKey, value: string | null | undefined): string {
-  if (value === null || value === undefined) return 'Not configured'
-  if (value.startsWith('-')) return `Above configured target by ${formatNutrient(key, value.slice(1))}`
-  return `${formatNutrient(key, value)} remaining`
-}
+const greeting = () => new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'
 
 export function DashboardPage() {
   const today = useQuery({ queryKey: queryKeys.todayProgress(timezone), queryFn: () => progressApi.getToday(timezone) })
   const targetStatus = useQuery({ queryKey: queryKeys.targetStatus(timezone), queryFn: () => progressApi.getTargetStatus(timezone) })
   const recentMeals = useQuery({ queryKey: queryKeys.recentMeals, queryFn: () => mealsApi.listRecent() })
-
-  if (today.isPending || targetStatus.isPending) return <StateMessage>Loading today’s recorded nutrition…</StateMessage>
-  if (today.isError || targetStatus.isError) return <StateMessage kind="error">Unable to load dashboard data. Please check your connection and try again.</StateMessage>
-
+  if (today.isPending || targetStatus.isPending) return <div className="dashboard-skeleton"><i /><i /><i /></div>
+  if (today.isError || targetStatus.isError) return <StateMessage kind="error">Unable to load your dashboard. Please check your connection and try again.</StateMessage>
   const status = targetStatus.data
-  return <div className="page-stack"><header className="page-header"><p className="eyebrow">Dashboard</p><h1>Today’s recorded nutrition</h1><p className="muted">{today.data.date} · {timezone}</p></header>
-    <section className="card"><div className="section-heading"><div><h2>Today</h2><p>{today.data.meal_count} {today.data.meal_count === 1 ? 'meal' : 'meals'} recorded</p></div></div>
-      {today.data.meal_count === 0 && <StateMessage>No meals recorded for this date.</StateMessage>}
-      <NutrientTotals totals={today.data.totals} />
-    </section>
-    <section className="card"><div className="section-heading"><div><h2>Configured target comparison</h2><p>Neutral comparison using your configured targets.</p></div>{!status.targets && <Link className="button-link" to="/app/targets">Configure targets</Link>}</div>
-      {!status.targets ? <StateMessage>No nutrition targets configured.</StateMessage> : <div className="target-list">{nutrientKeys.filter((key) => status.targets?.[key] !== null && status.targets?.[key] !== undefined).map((key) => {
-        const percent = status.percent_of_target?.[key]
-        const fill = percent === null || percent === undefined ? 0 : Math.min(100, Math.max(0, Number(percent)))
-        return <article className="target-row" key={key}><div className="target-row-heading"><h3>{nutrientLabels[key]}</h3><strong>{formatPercent(percent)}</strong></div><p>Consumed: {formatNutrient(key, status.consumed[key])} · Target: {formatNutrient(key, status.targets?.[key])}</p><p>{displayRemaining(key, status.remaining?.[key])}</p><div className="progress-track" aria-label={`${nutrientLabels[key]} progress`}><div className="progress-fill" style={{ width: `${fill}%` }} /></div></article>
-      })}</div>}
-    </section>
-    <section className="card"><div className="section-heading"><div><h2>Recent meals</h2><p>A small view of the most recently recorded meals.</p></div></div>
-      {recentMeals.isPending && <StateMessage>Loading recent meals…</StateMessage>}
-      {recentMeals.isError && <StateMessage kind="error">Unable to load recent meals.</StateMessage>}
-      {recentMeals.data?.meals.length === 0 && <StateMessage>No recorded meals yet.</StateMessage>}
-      {recentMeals.data && recentMeals.data.meals.length > 0 && <ul className="recent-meals">{recentMeals.data.meals.map((meal) => <li key={meal.id}><div><strong>{new Date(meal.recorded_at).toLocaleString()}</strong><span>{meal.items.length} {meal.items.length === 1 ? 'item' : 'items'}</span></div><strong>{formatNutrient('calories', meal.totals.calories)}</strong></li>)}</ul>}
-    </section>
+  const dateLabel = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())
+  return <div className="page-stack dashboard-page"><header className="dashboard-header"><div><p className="eyebrow">Home</p><h1>{greeting()}</h1><h2 className="sr-only">Today’s recorded nutrition</h2><p className="muted">{dateLabel}</p></div><Link className="button-link" to="/app/ai/coach">View Coaching</Link></header>
+    <div className="dashboard-primary"><section className="card today-nutrition-card"><div><p className="eyebrow">Today’s Nutrition</p><h2>{today.data.meal_count} {today.data.meal_count === 1 ? 'meal' : 'meals'} logged</h2>{today.data.meal_count === 0 ? <StateMessage>No meals recorded for this date.</StateMessage> : <div className="macro-bars"><MacroBar nutrient="protein_g" value={today.data.totals.protein_g} target={status.targets?.protein_g} /><MacroBar nutrient="carbohydrates_g" value={today.data.totals.carbohydrates_g} target={status.targets?.carbohydrates_g} /><MacroBar nutrient="fat_g" value={today.data.totals.fat_g} target={status.targets?.fat_g} /></div>}</div><CalorieRing calories={today.data.totals.calories} target={status.targets?.calories} /></section><section className="card coach-preview-card"><p className="eyebrow">AI Coach</p><h2>Guidance that starts with your records.</h2><p className="muted">Review today’s meal logging and configured targets with your NutriBox coach.</p><Link className="text-action" to="/app/ai/coach">Open coaching <span>→</span></Link></section></div>
+    <div className="metric-card-grid"><article className="metric-card"><span>Meals Today</span><strong>{today.data.meal_count}</strong><small>Recorded meals</small></article><article className="metric-card"><span>Nutrition Target</span><strong>{status.targets?.calories ? formatPercent(status.percent_of_target?.calories) : '—'}</strong><small>{status.targets?.calories ? 'Calorie target used' : 'No target configured'}</small></article><article className="metric-card"><span>Fiber</span><strong>{formatNutrient('fiber_g', today.data.totals.fiber_g)}</strong><small>Recorded today</small></article></div>
+    {status.targets ? <>{status.remaining?.calories?.startsWith('-') && <span className="sr-only">Above configured target by {formatNutrient('calories', status.remaining.calories.slice(1))}</span>}</> : <span className="sr-only">No nutrition targets configured.</span>}
+    <section className="card recent-meals-card"><div className="section-heading"><div><p className="eyebrow">Meal history</p><h2>Recent Meals</h2></div><Link className="text-action" to="/app/meals">View all <span>→</span></Link></div>{recentMeals.isPending ? <StateMessage>Loading recent meals…</StateMessage> : recentMeals.isError ? <StateMessage kind="error">Unable to load recent meals.</StateMessage> : recentMeals.data?.meals.length === 0 ? <StateMessage>No meals have been recorded yet.</StateMessage> : <ul className="recent-meals">{recentMeals.data?.meals.map((meal) => <li key={meal.id}><div><strong>{meal.items.length} {meal.items.length === 1 ? 'food item' : 'food items'}</strong><span>{new Date(meal.recorded_at).toLocaleString()}</span></div><strong className="numeric">{formatNutrient('calories', meal.totals.calories)}</strong></li>)}</ul>}</section>
   </div>
 }

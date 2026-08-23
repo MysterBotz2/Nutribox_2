@@ -56,6 +56,19 @@ Food recognition defaults to `mock`; Gemini is opt-in through the ignored `backe
 
 Curated nutrition imports are explicit, validated, transactional administrative commands. See [deployment documentation](docs/DEPLOYMENT.md#curated-nutrition-import) for dry-run and real-import steps. No food data is seeded automatically.
 
+## Local Web Companion demo account
+
+For manual local UI checks, the backend can create exactly one synthetic account. Set a local password in `backend/.env`, then run the command from the repository root:
+
+```powershell
+$env:NUTRIBOX_DEMO_PASSWORD = "choose-a-local-demo-password"
+Push-Location backend
+..\.venv\Scripts\python.exe -m app.cli.seed_demo_user
+Pop-Location
+```
+
+Sign in with `demo@nutribox.local` and the value supplied through `NUTRIBOX_DEMO_PASSWORD`. The command is idempotent. To replace only this demo account’s marked synthetic records, append `--reset`. It never calls Gemini or USDA and must only be used with a local or test database.
+
 ## Tests
 
 ```powershell

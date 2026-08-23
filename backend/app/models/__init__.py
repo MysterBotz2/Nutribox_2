@@ -1,7 +1,25 @@
-"""SQLAlchemy domain models."""
+"""Central SQLAlchemy model registry.
 
+Import this package before standalone ORM work so every string-based
+relationship target is registered with ``Base``.
+"""
+
+from app.models.chat import ChatConversation, ChatMessage
 from app.models.food import Food
 from app.models.food_alias import FoodAlias
+from app.models.leftover_analysis import LeftoverAnalysis
+from app.models.meal import Meal, MealItem
+from app.models.nutrition_profile import NutritionProfile
+from app.models.nutrition_target import NutritionTarget
+from app.models.paired_device import PairedDevice
+from app.models.profile_consent import ProfileConsent
 from app.models.scheduled_meal import ScheduledMeal
+from app.models.sensitive_profile_context import SensitiveProfileContext
+from app.models.user import User
+from app.models.weight_entry import WeightEntry
 
-__all__ = ["Food", "FoodAlias", "ScheduledMeal"]
+__all__ = [
+    "ChatConversation", "ChatMessage", "Food", "FoodAlias", "LeftoverAnalysis",
+    "Meal", "MealItem", "NutritionProfile", "NutritionTarget", "PairedDevice",
+    "ProfileConsent", "ScheduledMeal", "SensitiveProfileContext", "User", "WeightEntry",
+]

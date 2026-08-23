@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str | None = None
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = Field(default=30, gt=0, le=1440)
+    nutribox_demo_password: str | None = None
     cors_allowed_origins: Annotated[list[str], NoDecode] = Field(default_factory=list)
 
     @field_validator("cors_allowed_origins", mode="before")
