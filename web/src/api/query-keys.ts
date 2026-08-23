@@ -11,4 +11,10 @@ export const queryKeys = {
   weeklyProgress: (weekStart: string, timezone: string) => ['progress', 'weekly', weekStart, timezone] as const,
   progressSummary: (days: number, timezone: string) => ['progress', 'summary', days, timezone] as const,
   scanAnalysis: ['scan', 'analysis'] as const,
+  schedule: ['schedule'] as const,
+  conversations: ['ai', 'conversations'] as const,
+  conversation: (id: number) => ['ai', 'conversation', id] as const,
+  devices: ['devices'] as const,
+  leftoverAnalysis: (mealId: number) => ['meals', 'leftover-analysis', mealId] as const,
+  weightEntries: ['weight-entries'] as const,
 }

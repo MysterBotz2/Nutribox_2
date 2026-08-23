@@ -90,6 +90,7 @@ export const apiClient = {
       body: JSON.stringify(requestBody),
     }, { authenticated: true })
   },
+  delete<T>(path: string): Promise<T> { return request(path, { method: 'DELETE' }, { authenticated: true }) },
 
   post<T>(path: string, requestBody: unknown, authenticated = true): Promise<T> {
     return request(path, {

@@ -1,0 +1,20 @@
+import { useState } from 'react'
+import type { FormEvent } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ApiError } from '../api/client'
+import { chatApi } from '../api/chat'
+import { queryKeys } from '../api/query-keys'
+import { StateMessage } from '../components/StateMessage'
+import { formatLocalDateTime } from '../utils/date-time'
+
+export function ChatPage() {
+  const queryClient = useQueryClient()
+  const conversations = useQuery({ queryKey: queryKeys.conversations, queryFn: chatApi.list, retry: false })
+  const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
+  const [message, setMessage] = useState('')
+  const activeConversation = useQuery({ queryKey: queryKeys.conversation(activeConversationId ?? 0), queryFn: () => chatApi.get(activeConversationId as number), enabled: activeConversationId !== null, retry: false })
+  const send = useMutation({ mutationFn: () => chatApi.send({ message: message.trim(), conversation_id: activeConversationId }), onSuccess: (response) => { setMessage(''); setActiveConversationId(response.conversation_id); queryClient.invalidateQueries({ queryKey: queryKeys.conversations }); queryClient.invalidateQueries({ queryKey: queryKeys.conversation(response.conversation_id) }) } })
+  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (message.trim()) send.mutate() }
+  const messages = activeConversation.data?.messages ?? []
+  return <div className="page-stack"><header className="page-header"><p className="eyebrow">AI Chat</p><h1>NutriBox assistant</h1><p className="muted">Chat is handled by the NutriBox backend. It does not replace medical advice.</p></header><section className="chat-layout card"><aside className="chat-history"><div className="section-heading"><h2>Conversations</h2><button type="button" className="secondary-button" onClick={() => { setActiveConversationId(null); setMessage('') }}>New chat</button></div>{conversations.isPending ? <StateMessage>Loading chats…</StateMessage> : conversations.isError ? <StateMessage kind="error">Unable to load chats.</StateMessage> : conversations.data.conversations.length === 0 ? <p className="muted">No conversations yet.</p> : <div className="conversation-list">{conversations.data.conversations.map((conversation) => <button type="button" className={activeConversationId === conversation.id ? 'conversation active' : 'conversation'} onClick={() => setActiveConversationId(conversation.id)} key={conversation.id}><strong>{conversation.messages.at(-1)?.content.slice(0, 56) || 'New conversation'}</strong><span>{formatLocalDateTime(conversation.updated_at)}</span></button>)}</div>}</aside><div className="chat-main"><h2>{activeConversationId === null ? 'New conversation' : 'Conversation'}</h2>{activeConversation.isPending && activeConversationId !== null ? <StateMessage>Loading conversation…</StateMessage> : activeConversation.isError ? <StateMessage kind="error">Unable to load this conversation. Select another chat or retry.</StateMessage> : <div className="chat-messages">{messages.length === 0 && <StateMessage>Ask a question to begin.</StateMessage>}{messages.map((item) => <article className={`chat-bubble ${item.role === 'assistant' ? 'assistant' : 'user'}`} key={item.id}><strong>{item.role === 'assistant' ? 'NutriBox' : 'You'}</strong><p>{item.content}</p><small>{formatLocalDateTime(item.created_at)}</small></article>)}</div>}{send.isError && <StateMessage kind="error">{send.error instanceof ApiError ? send.error.detail : 'Unable to send your message. Try again.'}</StateMessage>}<form className="chat-composer" onSubmit={submit}><label>Message<textarea value={message} maxLength={1000} onChange={(event) => setMessage(event.target.value)} placeholder="What would you like to know about your recorded meals?" /></label><button type="submit" disabled={send.isPending || !message.trim()}>{send.isPending ? 'Sending…' : 'Send message'}</button></form></div></section></div>
+}
