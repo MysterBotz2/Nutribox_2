@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class OnboardingRequiredField(str, Enum):
+    SENSITIVE_CONSENT = "sensitive_consent"
     MEDICAL_CONDITIONS = "medical_conditions"
     SMOKING_HISTORY = "smoking_history"
     DRINKING_HISTORY = "drinking_history"

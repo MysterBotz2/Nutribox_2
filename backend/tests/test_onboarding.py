@@ -25,7 +25,7 @@ def sensitive_payload() -> dict[str, object]:
     return {
         "medical_conditions": ["none"],
         "smoking_status": "never",
-        "smoking_method": "none",
+        "smoking_methods": ["none"],
         "drinking_status": "never",
         "body_build": "average",
         "medical_needs": [],
@@ -55,11 +55,7 @@ def test_new_user_is_incomplete_with_stable_missing_order(
             "activity_level",
             "budget_allotment",
             "nutrition_goal",
-            "medical_conditions",
-            "smoking_history",
-            "drinking_history",
-            "body_build",
-            "medical_needs",
+            "sensitive_consent",
         ],
     }
 
@@ -71,7 +67,7 @@ def test_ordinary_fields_and_null_semantics_contribute_to_completion(
     assert client.put("/api/users/me/profile", json=profile_payload(), headers=headers).status_code == 200
     result = status(client, headers)
     assert result["missing_required_fields"] == [
-        "medical_conditions", "smoking_history", "drinking_history", "body_build", "medical_needs"
+        "sensitive_consent"
     ]
 
     assert client.put(
@@ -121,9 +117,16 @@ def test_withdrawal_makes_status_incomplete_without_breaking_login_or_ordinary_r
 
     assert client.put("/api/users/me/profile-consent", json=consent_payload("withdrawn"), headers=headers).status_code == 200
     result = status(client, headers)
-    assert result["completed"] is False
-    assert result["missing_required_fields"] == [
-        "medical_conditions", "smoking_history", "drinking_history", "body_build", "medical_needs"
-    ]
+    assert result["completed"] is True
+    assert result["missing_required_fields"] == []
     assert client.get("/api/users/me", headers=headers).status_code == 200
     assert client.get("/api/users/me/profile", headers=headers).status_code == 200
+
+
+def test_declined_sensitive_consent_is_a_completed_decision_for_onboarding(
+    client: TestClient, jwt_configuration: None
+) -> None:
+    _, headers = register_and_login(client)
+    assert client.put("/api/users/me/profile", json=profile_payload(), headers=headers).status_code == 200
+    assert client.put("/api/users/me/profile-consent", json=consent_payload("declined"), headers=headers).status_code == 200
+    assert status(client, headers) == {"completed": True, "missing_required_fields": []}

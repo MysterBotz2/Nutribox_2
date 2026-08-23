@@ -37,13 +37,14 @@ def valid_sensitive_profile() -> dict[str, object]:
         "pregnancy_duration_unit": "weeks",
         "pregnancy_due_date": "2027-01-10",
         "smoking_status": "never",
-        "smoking_method": "none",
+        "smoking_methods": ["none"],
         "drinking_status": "former",
         "drinking_frequency": "rarely",
-        "drinking_average_intake": "one_to_two",
+        "average_alcohol_intake": "one_to_two",
         "last_alcohol_consumption": "more_than_30_days_ago",
-        "alcohol_type": "wine",
+        "alcohol_types": ["wine"],
         "body_build": "average",
+        "weight_status": "normal_weight",
         "ethnicity": "filipino",
         "medical_needs": ["low_sodium", "gluten_free"],
     }
@@ -89,6 +90,7 @@ def test_sensitive_profile_is_owner_scoped_and_preserves_none_vs_null(
     assert created.status_code == 200
     assert created.json()["user_id"] == first["id"]
     assert created.json()["medical_conditions"] == ["diabetes", "other"]
+    assert created.json()["smoking_methods"] == ["none"]
     assert second_read.status_code == 404
     assert client.put(
         "/api/users/me/sensitive-profile",
@@ -111,6 +113,7 @@ def test_storage_consent_declined_or_withdrawn_rejects_writes_and_withdrawal_cle
 
     declined = {**granted_consent(), "sensitive_storage": "declined"}
     assert client.put("/api/users/me/profile-consent", json=declined, headers=headers).status_code == 200
+    assert client.get("/api/users/me/sensitive-profile", headers=headers).status_code == 404
     assert client.put("/api/users/me/sensitive-profile", json={}, headers=headers).status_code == 403
 
     assert client.put("/api/users/me/profile-consent", json=granted_consent(), headers=headers).status_code == 200
@@ -150,9 +153,44 @@ def test_sensitive_profile_validates_client_options_and_rejects_unsupported_fiel
     ).status_code == 422
     assert client.put(
         "/api/users/me/sensitive-profile",
+        json={"smoking_status": "last_6_months", "smoking_methods": ["none", "vaping"]},
+        headers=headers,
+    ).status_code == 422
+    assert client.put(
+        "/api/users/me/sensitive-profile",
         json={"pregnancy_status": "postpartum", "pregnancy_duration_value": 2, "pregnancy_duration_unit": "weeks"},
         headers=headers,
     ).status_code == 422
+
+
+def test_sensitive_profile_normalizes_collections_and_canonicalizes_never_states(
+    client: TestClient, jwt_configuration: None
+) -> None:
+    _, headers = register_and_login(client)
+    assert client.put("/api/users/me/profile-consent", json=granted_consent(), headers=headers).status_code == 200
+
+    response = client.put(
+        "/api/users/me/sensitive-profile",
+        json={
+            "medical_conditions": [" Hypertension ", "hypertension"],
+            "smoking_status": "never",
+            "smoking_methods": ["vaping"],
+            "drinking_status": "never",
+            "drinking_frequency": "daily",
+            "average_alcohol_intake": "five_or_more",
+            "last_alcohol_consumption": "last_24_hours",
+            "alcohol_types": ["beer"],
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["medical_conditions"] == ["hypertension"]
+    assert response.json()["smoking_methods"] == ["none"]
+    assert response.json()["drinking_frequency"] is None
+    assert response.json()["average_alcohol_intake"] is None
+    assert response.json()["last_alcohol_consumption"] == "never"
+    assert response.json()["alcohol_types"] == []
     assert client.put(
         "/api/users/me/sensitive-profile",
         json={"body_build": "ectomorph"},

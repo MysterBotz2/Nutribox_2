@@ -3,6 +3,7 @@ from app.models.sensitive_profile_context import SensitiveProfileContext
 from app.repositories.nutrition_profile_repository import NutritionProfileRepository
 from app.repositories.sensitive_profile_repository import SensitiveProfileRepository
 from app.schemas.onboarding import OnboardingRequiredField, OnboardingStatusResponse
+from app.schemas.sensitive_profile import ProfileConsentState
 from app.services.profile_consent_service import ProfileConsentService
 
 
@@ -23,7 +24,8 @@ class OnboardingService:
         profile = self._profiles.get_by_user_id(user_id)
         context = self._sensitive_profiles.get_by_user_id(user_id)
         missing = self._missing_ordinary(profile)
-        missing.extend(self._missing_sensitive(context, self._consents.storage_is_granted(user_id)))
+        consent = self._consents.get_consent(user_id)
+        missing.extend(self._missing_sensitive(context, consent.sensitive_storage if consent else None))
         return OnboardingStatusResponse(completed=not missing, missing_required_fields=missing)
 
     @staticmethod
@@ -52,8 +54,17 @@ class OnboardingService:
 
     @staticmethod
     def _missing_sensitive(
-        context: SensitiveProfileContext | None, storage_is_granted: bool
+        context: SensitiveProfileContext | None, storage_consent: str | None
     ) -> list[OnboardingRequiredField]:
+        if storage_consent in (None, ProfileConsentState.NOT_ASKED.value):
+            return [OnboardingRequiredField.SENSITIVE_CONSENT]
+        # A declined or withdrawn decision is complete for onboarding. Sensitive
+        # fields remain unavailable, but neither decision blocks ordinary use.
+        if storage_consent in (
+            ProfileConsentState.DECLINED.value,
+            ProfileConsentState.WITHDRAWN.value,
+        ):
+            return []
         required = [
             OnboardingRequiredField.MEDICAL_CONDITIONS,
             OnboardingRequiredField.SMOKING_HISTORY,
@@ -61,13 +72,13 @@ class OnboardingService:
             OnboardingRequiredField.BODY_BUILD,
             OnboardingRequiredField.MEDICAL_NEEDS,
         ]
-        if not storage_is_granted or context is None:
+        if context is None:
             return required
 
         missing: list[OnboardingRequiredField] = []
         if not context.medical_conditions:
             missing.append(OnboardingRequiredField.MEDICAL_CONDITIONS)
-        if context.smoking_status is None or context.smoking_method is None:
+        if context.smoking_status is None or context.smoking_methods is None:
             missing.append(OnboardingRequiredField.SMOKING_HISTORY)
         if context.drinking_status is None or (
             context.drinking_status != "never"
@@ -75,9 +86,9 @@ class OnboardingService:
                 value is None
                 for value in (
                     context.drinking_frequency,
-                    context.drinking_average_intake,
+                    context.average_alcohol_intake,
                     context.last_alcohol_consumption,
-                    context.alcohol_type,
+                    context.alcohol_types,
                 )
             )
         ):

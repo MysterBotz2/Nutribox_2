@@ -1517,20 +1517,6 @@
         "title": "MealTotals",
         "type": "object"
       },
-      "MedicalCondition": {
-        "enum": [
-          "obesity",
-          "diabetes",
-          "hypertension",
-          "hyperlipidemia",
-          "anorexia_nervosa",
-          "bulimia",
-          "other",
-          "none"
-        ],
-        "title": "MedicalCondition",
-        "type": "string"
-      },
       "MedicalNeed": {
         "enum": [
           "diabetic_friendly",
@@ -2464,6 +2450,7 @@
       },
       "OnboardingRequiredField": {
         "enum": [
+          "sensitive_consent",
           "medical_conditions",
           "smoking_history",
           "drinking_history",
@@ -3384,10 +3371,25 @@
       "SensitiveProfileResponse": {
         "additionalProperties": false,
         "properties": {
-          "alcohol_type": {
+          "alcohol_types": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/AlcoholType"
+                "items": {
+                  "$ref": "#/components/schemas/AlcoholType"
+                },
+                "maxItems": 4,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alcohol Types"
+          },
+          "average_alcohol_intake": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DrinkingAverageIntake"
               },
               {
                 "type": "null"
@@ -3409,16 +3411,6 @@
             "title": "Created At",
             "type": "string"
           },
-          "drinking_average_intake": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/DrinkingAverageIntake"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "drinking_frequency": {
             "anyOf": [
               {
@@ -3463,7 +3455,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/MedicalCondition"
+                  "type": "string"
                 },
                 "maxItems": 8,
                 "type": "array"
@@ -3546,15 +3538,20 @@
               }
             ]
           },
-          "smoking_method": {
+          "smoking_methods": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/SmokingMethod"
+                "items": {
+                  "$ref": "#/components/schemas/SmokingMethod"
+                },
+                "maxItems": 6,
+                "type": "array"
               },
               {
                 "type": "null"
               }
-            ]
+            ],
+            "title": "Smoking Methods"
           },
           "smoking_status": {
             "anyOf": [
@@ -3574,6 +3571,16 @@
           "user_id": {
             "title": "User Id",
             "type": "integer"
+          },
+          "weight_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WeightStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -3588,10 +3595,25 @@
         "additionalProperties": false,
         "description": "Full replacement of active sensitive declarations; null means unknown or cleared.",
         "properties": {
-          "alcohol_type": {
+          "alcohol_types": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/AlcoholType"
+                "items": {
+                  "$ref": "#/components/schemas/AlcoholType"
+                },
+                "maxItems": 4,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alcohol Types"
+          },
+          "average_alcohol_intake": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DrinkingAverageIntake"
               },
               {
                 "type": "null"
@@ -3602,16 +3624,6 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/BodyBuild"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "drinking_average_intake": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/DrinkingAverageIntake"
               },
               {
                 "type": "null"
@@ -3662,7 +3674,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/MedicalCondition"
+                  "type": "string"
                 },
                 "maxItems": 8,
                 "type": "array"
@@ -3745,20 +3757,35 @@
               }
             ]
           },
-          "smoking_method": {
+          "smoking_methods": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/SmokingMethod"
+                "items": {
+                  "$ref": "#/components/schemas/SmokingMethod"
+                },
+                "maxItems": 6,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Smoking Methods"
+          },
+          "smoking_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmokingStatus"
               },
               {
                 "type": "null"
               }
             ]
           },
-          "smoking_status": {
+          "weight_status": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/SmokingStatus"
+                "$ref": "#/components/schemas/WeightStatus"
               },
               {
                 "type": "null"
@@ -4286,6 +4313,16 @@
         ],
         "title": "WeightEntryWrite",
         "type": "object"
+      },
+      "WeightStatus": {
+        "enum": [
+          "underweight",
+          "normal_weight",
+          "overweight",
+          "obesity"
+        ],
+        "title": "WeightStatus",
+        "type": "string"
       }
     },
     "securitySchemes": {

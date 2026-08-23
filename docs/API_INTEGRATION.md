@@ -20,11 +20,23 @@ All routes below require a bearer token and operate only on the token owner:
 | GET / PUT | `/api/users/me/profile-consent` | Read or fully replace `sensitive_storage`, `personalization`, and `ai_context`. |
 | GET / PUT | `/api/users/me/sensitive-profile` | Read or fully replace active sensitive declarations. PUT requires `sensitive_storage: granted` and otherwise returns `403`. |
 
-Missing consent reads as `not_asked` for all three purposes. Storage withdrawal
-deletes the active sensitive context; personalization/AI-context withdrawal does
-not. `null` means unknown or cleared, while a medical condition of `none` is an
-explicit declaration. Sensitive data is never included in food, meal, progress,
-or public APIs, and R2B1 does not pass it to the Coach.
+Missing consent reads as `not_asked` for all three purposes. Sensitive-profile
+storage is permitted only while `sensitive_storage` is `granted`; `declined` and
+`withdrawn` make the sensitive resource unavailable. Storage withdrawal deletes
+the active sensitive context atomically while preserving the `withdrawn` consent
+state; personalization/AI-context withdrawal does not delete it. `null` means
+unknown or cleared, `[]` is an explicit empty collection, and `none` is an
+explicit declaration only for fields that support it. Medical conditions are
+trimmed, normalized strings rather than a final product taxonomy. Exact medical
+condition choices require product confirmation. Sensitive data is never included
+in food, meal, progress, or public APIs, and is not sent to the Coach or Gemini.
+
+The canonical collection fields are `smoking_methods` and `alcohol_types`.
+When smoking status is `never`, the API resolves methods to `["none"]`. When
+drinking status is `never`, it resolves last consumption to `never`, clears
+frequency/intake, and stores `alcohol_types` as `[]`. These declarations are
+collection/storage only: no clinical rules, target changes, BMI/BMR/TDEE
+calculation, recommendations, or AI context use are authorized.
 
 Blood type, somatotype, and BMI fields are unsupported. `budget_allotment` is a
 nullable tier on the ordinary profile; lifestyle diets use existing
@@ -53,9 +65,11 @@ The deterministic required concepts are `medical_conditions`,
 `null` means missing/unknown and is incomplete. Existing explicitly empty label
 arrays mean “none selected” for allergies, lifestyle diets, and medical needs.
 Medical conditions require a non-empty valid declaration, so explicit `none`
-counts as complete. Sensitive requirements count only while
-`sensitive_storage` is `granted`; withdrawal clears active sensitive values and
-can make onboarding incomplete without affecting login or ordinary account use.
+counts as complete. `not_asked` reports the `sensitive_consent` onboarding item.
+A `declined` or `withdrawn` decision is complete for onboarding and does not
+block ordinary account use; `granted` retains the existing required sensitive
+declaration checks. Withdrawal clears active sensitive values without affecting
+login or ordinary account use.
 Clients must not calculate or persist their own authoritative completion flag.
 
 ## R2 profile handoff and mobile-cache boundary
@@ -68,7 +82,7 @@ read the current resource before changing only one field.
 
 | Data group | Route/resource | Mobile-cache status |
 | --- | --- | --- |
-| Medical conditions, pregnancy/postpartum, smoking, drinking, ethnicity | Sensitive profile | Backend-only; do not cache in the mobile client. |
+| Medical conditions, pregnancy/postpartum, smoking, drinking, ethnicity | Sensitive profile | Backend-only; do not persistently cache in the mobile client. Fetch only for onboarding/profile display. |
 | Body build, allergies, medical needs, lifestyle diets, activity level, budget allotment, nutrition goal | Profile/sensitive profile | Future cache eligible only; FastAPI/PostgreSQL remains authoritative and offline writes are not defined. |
 | Consent states | Profile consent | Read/write only through the backend; do not infer permission from stored declarations. |
 | Completion | Onboarding status | Derived backend metadata only; never persist a client-authoritative completion flag. |

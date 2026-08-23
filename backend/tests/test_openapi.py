@@ -96,7 +96,7 @@ def test_openapi_preserves_r2_profile_privacy_boundaries() -> None:
         "completed", "missing_required_fields",
     }
     assert schemas["OnboardingRequiredField"]["enum"] == [
-        "medical_conditions", "smoking_history", "drinking_history", "body_build",
+        "sensitive_consent", "medical_conditions", "smoking_history", "drinking_history", "body_build",
         "allergies", "medical_needs", "lifestyle_diets", "activity_level",
         "budget_allotment", "nutrition_goal",
     ]

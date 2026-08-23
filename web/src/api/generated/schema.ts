@@ -1233,11 +1233,6 @@ export interface components {
             zinc_mg?: string | null;
         };
         /**
-         * MedicalCondition
-         * @enum {string}
-         */
-        MedicalCondition: "obesity" | "diabetes" | "hypertension" | "hyperlipidemia" | "anorexia_nervosa" | "bulimia" | "other" | "none";
-        /**
          * MedicalNeed
          * @enum {string}
          */
@@ -1480,7 +1475,7 @@ export interface components {
          * OnboardingRequiredField
          * @enum {string}
          */
-        OnboardingRequiredField: "medical_conditions" | "smoking_history" | "drinking_history" | "body_build" | "allergies" | "medical_needs" | "lifestyle_diets" | "activity_level" | "budget_allotment" | "nutrition_goal";
+        OnboardingRequiredField: "sensitive_consent" | "medical_conditions" | "smoking_history" | "drinking_history" | "body_build" | "allergies" | "medical_needs" | "lifestyle_diets" | "activity_level" | "budget_allotment" | "nutrition_goal";
         /**
          * OnboardingStatusResponse
          * @description Derived owner-only completion metadata with no profile values.
@@ -1795,20 +1790,21 @@ export interface components {
         };
         /** SensitiveProfileResponse */
         SensitiveProfileResponse: {
-            alcohol_type?: components["schemas"]["AlcoholType"] | null;
+            /** Alcohol Types */
+            alcohol_types?: components["schemas"]["AlcoholType"][] | null;
+            average_alcohol_intake?: components["schemas"]["DrinkingAverageIntake"] | null;
             body_build?: components["schemas"]["BodyBuild"] | null;
             /**
              * Created At
              * Format: date-time
              */
             created_at: string;
-            drinking_average_intake?: components["schemas"]["DrinkingAverageIntake"] | null;
             drinking_frequency?: components["schemas"]["DrinkingFrequency"] | null;
             drinking_status?: components["schemas"]["DrinkingStatus"] | null;
             ethnicity?: components["schemas"]["Ethnicity"] | null;
             last_alcohol_consumption?: components["schemas"]["LastAlcoholConsumption"] | null;
             /** Medical Conditions */
-            medical_conditions?: components["schemas"]["MedicalCondition"][] | null;
+            medical_conditions?: string[] | null;
             /** Medical Conditions Other */
             medical_conditions_other?: string | null;
             /** Medical Needs */
@@ -1819,7 +1815,8 @@ export interface components {
             /** Pregnancy Duration Value */
             pregnancy_duration_value?: number | null;
             pregnancy_status?: components["schemas"]["PregnancyStatus"] | null;
-            smoking_method?: components["schemas"]["SmokingMethod"] | null;
+            /** Smoking Methods */
+            smoking_methods?: components["schemas"]["SmokingMethod"][] | null;
             smoking_status?: components["schemas"]["SmokingStatus"] | null;
             /**
              * Updated At
@@ -1828,21 +1825,23 @@ export interface components {
             updated_at: string;
             /** User Id */
             user_id: number;
+            weight_status?: components["schemas"]["WeightStatus"] | null;
         };
         /**
          * SensitiveProfileUpdateRequest
          * @description Full replacement of active sensitive declarations; null means unknown or cleared.
          */
         SensitiveProfileUpdateRequest: {
-            alcohol_type?: components["schemas"]["AlcoholType"] | null;
+            /** Alcohol Types */
+            alcohol_types?: components["schemas"]["AlcoholType"][] | null;
+            average_alcohol_intake?: components["schemas"]["DrinkingAverageIntake"] | null;
             body_build?: components["schemas"]["BodyBuild"] | null;
-            drinking_average_intake?: components["schemas"]["DrinkingAverageIntake"] | null;
             drinking_frequency?: components["schemas"]["DrinkingFrequency"] | null;
             drinking_status?: components["schemas"]["DrinkingStatus"] | null;
             ethnicity?: components["schemas"]["Ethnicity"] | null;
             last_alcohol_consumption?: components["schemas"]["LastAlcoholConsumption"] | null;
             /** Medical Conditions */
-            medical_conditions?: components["schemas"]["MedicalCondition"][] | null;
+            medical_conditions?: string[] | null;
             /** Medical Conditions Other */
             medical_conditions_other?: string | null;
             /** Medical Needs */
@@ -1853,8 +1852,10 @@ export interface components {
             /** Pregnancy Duration Value */
             pregnancy_duration_value?: number | null;
             pregnancy_status?: components["schemas"]["PregnancyStatus"] | null;
-            smoking_method?: components["schemas"]["SmokingMethod"] | null;
+            /** Smoking Methods */
+            smoking_methods?: components["schemas"]["SmokingMethod"][] | null;
             smoking_status?: components["schemas"]["SmokingStatus"] | null;
+            weight_status?: components["schemas"]["WeightStatus"] | null;
         };
         /**
          * SmokingMethod
@@ -2036,6 +2037,11 @@ export interface components {
             /** Weight Kg */
             weight_kg: number | string;
         };
+        /**
+         * WeightStatus
+         * @enum {string}
+         */
+        WeightStatus: "underweight" | "normal_weight" | "overweight" | "obesity";
     };
     responses: never;
     parameters: never;

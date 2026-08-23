@@ -44,6 +44,7 @@ it('preserves negative remaining values and percentages above one hundred', asyn
 it('treats a missing profile as setup and submits the exact profile shape', async () => {
   const fetchMock = vi.fn()
     .mockResolvedValueOnce(json({ detail: 'Nutrition profile was not found.' }, 404))
+    .mockResolvedValueOnce(json({ user_id: 1, sensitive_storage: 'not_asked', personalization: 'not_asked', ai_context: 'not_asked', updated_at: null }))
     .mockResolvedValueOnce(json({ id: 1, user_id: 1, age: 25, height_cm: '170.000', weight_kg: '65.000', activity_level: 'moderately_active', nutrition_goal: 'general_health', dietary_restrictions: ['Vegetarian'], allergies: ['Peanut'], created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }))
   vi.stubGlobal('fetch', fetchMock)
   renderPage(<ProfilePage />)
@@ -52,8 +53,8 @@ it('treats a missing profile as setup and submits the exact profile shape', asyn
   await user.type(screen.getByLabelText('Age'), '25')
   await user.selectOptions(screen.getByLabelText('Activity level'), 'moderately_active')
   await user.click(screen.getByRole('button', { name: 'Save profile' }))
-  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
-  const request = JSON.parse(fetchMock.mock.calls[1][1].body)
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3))
+  const request = JSON.parse(fetchMock.mock.calls[2][1].body)
   expect(request).toMatchObject({ age: 25, activity_level: 'moderately_active', dietary_restrictions: [], allergies: [] })
 })
 
@@ -75,7 +76,7 @@ it('supports partial targets, supported source types, and safe validation errors
 })
 
 it('loads existing profile enum values and updates bounded label arrays', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ id: 1, user_id: 1, age: null, height_cm: null, weight_kg: null, activity_level: 'very_active', nutrition_goal: 'general_health', dietary_restrictions: ['Vegetarian'], allergies: [], created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' })))
+  vi.stubGlobal('fetch', vi.fn((input: string) => Promise.resolve(json(input.includes('profile-consent') ? { user_id: 1, sensitive_storage: 'not_asked', personalization: 'not_asked', ai_context: 'not_asked', updated_at: null } : { id: 1, user_id: 1, age: null, height_cm: null, weight_kg: null, activity_level: 'very_active', nutrition_goal: 'general_health', dietary_restrictions: ['Vegetarian'], allergies: [], created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }))))
   renderPage(<ProfilePage />)
   expect((await screen.findByLabelText('Activity level'))).toHaveValue('very_active')
   const user = userEvent.setup()

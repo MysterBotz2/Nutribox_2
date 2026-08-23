@@ -14,6 +14,8 @@ class SensitiveProfileContext(Base):
     __table_args__ = (
         CheckConstraint("jsonb_typeof(medical_conditions) = 'array'", name="ck_sensitive_context_medical_conditions_array"),
         CheckConstraint("jsonb_typeof(medical_needs) = 'array'", name="ck_sensitive_context_medical_needs_array"),
+        CheckConstraint("jsonb_typeof(smoking_methods) = 'array'", name="ck_sensitive_context_smoking_methods_array"),
+        CheckConstraint("jsonb_typeof(alcohol_types) = 'array'", name="ck_sensitive_context_alcohol_types_array"),
         CheckConstraint(
             "pregnancy_status IS NULL OR pregnancy_status IN ('pregnant', 'postpartum', 'none', 'declined')",
             name="ck_sensitive_context_pregnancy_status",
@@ -59,6 +61,14 @@ class SensitiveProfileContext(Base):
             name="ck_sensitive_context_body_build",
         ),
         CheckConstraint(
+            "weight_status IS NULL OR weight_status IN ('underweight', 'normal_weight', 'overweight', 'obesity')",
+            name="ck_sensitive_context_weight_status",
+        ),
+        CheckConstraint(
+            "average_alcohol_intake IS NULL OR average_alcohol_intake IN ('one_to_two', 'three_to_four', 'five_or_more')",
+            name="ck_sensitive_context_average_alcohol_intake",
+        ),
+        CheckConstraint(
             "ethnicity IS NULL OR ethnicity IN ('filipino', 'other', 'declined')",
             name="ck_sensitive_context_ethnicity",
         ),
@@ -75,13 +85,19 @@ class SensitiveProfileContext(Base):
     pregnancy_duration_unit: Mapped[str | None] = mapped_column(String(8), nullable=True)
     pregnancy_due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     smoking_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # Canonical collection fields. The older singular columns remain mapped only
+    # for additive migration compatibility and are no longer exposed by the API.
+    smoking_methods: Mapped[list[str] | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
     smoking_method: Mapped[str | None] = mapped_column(String(32), nullable=True)
     drinking_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
     drinking_frequency: Mapped[str | None] = mapped_column(String(16), nullable=True)
     drinking_average_intake: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    average_alcohol_intake: Mapped[str | None] = mapped_column(String(16), nullable=True)
     last_alcohol_consumption: Mapped[str | None] = mapped_column(String(32), nullable=True)
     alcohol_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    alcohol_types: Mapped[list[str] | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
     body_build: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    weight_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
     ethnicity: Mapped[str | None] = mapped_column(String(16), nullable=True)
     medical_needs: Mapped[list[str] | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

@@ -18,6 +18,9 @@ class SensitiveProfileService:
         self._consents = consent_service
 
     def get_context(self, user_id: int) -> SensitiveProfileContext | None:
+        """Return data only while the owner has granted storage consent."""
+        if not self._consents.storage_is_granted(user_id):
+            return None
         return self._contexts.get_by_user_id(user_id)
 
     def replace_context(
