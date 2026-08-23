@@ -26,8 +26,27 @@ from app.services.sensitive_profile_service import SensitiveProfileService
 from app.services.nutrition_profile_service import NutritionProfileService
 from app.services.nutrition_target_service import NutritionTargetService
 from app.services.onboarding_service import OnboardingService
+from app.repositories.device_pairing_repository import DevicePairingRepository
+from app.schemas.device_pairing import PairDeviceRequest, PairedDeviceListResponse, PairedDeviceResponse
+from app.routers.device_pairing import device_response, get_pairing_service
+from app.services.device_pairing_service import DevicePairingService, PairingError
 
 router = APIRouter(prefix="/api/users", tags=["users"])
+
+@router.post("/me/devices/pair", response_model=PairedDeviceResponse, status_code=status.HTTP_201_CREATED)
+def pair_my_device(request: PairDeviceRequest, current_user: Annotated[User, Depends(get_current_user)], service: Annotated[DevicePairingService, Depends(get_pairing_service)]):
+    try: return device_response(service.claim(current_user.id, request.pairing_code))
+    except PairingError as error: raise HTTPException(status_code=422, detail=str(error)) from None
+
+@router.get("/me/devices", response_model=PairedDeviceListResponse)
+def list_my_devices(current_user: Annotated[User, Depends(get_current_user)], database_session: Annotated[Session, Depends(get_db)]):
+    return PairedDeviceListResponse(devices=[device_response(device) for device in DevicePairingRepository(database_session).list_for_user(current_user.id)])
+
+@router.delete("/me/devices/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_my_device(device_id: int, current_user: Annotated[User, Depends(get_current_user)], service: Annotated[DevicePairingService, Depends(get_pairing_service)]):
+    device=service._repo.get_device_for_user(device_id,current_user.id)
+    if device is None: raise HTTPException(status_code=404,detail="Device was not found.")
+    service.revoke(device)
 
 
 def get_nutrition_profile_service(

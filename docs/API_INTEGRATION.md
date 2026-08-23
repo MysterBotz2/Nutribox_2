@@ -276,6 +276,28 @@ are never clamped and nothing is persisted. One finalized analysis is allowed
 per meal; the original Meal and MealItems remain immutable. No clinical
 interpretation is made.
 
+## AI chat
+
+`POST /api/ai/chat?timezone=UTC` requires a bearer token and accepts
+`{"message":"...", "conversation_id": optional}`. Without a conversation ID it
+creates one; with an ID it verifies ownership and appends the turn. It returns
+the conversation ID plus persisted `user_message` and `assistant_message`.
+`GET /api/ai/conversations` lists the current user's conversations and `GET
+/api/ai/conversations/{conversation_id}` returns its ordered history. Clients
+must call Nutri-Box only, never an LLM provider directly. The backend supplies
+bounded history and trusted profile/target/progress facts; sensitive-profile
+fields are excluded. Chat guidance is non-clinical and is never the authority
+for stored nutrition values or targets.
+
+## Optional device pairing
+
+Mobile/Web users may start the optional flow through `POST /api/users/me/devices/pair`,
+then list or revoke devices through `GET /api/users/me/devices` and `DELETE
+/api/users/me/devices/{device_id}` with their normal bearer token. Pi devices
+use `POST /api/device-pairing/start`, `POST /api/device-pairing/status`, and
+`GET /api/device/me` with `X-Device-Token`. The Pi receives no user JWT or
+provider credentials; the Web/Mobile client never receives the device token.
+
 ## Error contract
 
 The stable safe error shape is normally `{"detail": "..."}`. FastAPI/Pydantic validation errors use `{"detail": [...]}` with HTTP `422`. Common client actions:

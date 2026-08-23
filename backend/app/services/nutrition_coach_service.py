@@ -35,13 +35,21 @@ class NutritionCoachService:
     async def generate_guidance(
         self, user_id: int, timezone_name: str, question: str | None
     ) -> NutritionCoachResponse:
+        result = await self._provider.generate_guidance(self.build_context(user_id, timezone_name, question))
+        return NutritionCoachResponse(
+            message=result.message,
+            highlights=list(result.highlights),
+            provider=result.provider,
+            generated_at=datetime.now(timezone.utc),
+        )
+
+    def build_context(self, user_id: int, timezone_name: str, question: str | None, history=()) -> NutritionCoachContext:
         profile = self._profiles.get_by_user_id(user_id)
         today = self._progress.today(user_id, timezone_name)
         comparison = self._comparison.status_for_today_progress(user_id, today)
         target = self._targets.get_target(user_id)
         weekly = self._progress.summary(user_id, days=7, timezone_name=timezone_name)
-        result = await self._provider.generate_guidance(
-            NutritionCoachContext(
+        return NutritionCoachContext(
                 timezone=timezone_name,
                 profile=self._profile_context(profile),
                 target=(
@@ -62,14 +70,11 @@ class NutritionCoachService:
                 target_comparison=comparison,
                 weekly=weekly,
                 question=question,
+                conversation_history=tuple(history),
             )
-        )
-        return NutritionCoachResponse(
-            message=result.message,
-            highlights=list(result.highlights),
-            provider=result.provider,
-            generated_at=datetime.now(timezone.utc),
-        )
+
+    async def generate_chat_reply(self, context: NutritionCoachContext):
+        return await self._provider.generate_chat_reply(context)
 
     @staticmethod
     def _profile_context(profile: NutritionProfile | None) -> NutritionCoachProfileContext | None:

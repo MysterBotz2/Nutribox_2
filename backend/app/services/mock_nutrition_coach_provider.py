@@ -34,6 +34,13 @@ class MockNutritionCoachProvider(NutritionCoachProvider):
             highlights.append("Your optional question is included in this simulated response context.")
         return NutritionCoachResult(message=message, highlights=tuple(highlights), provider="mock")
 
+    async def generate_chat_reply(self, context: NutritionCoachContext) -> NutritionCoachResult:
+        return NutritionCoachResult(
+            message="This is a simulated Nutri-Box chat response.",
+            highlights=(),
+            provider="mock",
+        )
+
     @staticmethod
     def _meal_highlight(meal_count: int) -> str:
         if meal_count == 0:

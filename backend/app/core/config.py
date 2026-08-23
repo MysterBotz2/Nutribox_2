@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     usda_fdc_base_url: str = "https://api.nal.usda.gov/fdc/v1"
     usda_fdc_timeout_seconds: int = Field(default=10, gt=0, le=60)
     nutrition_coach_provider: str = "mock"
+    nutrition_coach_gemini_api_key: str | None = None
+    nutrition_coach_gemini_model: str | None = None
+    nutrition_coach_gemini_timeout_seconds: int = Field(default=20, gt=0, le=120)
+    device_pairing_secret: str | None = None
+    device_pairing_ttl_seconds: int = Field(default=300, ge=60, le=3600)
     jwt_secret_key: str | None = None
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = Field(default=30, gt=0, le=1440)

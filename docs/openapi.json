@@ -463,6 +463,133 @@
         "title": "CalculatedMealAnalysis",
         "type": "object"
       },
+      "ChatConversationListResponse": {
+        "properties": {
+          "conversations": {
+            "items": {
+              "$ref": "#/components/schemas/ChatConversationResponse"
+            },
+            "title": "Conversations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "conversations"
+        ],
+        "title": "ChatConversationListResponse",
+        "type": "object"
+      },
+      "ChatConversationResponse": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessageResponse"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "updated_at",
+          "messages"
+        ],
+        "title": "ChatConversationResponse",
+        "type": "object"
+      },
+      "ChatMessageResponse": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "content",
+          "created_at"
+        ],
+        "title": "ChatMessageResponse",
+        "type": "object"
+      },
+      "ChatRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "conversation_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          },
+          "message": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "ChatRequest",
+        "type": "object"
+      },
+      "ChatResponse": {
+        "properties": {
+          "assistant_message": {
+            "$ref": "#/components/schemas/ChatMessageResponse"
+          },
+          "conversation_id": {
+            "title": "Conversation Id",
+            "type": "integer"
+          },
+          "user_message": {
+            "$ref": "#/components/schemas/ChatMessageResponse"
+          }
+        },
+        "required": [
+          "conversation_id",
+          "user_message",
+          "assistant_message"
+        ],
+        "title": "ChatResponse",
+        "type": "object"
+      },
       "DailyProgressPoint": {
         "properties": {
           "date": {
@@ -2446,6 +2573,167 @@
         "title": "OptionalNutrientValues",
         "type": "object"
       },
+      "PairDeviceRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "pairing_code": {
+            "pattern": "^\\d{6}$",
+            "title": "Pairing Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pairing_code"
+        ],
+        "title": "PairDeviceRequest",
+        "type": "object"
+      },
+      "PairedDeviceListResponse": {
+        "properties": {
+          "devices": {
+            "items": {
+              "$ref": "#/components/schemas/PairedDeviceResponse"
+            },
+            "title": "Devices",
+            "type": "array"
+          }
+        },
+        "required": [
+          "devices"
+        ],
+        "title": "PairedDeviceListResponse",
+        "type": "object"
+      },
+      "PairedDeviceResponse": {
+        "properties": {
+          "device_type": {
+            "title": "Device Type",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_seen_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "paired_at": {
+            "format": "date-time",
+            "title": "Paired At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "device_type",
+          "paired_at"
+        ],
+        "title": "PairedDeviceResponse",
+        "type": "object"
+      },
+      "PairingStartRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "device_name": {
+            "default": "NutriBox Pi",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Device Name",
+            "type": "string"
+          }
+        },
+        "title": "PairingStartRequest",
+        "type": "object"
+      },
+      "PairingStartResponse": {
+        "properties": {
+          "device_token": {
+            "title": "Device Token",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "pairing_code": {
+            "title": "Pairing Code",
+            "type": "string"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "pairing_code",
+          "device_token",
+          "expires_at"
+        ],
+        "title": "PairingStartResponse",
+        "type": "object"
+      },
+      "PairingStatusRequest": {
+        "properties": {
+          "device_token": {
+            "maxLength": 256,
+            "minLength": 20,
+            "title": "Device Token",
+            "type": "string"
+          },
+          "session_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "device_token"
+        ],
+        "title": "PairingStatusRequest",
+        "type": "object"
+      },
+      "PairingStatusResponse": {
+        "properties": {
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "PairingStatusResponse",
+        "type": "object"
+      },
       "PortionCalculationRequest": {
         "description": "A food reference identifier and measured portion weight.",
         "properties": {
@@ -4045,6 +4333,66 @@
         ]
       }
     },
+    "/api/ai/chat": {
+      "post": {
+        "operationId": "send_chat_message_api_ai_chat_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "timezone",
+            "required": false,
+            "schema": {
+              "default": "UTC",
+              "maxLength": 64,
+              "minLength": 1,
+              "title": "Timezone",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Send Chat Message",
+        "tags": [
+          "AI capabilities"
+        ]
+      }
+    },
     "/api/ai/coach": {
       "post": {
         "description": "Return transient provider-neutral coaching guidance from trusted backend context.",
@@ -4101,6 +4449,79 @@
           }
         ],
         "summary": "Generate Nutrition Coach Guidance",
+        "tags": [
+          "AI capabilities"
+        ]
+      }
+    },
+    "/api/ai/conversations": {
+      "get": {
+        "operationId": "list_chat_conversations_api_ai_conversations_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatConversationListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Chat Conversations",
+        "tags": [
+          "AI capabilities"
+        ]
+      }
+    },
+    "/api/ai/conversations/{conversation_id}": {
+      "get": {
+        "operationId": "get_chat_conversation_api_ai_conversations__conversation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "title": "Conversation Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatConversationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Chat Conversation",
         "tags": [
           "AI capabilities"
         ]
@@ -4227,6 +4648,137 @@
         "summary": "Login For Access Token",
         "tags": [
           "authentication"
+        ]
+      }
+    },
+    "/api/device-pairing/start": {
+      "post": {
+        "operationId": "start_pairing_api_device_pairing_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PairingStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairingStartResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Pairing",
+        "tags": [
+          "device pairing"
+        ]
+      }
+    },
+    "/api/device-pairing/status": {
+      "post": {
+        "operationId": "pairing_status_api_device_pairing_status_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PairingStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairingStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pairing Status",
+        "tags": [
+          "device pairing"
+        ]
+      }
+    },
+    "/api/device/me": {
+      "get": {
+        "operationId": "get_device_me_api_device_me_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-device-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Device-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairedDeviceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Device Me",
+        "tags": [
+          "device pairing"
         ]
       }
     },
@@ -5370,6 +5922,118 @@
           }
         ],
         "summary": "Get Me",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/me/devices": {
+      "get": {
+        "operationId": "list_my_devices_api_users_me_devices_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairedDeviceListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List My Devices",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/me/devices/pair": {
+      "post": {
+        "operationId": "pair_my_device_api_users_me_devices_pair_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PairDeviceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairedDeviceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Pair My Device",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/me/devices/{device_id}": {
+      "delete": {
+        "operationId": "revoke_my_device_api_users_me_devices__device_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "title": "Device Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Revoke My Device",
         "tags": [
           "users"
         ]

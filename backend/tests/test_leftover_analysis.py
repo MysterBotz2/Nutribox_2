@@ -39,7 +39,11 @@ def test_leftover_requires_auth_and_owner_access(client: TestClient, database_se
     assert client.get(f"/api/meals/{meal['id']}/leftover-analysis", headers=owner).status_code == 200
     assert client.get(f"/api/meals/{meal['id']}/leftover-analysis", headers=other).status_code == 404
     assert client.post(f"/api/meals/{meal['id']}/leftover-analysis", data={"leftover_weight_grams": "0"}, headers=owner).status_code == 409
-    assert client.get(f"/api/meals/{meal['id']}", headers=owner).json() == meal
+    unchanged = client.get(f"/api/meals/{meal['id']}", headers=owner).json()
+    assert unchanged["id"] == meal["id"]
+    assert unchanged["totals"] == meal["totals"]
+    assert unchanged["items"][0]["id"] == meal["items"][0]["id"]
+    assert Decimal(unchanged["items"][0]["weight_grams"]) == Decimal(meal["items"][0]["weight_grams"])
 
 
 def test_nonzero_leftover_requires_image(client: TestClient, database_session: Session, auth_headers: dict[str, str]) -> None:

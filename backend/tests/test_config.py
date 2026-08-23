@@ -14,10 +14,10 @@ def test_operating_system_environment_overrides_env_file(monkeypatch) -> None:
 
 
 def test_coach_provider_configuration_defaults_to_mock_and_honors_environment(monkeypatch) -> None:
-    assert Settings().nutrition_coach_provider == "mock"
+    assert Settings(_env_file=None).nutrition_coach_provider == "mock"
     monkeypatch.setenv("NUTRITION_COACH_PROVIDER", "custom")
 
-    assert Settings().nutrition_coach_provider == "custom"
+    assert Settings(_env_file=None).nutrition_coach_provider == "custom"
 
 
 def test_gemini_settings_are_optional_and_honor_environment(monkeypatch) -> None:
