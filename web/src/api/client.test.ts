@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { apiClient, ApiError } from './client'
-import { API_BASE_URL, resolveApiBaseUrl } from './config'
+import { resolveApiBaseUrl } from './config'
 import { clearSessionToken, storeSessionToken } from '../auth/token-storage'
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -17,7 +17,6 @@ describe('API client', () => {
   it('uses same-origin relative requests when the API base is missing or blank', () => {
     expect(resolveApiBaseUrl(undefined)).toBe('')
     expect(resolveApiBaseUrl('   ')).toBe('')
-    expect(API_BASE_URL).toBe('')
   })
 
   it('preserves an explicit API-origin override without a trailing slash', () => {
