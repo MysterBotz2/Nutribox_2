@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal
+from uuid import uuid4
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -9,8 +10,10 @@ from app.models.meal import Meal
 from app.routers.ai import get_nutrition_coach_service
 from app.services.nutrition_coach_provider import (
     NutritionCoachContext,
+    NutritionCoachInvalidResponse,
     NutritionCoachProvider,
     NutritionCoachResult,
+    NutritionCoachUnavailable,
 )
 from app.services.nutrition_coach_selector import get_nutrition_coach_provider
 from app.services.nutrient_calculator import NutrientCalculator
@@ -195,3 +198,32 @@ def test_unknown_coach_provider_fails_safely(client: TestClient, jwt_configurati
 
     assert response.status_code == 503
     assert response.json() == {"detail": "Nutrition coach provider is not configured."}
+
+
+def test_coach_normalizes_provider_unavailable_and_invalid_response(
+    client: TestClient, jwt_configuration: None
+) -> None:
+    _, headers = register_and_login(client)
+
+    class UnavailableProvider(CapturingCoachProvider):
+        async def generate_guidance(self, context):
+            raise NutritionCoachUnavailable("Nutrition coach provider is unavailable.")
+
+    app.dependency_overrides[get_nutrition_coach_provider] = lambda: UnavailableProvider()
+    try:
+        unavailable = client.post("/api/ai/coach", json={}, headers=headers)
+    finally:
+        app.dependency_overrides.clear()
+    assert unavailable.status_code == 503
+
+    class InvalidProvider(CapturingCoachProvider):
+        async def generate_guidance(self, context):
+            raise NutritionCoachInvalidResponse("Nutrition coach provider returned an invalid response.")
+
+    _, headers = register_and_login(client, f"invalid-provider-{uuid4().hex}@example.com")
+    app.dependency_overrides[get_nutrition_coach_provider] = lambda: InvalidProvider()
+    try:
+        invalid = client.post("/api/ai/coach", json={}, headers=headers)
+    finally:
+        app.dependency_overrides.clear()
+    assert invalid.status_code == 502

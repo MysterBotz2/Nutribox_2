@@ -11,6 +11,7 @@ from app.models.user import User
 from app.repositories.meal_repository import MealRepository
 from app.repositories.nutrition_profile_repository import NutritionProfileRepository
 from app.repositories.nutrition_target_repository import NutritionTargetRepository
+from app.repositories.chat_repository import ChatRepository
 from app.schemas.ai import FoodRecognitionResponse, RecognizedFood
 from app.schemas.nutrition_coach import NutritionCoachRequest, NutritionCoachResponse
 from app.services.food_recognition_selector import get_food_recognition_provider
@@ -22,6 +23,9 @@ from app.services.nutrition_coach_service import NutritionCoachService
 from app.services.nutrition_target_comparison_service import NutritionTargetComparisonService
 from app.services.nutrition_target_service import NutritionTargetService
 from app.services.progress_service import InvalidTimezoneError, ProgressService
+from app.services.chat_service import ChatConversationNotFoundError, ChatService
+from app.services.nutrition_coach_provider import NutritionCoachInvalidResponse, NutritionCoachUnavailable
+from app.schemas.chat import ChatConversationListResponse, ChatConversationResponse, ChatRequest, ChatResponse
 
 router = APIRouter(prefix="/api/ai", tags=["AI capabilities"])
 
@@ -61,6 +65,13 @@ def get_nutrition_coach_service(
     )
 
 
+def get_chat_service(
+    database_session: Annotated[Session, Depends(get_db)],
+    coach_service: Annotated[NutritionCoachService, Depends(get_nutrition_coach_service)],
+) -> ChatService:
+    return ChatService(ChatRepository(database_session), coach_service)
+
+
 @router.post("/coach", response_model=NutritionCoachResponse)
 async def generate_nutrition_coach_guidance(
     request: NutritionCoachRequest,
@@ -73,3 +84,46 @@ async def generate_nutrition_coach_guidance(
         return await coach_service.generate_guidance(current_user.id, timezone, request.question)
     except InvalidTimezoneError as error:
         raise HTTPException(status_code=422, detail=str(error)) from None
+    except NutritionCoachUnavailable as error:
+        raise HTTPException(status_code=503, detail=str(error)) from None
+    except NutritionCoachInvalidResponse as error:
+        raise HTTPException(status_code=502, detail=str(error)) from None
+
+
+@router.post("/chat", response_model=ChatResponse, status_code=201)
+async def send_chat_message(
+    request: ChatRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    chat_service: Annotated[ChatService, Depends(get_chat_service)],
+    timezone: str = Query("UTC", min_length=1, max_length=64),
+) -> ChatResponse:
+    try:
+        return await chat_service.send(current_user.id, timezone, request.message, request.conversation_id)
+    except ChatConversationNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from None
+    except InvalidTimezoneError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
+    except NutritionCoachUnavailable as error:
+        raise HTTPException(status_code=503, detail=str(error)) from None
+    except NutritionCoachInvalidResponse as error:
+        raise HTTPException(status_code=502, detail=str(error)) from None
+
+
+@router.get("/conversations", response_model=ChatConversationListResponse)
+def list_chat_conversations(
+    current_user: Annotated[User, Depends(get_current_user)],
+    chat_service: Annotated[ChatService, Depends(get_chat_service)],
+) -> ChatConversationListResponse:
+    return ChatConversationListResponse(conversations=chat_service.list(current_user.id))
+
+
+@router.get("/conversations/{conversation_id}", response_model=ChatConversationResponse)
+def get_chat_conversation(
+    conversation_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    chat_service: Annotated[ChatService, Depends(get_chat_service)],
+) -> ChatConversationResponse:
+    try:
+        return chat_service.get(current_user.id, conversation_id)
+    except ChatConversationNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from None

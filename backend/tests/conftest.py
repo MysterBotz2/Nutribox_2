@@ -16,6 +16,7 @@ from app.main import app
 def force_mock_food_recognition_for_tests(monkeypatch: pytest.MonkeyPatch) -> None:
     """Keep normal tests independent of a developer's real-provider .env settings."""
     monkeypatch.setattr(settings, "food_recognition_provider", "mock")
+    monkeypatch.setattr(settings, "nutrition_coach_provider", "mock")
 
 
 @pytest.fixture

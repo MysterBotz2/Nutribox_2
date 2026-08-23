@@ -24,6 +24,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ai/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send Chat Message */
+        post: operations["send_chat_message_api_ai_chat_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ai/coach": {
         parameters: {
             query?: never;
@@ -38,6 +55,40 @@ export interface paths {
          * @description Return transient provider-neutral coaching guidance from trusted backend context.
          */
         post: operations["generate_nutrition_coach_guidance_api_ai_coach_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Chat Conversations */
+        get: operations["list_chat_conversations_api_ai_conversations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/conversations/{conversation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Chat Conversation */
+        get: operations["get_chat_conversation_api_ai_conversations__conversation_id__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -92,6 +143,57 @@ export interface paths {
         put?: never;
         /** Login For Access Token */
         post: operations["login_for_access_token_api_auth_token_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/device-pairing/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Pairing */
+        post: operations["start_pairing_api_device_pairing_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/device-pairing/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pairing Status */
+        post: operations["pairing_status_api_device_pairing_status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/device/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Device Me */
+        get: operations["get_device_me_api_device_me_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -424,6 +526,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/me/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List My Devices */
+        get: operations["list_my_devices_api_users_me_devices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/me/devices/pair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pair My Device */
+        post: operations["pair_my_device_api_users_me_devices_pair_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/me/devices/{device_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke My Device */
+        delete: operations["revoke_my_device_api_users_me_devices__device_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/me/onboarding-status": {
         parameters: {
             query?: never;
@@ -712,6 +865,56 @@ export interface components {
              * @constant
              */
             weight_source: "manual";
+        };
+        /** ChatConversationListResponse */
+        ChatConversationListResponse: {
+            /** Conversations */
+            conversations: components["schemas"]["ChatConversationResponse"][];
+        };
+        /** ChatConversationResponse */
+        ChatConversationResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /** Messages */
+            messages: components["schemas"]["ChatMessageResponse"][];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ChatMessageResponse */
+        ChatMessageResponse: {
+            /** Content */
+            content: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /** Role */
+            role: string;
+        };
+        /** ChatRequest */
+        ChatRequest: {
+            /** Conversation Id */
+            conversation_id?: number | null;
+            /** Message */
+            message: string;
+        };
+        /** ChatResponse */
+        ChatResponse: {
+            assistant_message: components["schemas"]["ChatMessageResponse"];
+            /** Conversation Id */
+            conversation_id: number;
+            user_message: components["schemas"]["ChatMessageResponse"];
         };
         /** DailyProgressPoint */
         DailyProgressPoint: {
@@ -1304,6 +1507,68 @@ export interface components {
             /** Protein G */
             protein_g: string | null;
         };
+        /** PairDeviceRequest */
+        PairDeviceRequest: {
+            /** Pairing Code */
+            pairing_code: string;
+        };
+        /** PairedDeviceListResponse */
+        PairedDeviceListResponse: {
+            /** Devices */
+            devices: components["schemas"]["PairedDeviceResponse"][];
+        };
+        /** PairedDeviceResponse */
+        PairedDeviceResponse: {
+            /** Device Type */
+            device_type: string;
+            /** Id */
+            id: number;
+            /** Last Seen At */
+            last_seen_at?: string | null;
+            /** Name */
+            name: string;
+            /**
+             * Paired At
+             * Format: date-time
+             */
+            paired_at: string;
+        };
+        /** PairingStartRequest */
+        PairingStartRequest: {
+            /**
+             * Device Name
+             * @default NutriBox Pi
+             */
+            device_name: string;
+        };
+        /** PairingStartResponse */
+        PairingStartResponse: {
+            /** Device Token */
+            device_token: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Pairing Code */
+            pairing_code: string;
+            /** Session Id */
+            session_id: string;
+        };
+        /** PairingStatusRequest */
+        PairingStatusRequest: {
+            /** Device Token */
+            device_token: string;
+            /** Session Id */
+            session_id: string;
+        };
+        /** PairingStatusResponse */
+        PairingStatusResponse: {
+            /** Device Id */
+            device_id?: number | null;
+            /** Status */
+            status: string;
+        };
         /**
          * PortionCalculationRequest
          * @description A food reference identifier and measured portion weight.
@@ -1802,6 +2067,41 @@ export interface operations {
             };
         };
     };
+    send_chat_message_api_ai_chat_post: {
+        parameters: {
+            query?: {
+                timezone?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     generate_nutrition_coach_guidance_api_ai_coach_post: {
         parameters: {
             query?: {
@@ -1824,6 +2124,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NutritionCoachResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_chat_conversations_api_ai_conversations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatConversationListResponse"];
+                };
+            };
+        };
+    };
+    get_chat_conversation_api_ai_conversations__conversation_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatConversationResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1923,6 +2274,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccessTokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_pairing_api_device_pairing_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PairingStartRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairingStartResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pairing_status_api_device_pairing_status_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PairingStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairingStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_device_me_api_device_me_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-device-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairedDeviceResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2646,6 +3094,88 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicUser"];
+                };
+            };
+        };
+    };
+    list_my_devices_api_users_me_devices_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairedDeviceListResponse"];
+                };
+            };
+        };
+    };
+    pair_my_device_api_users_me_devices_pair_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PairDeviceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairedDeviceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_my_device_api_users_me_devices__device_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                device_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
