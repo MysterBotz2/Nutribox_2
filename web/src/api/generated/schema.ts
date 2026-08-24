@@ -258,6 +258,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meals/analysis-sessions/{analysis_session_id}/selections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Select Meal Analysis Component */
+        post: operations["select_meal_analysis_component_api_meals_analysis_sessions__analysis_session_id__selections_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/meals/analyze": {
         parameters: {
             query?: never;
@@ -847,7 +864,15 @@ export interface components {
         };
         /** CalculatedMealAnalysis */
         CalculatedMealAnalysis: {
-            food: components["schemas"]["CalculatedFood"];
+            /** Analysis Session Expires At */
+            analysis_session_expires_at?: string | null;
+            /** Analysis Session Id */
+            analysis_session_id?: number | null;
+            /** Components */
+            components?: components["schemas"]["MealAnalysisComponentResponse"][] | null;
+            food?: components["schemas"]["CalculatedFood"] | null;
+            /** Measured Weight Grams */
+            measured_weight_grams?: string | null;
             nutrition: components["schemas"]["PortionNutrition"];
             /** Recognition Source */
             recognition_source: string;
@@ -862,9 +887,10 @@ export interface components {
             weight_grams: string;
             /**
              * Weight Source
-             * @constant
+             * @default manual
+             * @enum {string}
              */
-            weight_source: "manual";
+            weight_source: "manual" | "ai_estimate";
         };
         /** ChatConversationListResponse */
         ChatConversationListResponse: {
@@ -999,6 +1025,14 @@ export interface components {
         };
         /** FoodNotRecognizedMealAnalysis */
         FoodNotRecognizedMealAnalysis: {
+            /** Analysis Session Expires At */
+            analysis_session_expires_at?: string | null;
+            /** Analysis Session Id */
+            analysis_session_id?: number | null;
+            /** Components */
+            components?: components["schemas"]["MealAnalysisComponentResponse"][] | null;
+            /** Measured Weight Grams */
+            measured_weight_grams?: string | null;
             /** Recognition Source */
             recognition_source: string;
             /** Recognized Foods */
@@ -1101,10 +1135,54 @@ export interface components {
             /** Protein G */
             protein_g: string;
         };
+        /** MealAnalysisCandidateResponse */
+        MealAnalysisCandidateResponse: {
+            /** Name */
+            name: string;
+        };
+        /** MealAnalysisComponentResponse */
+        MealAnalysisComponentResponse: {
+            /** Candidates */
+            candidates: components["schemas"]["MealAnalysisCandidateResponse"][];
+            /**
+             * Component Id
+             * Format: uuid
+             */
+            component_id: string;
+            /** Estimated Weight Grams */
+            estimated_weight_grams: string;
+            /** Normalized Proportion */
+            normalized_proportion: string;
+            nutrition: components["schemas"]["PortionNutrition"] | null;
+            /** Nutrition Source */
+            nutrition_source: string | null;
+            /** Raw Estimated Proportion */
+            raw_estimated_proportion: string;
+            /** Recognized Name */
+            recognized_name: string;
+            /** Resolution Status */
+            resolution_status: string;
+            /** Resolved Reference */
+            resolved_reference: string | null;
+            /** Weight Source */
+            weight_source: string;
+        };
+        /** MealAnalysisSelectionRequest */
+        MealAnalysisSelectionRequest: {
+            /** Candidate Name */
+            candidate_name: string;
+            /**
+             * Component Id
+             * Format: uuid
+             */
+            component_id: string;
+        };
         /** MealCreateRequest */
         MealCreateRequest: {
+            /** Analysis Session Id */
+            analysis_session_id?: number | null;
             /** Items */
-            items: components["schemas"]["MealItemCreateRequest"][];
+            items?: components["schemas"]["MealItemCreateRequest"][] | null;
         };
         /** MealItemCreateRequest */
         MealItemCreateRequest: {
@@ -1402,6 +1480,14 @@ export interface components {
         };
         /** NutritionReferenceNotFoundMealAnalysis */
         NutritionReferenceNotFoundMealAnalysis: {
+            /** Analysis Session Expires At */
+            analysis_session_expires_at?: string | null;
+            /** Analysis Session Id */
+            analysis_session_id?: number | null;
+            /** Components */
+            components?: components["schemas"]["MealAnalysisComponentResponse"][] | null;
+            /** Measured Weight Grams */
+            measured_weight_grams?: string | null;
             /** Recognition Source */
             recognition_source: string;
             /** Recognized Foods */
@@ -1721,6 +1807,14 @@ export interface components {
         };
         /** RequiresFoodSelectionMealAnalysis */
         RequiresFoodSelectionMealAnalysis: {
+            /** Analysis Session Expires At */
+            analysis_session_expires_at?: string | null;
+            /** Analysis Session Id */
+            analysis_session_id?: number | null;
+            /** Components */
+            components?: components["schemas"]["MealAnalysisComponentResponse"][] | null;
+            /** Measured Weight Grams */
+            measured_weight_grams?: string | null;
             /** Recognition Source */
             recognition_source: string;
             /** Recognized Foods */
@@ -2495,6 +2589,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MealResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    select_meal_analysis_component_api_meals_analysis_sessions__analysis_session_id__selections_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                analysis_session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MealAnalysisSelectionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalculatedMealAnalysis"] | components["schemas"]["FoodNotRecognizedMealAnalysis"] | components["schemas"]["NutritionReferenceNotFoundMealAnalysis"] | components["schemas"]["RequiresFoodSelectionMealAnalysis"];
                 };
             };
             /** @description Validation Error */
