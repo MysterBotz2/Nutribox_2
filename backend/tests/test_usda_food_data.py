@@ -101,7 +101,7 @@ def test_ambiguous_usda_results_are_not_selected(database_session: Session) -> N
             return [UsdaSearchFood(1, "Rice", "Foundation"), UsdaSearchFood(2, "Rice", "SR Legacy")]
     resolution = UsdaFoodReferenceService(FoodRepository(database_session), AmbiguousClient()).resolve("Rice")  # type: ignore[arg-type]
     assert resolution.food is None
-    assert resolution.candidate_names == ("Rice", "Rice")
+    assert resolution.candidate_names == ("Rice",)
 
 
 def _ranked_names(query: str, *descriptions: str) -> list[str]:

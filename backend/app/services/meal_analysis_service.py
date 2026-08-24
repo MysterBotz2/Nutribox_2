@@ -1,5 +1,6 @@
 from decimal import Decimal
 from dataclasses import dataclass, fields
+from uuid import uuid4
 
 from app.schemas.ai import RecognizedFood
 from app.schemas.meal import (
@@ -168,7 +169,12 @@ class MealAnalysisService:
         candidates: list[dict[str, str]] = []
         if food is None and self._usda_food_reference_service is not None:
             usda_resolution = self._usda_food_reference_service.resolve(name)
-            candidates = [{"name": candidate} for candidate in usda_resolution.candidate_names]
+            candidates = [
+                {"candidate_id": str(uuid4()), "name": candidate.description, "source": "usda", "source_reference_id": str(candidate.fdc_id)}
+                for candidate in usda_resolution.candidates
+            ]
+            if not candidates:
+                candidates = [{"candidate_id": str(uuid4()), "name": candidate, "source": "usda", "source_reference_id": ""} for candidate in usda_resolution.candidate_names]
             food = usda_resolution.food
         if candidates:
             status = ComponentResolutionStatus.REQUIRES_FOOD_SELECTION
@@ -212,7 +218,8 @@ class MealAnalysisService:
         user_id: int,
         session_id: int,
         component_id: str,
-        candidate_name: str,
+        candidate_id: str | None,
+        candidate_name: str | None,
         session_service: MealAnalysisSessionService,
     ) -> ComposedMealAnalysis:
         """Resolve exactly one stored candidate without calling recognition again."""
@@ -223,11 +230,25 @@ class MealAnalysisService:
             raise ValueError("Meal analysis component was not found.")
         if component.resolution_status != ComponentResolutionStatus.REQUIRES_FOOD_SELECTION:
             raise ValueError("Meal analysis component is not awaiting selection.")
-        if candidate_name not in {candidate["name"] for candidate in component.candidates}:
-            raise ValueError("Selected nutrition reference is not valid for this component.")
-        food = self._nutrition_service.get_food_by_recognized_name(candidate_name)
-        if food is None and self._usda_food_reference_service is not None:
-            food = self._usda_food_reference_service.resolve(candidate_name).food
+        matches = [candidate for candidate in component.candidates if (candidate_id is not None and candidate.get("candidate_id") == candidate_id) or (candidate_id is None and candidate_name is not None and candidate["name"] == candidate_name)]
+        if len(matches) != 1:
+            raise ValueError("Selected nutrition reference is not valid or is ambiguous for this component.")
+        candidate = matches[0]
+        source = candidate.get("source")
+        source_reference_id = candidate.get("source_reference_id")
+        if source == "usda" and source_reference_id and self._usda_food_reference_service is not None:
+            try:
+                food = self._usda_food_reference_service.load_by_fdc_id(int(source_reference_id))
+            except ValueError:
+                food = None
+        elif source == "local_database" and source_reference_id:
+            try:
+                food = self._nutrition_service.get_food(int(source_reference_id))
+            except ValueError:
+                food = None
+        else:
+            # Legacy short-lived session candidates did not retain a source ID.
+            food = self._nutrition_service.get_food_by_recognized_name(candidate["name"])
         if food is None:
             raise ValueError("Selected nutrition reference is no longer available.")
         calculated = self._nutrient_calculator.calculate_extended(

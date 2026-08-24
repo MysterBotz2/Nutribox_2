@@ -1137,6 +1137,8 @@ export interface components {
         };
         /** MealAnalysisCandidateResponse */
         MealAnalysisCandidateResponse: {
+            /** Candidate Id */
+            candidate_id?: string | null;
             /** Name */
             name: string;
         };
@@ -1169,8 +1171,13 @@ export interface components {
         };
         /** MealAnalysisSelectionRequest */
         MealAnalysisSelectionRequest: {
-            /** Candidate Name */
-            candidate_name: string;
+            /** Candidate Id */
+            candidate_id?: string | null;
+            /**
+             * Candidate Name
+             * @deprecated
+             */
+            candidate_name?: string | null;
             /**
              * Component Id
              * Format: uuid

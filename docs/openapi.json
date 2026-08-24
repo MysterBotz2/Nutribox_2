@@ -1134,6 +1134,18 @@
       },
       "MealAnalysisCandidateResponse": {
         "properties": {
+          "candidate_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -1237,11 +1249,31 @@
       },
       "MealAnalysisSelectionRequest": {
         "properties": {
+          "candidate_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
           "candidate_name": {
-            "maxLength": 160,
-            "minLength": 1,
-            "title": "Candidate Name",
-            "type": "string"
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "deprecated": true,
+            "title": "Candidate Name"
           },
           "component_id": {
             "format": "uuid",
@@ -1250,8 +1282,7 @@
           }
         },
         "required": [
-          "component_id",
-          "candidate_name"
+          "component_id"
         ],
         "title": "MealAnalysisSelectionRequest",
         "type": "object"

@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class UsdaResolution:
     food: Food | None = None
+    candidates: tuple[UsdaSearchFood, ...] = ()
     candidate_names: tuple[str, ...] = ()
 
 
@@ -86,26 +87,34 @@ class UsdaFoodReferenceService:
             [candidate.description for candidate in candidates],
         )
         exact = [candidate for candidate in candidates if normalize_food_name(candidate.description) == normalize_food_name(recognized_name)]
-        if len(exact) != 1:
+        underlying_exact = [candidate for candidate in raw_candidates if normalize_food_name(candidate.description) == normalize_food_name(recognized_name)]
+        if len(exact) != 1 or len(underlying_exact) != 1:
             logger.info(
                 "USDA relevance outcome=%s",
                 "requires_food_selection" if candidates else "nutrition_reference_not_found",
             )
-            return UsdaResolution(candidate_names=tuple(candidate.description for candidate in candidates[:self._RESULT_LIMIT]))
+            visible = tuple(candidates[:self._RESULT_LIMIT])
+            return UsdaResolution(candidates=visible, candidate_names=tuple(candidate.description for candidate in visible))
         selected = exact[0]
-        reference = f"fdcId:{selected.fdc_id}"
+        return UsdaResolution(food=self.load_by_fdc_id(selected.fdc_id, selected.data_type))
+
+    def load_by_fdc_id(self, fdc_id: int, data_type: str = "USDA") -> Food | None:
+        """Load and cache exactly one stored USDA reference; never search by name."""
+        if self._client is None:
+            return None
+        reference = f"fdcId:{fdc_id}"
         cached = self._food_repository.get_by_source_reference(reference)
         if cached is not None:
-            return UsdaResolution(food=cached)
+            return cached
         try:
-            detail = self._client.get_food(selected.fdc_id)
+            detail = self._client.get_food(fdc_id)
         except UsdaFoodDataError:
-            return UsdaResolution()
+            return None
         if any(detail.nutrients[name] is None for name in self._REQUIRED):
-            return UsdaResolution()
+            return None
         food = Food(
             name=detail.description,
-            category=selected.data_type,
+            category=data_type,
             calories_per_100g=detail.nutrients["calories"],
             protein_g_per_100g=detail.nutrients["protein_g"],
             carbohydrates_g_per_100g=detail.nutrients["carbohydrates_g"],
@@ -131,7 +140,7 @@ class UsdaFoodReferenceService:
         )
         self._food_repository.add(food)
         self._food_repository.flush()
-        return UsdaResolution(food=food)
+        return food
 
     @classmethod
     def _rank_relevant_candidates(
@@ -173,6 +182,8 @@ class UsdaFoodReferenceService:
         for original_index, candidate in enumerate(candidates):
             candidate_token_sequence = cls._matching_tokens(candidate.description)
             tokens = set(candidate_token_sequence)
+            if not cls._is_query_identity_compatible(query_token_set, tokens, candidate_token_sequence):
+                continue
             score, reasons = cls._candidate_relevance(
                 query_text=query_text,
                 candidate_text=" ".join(candidate_token_sequence),
@@ -193,7 +204,32 @@ class UsdaFoodReferenceService:
             if minimum_score is None or score >= minimum_score:
                 ranked.append((score, original_index, candidate))
         ranked.sort(key=lambda item: (-item[0], item[1]))
-        return [candidate for _, _, candidate in ranked]
+        deduplicated: list[UsdaSearchFood] = []
+        seen: set[str] = set()
+        for _, _, candidate in ranked:
+            key = normalize_food_name(candidate.description)
+            if key not in seen:
+                seen.add(key)
+                deduplicated.append(candidate)
+        return deduplicated
+
+    @staticmethod
+    def _is_query_identity_compatible(query_tokens: set[str], candidate_tokens: set[str], candidate_sequence: tuple[str, ...]) -> bool:
+        """Hard, query-aware exclusions for clearly different foods/dishes."""
+        animal_terms = {"chicken", "beef", "pork", "fish"}
+        if query_tokens & animal_terms and candidate_tokens & {"meatless", "vegan", "plant", "based", "imitation"}:
+            return False
+        if query_tokens == {"fried", "chicken"}:
+            if "chicken" not in candidate_tokens or not (candidate_tokens & {"fried", "breaded", "coated"}):
+                return False
+            if candidate_tokens & {"rice", "sandwich", "burger", "frozen", "potatoes", "vegetable", "meal"}:
+                return False
+        if query_tokens == {"beef", "stew"}:
+            if not {"beef", "stew"}.issubset(candidate_tokens):
+                return False
+            if "stew" in candidate_tokens and "meat" in candidate_tokens and "beef" in candidate_tokens and "stew meat" in " ".join(candidate_sequence):
+                return False
+        return True
 
     @classmethod
     def _is_semantically_eligible(cls, recognized_name: str, description: str) -> bool:

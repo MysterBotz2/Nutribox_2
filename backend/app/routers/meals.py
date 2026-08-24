@@ -194,7 +194,8 @@ def select_meal_analysis_component(
 ) -> MealAnalysisResponse:
     try:
         result = meal_analysis_service.apply_selection(user_id=current_user.id, session_id=analysis_session_id,
-            component_id=str(selection.component_id), candidate_name=selection.candidate_name, session_service=session_service)
+            component_id=str(selection.component_id), candidate_id=str(selection.candidate_id) if selection.candidate_id else None,
+            candidate_name=selection.candidate_name, session_service=session_service)
         persisted = session_service.get_session_for_user(analysis_session_id, current_user.id)
         return composed_analysis_response(result, persisted.expires_at)
     except MealAnalysisSessionNotFoundError:

@@ -81,6 +81,7 @@ class MealCreateRequest(BaseModel):
 
 
 class MealAnalysisCandidateResponse(BaseModel):
+    candidate_id: UUID | None = None
     name: str
 
 
@@ -100,7 +101,14 @@ class MealAnalysisComponentResponse(BaseModel):
 
 class MealAnalysisSelectionRequest(BaseModel):
     component_id: UUID
-    candidate_name: str = Field(min_length=1, max_length=160)
+    candidate_id: UUID | None = None
+    candidate_name: str | None = Field(default=None, min_length=1, max_length=160, deprecated=True)
+
+    @model_validator(mode="after")
+    def one_candidate_identifier(self):
+        if (self.candidate_id is None) == (self.candidate_name is None):
+            raise ValueError("Provide exactly one candidate identifier.")
+        return self
 
 
 class MealItemResponse(BaseModel):

@@ -1,5 +1,6 @@
 from decimal import Decimal
 from io import BytesIO
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,6 +9,11 @@ from PIL import Image
 from app.main import app
 from app.models.food import Food, normalize_food_name
 from app.routers.meals import get_meal_analysis_service
+from app.schemas.meal_analysis_session import (
+    ComponentResolutionStatus,
+    MealAnalysisSessionComponent,
+    MealAnalysisSessionState,
+)
 from app.schemas.nutrition import NutritionPer100g
 from app.services.food_recognition_provider import (
     FoodRecognitionProvider,
@@ -398,7 +404,9 @@ def test_composed_analysis_preserves_resolved_components_when_one_is_ambiguous(d
     assert result is not None and result.status == "requires_food_selection" and result.nutrition is None
     resolved, ambiguous = result.state.components
     assert resolved.nutrition is not None and resolved.resolved_reference is not None
-    assert ambiguous.nutrition is None and ambiguous.candidates == [{"name": "Chicken wing, fried"}, {"name": "Chicken thigh, fried"}]
+    assert ambiguous.nutrition is None
+    assert [candidate["name"] for candidate in ambiguous.candidates] == ["Chicken wing, fried", "Chicken thigh, fried"]
+    assert len({candidate["candidate_id"] for candidate in ambiguous.candidates}) == 2
 
 
 def test_composed_analysis_no_reference_does_not_fabricate_nutrition(database_session) -> None:
@@ -435,3 +443,170 @@ def test_authenticated_analyze_exposes_composed_session_contract(client, auth_he
     assert payload["analysis_session_id"] is not None
     assert payload["measured_weight_grams"] == "500.000"
     assert [component["estimated_weight_grams"] for component in payload["components"]] == ["250.000", "150.000", "100.000"]
+
+
+class _SelectionFoodRepository:
+    def __init__(self, foods: dict[int, Food] | None = None) -> None:
+        self._foods = foods or {}
+
+    def get_by_id(self, food_id: int) -> Food | None:
+        return self._foods.get(food_id)
+
+    def get_by_normalized_name(self, _: str) -> Food | None:
+        raise AssertionError("Selection must not use a name lookup for stored authoritative candidates.")
+
+
+class _NoRecognitionProvider(FoodRecognitionProvider):
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def recognize_food(self, *, image_bytes: bytes, content_type: str) -> FoodRecognitionResult:
+        self.calls += 1
+        raise AssertionError("Gemini/recognition must not run while selecting a stored candidate.")
+
+
+def _selection_state(*, candidates: list[dict[str, str]]) -> MealAnalysisSessionState:
+    return MealAnalysisSessionState(
+        measured_weight_grams=Decimal("100.000"),
+        components=[
+            MealAnalysisSessionComponent(
+                component_id=UUID("00000000-0000-0000-0000-000000000001"),
+                recognized_name="fried chicken",
+                raw_estimated_proportion=Decimal("1"),
+                normalized_proportion=Decimal("1"),
+                estimated_weight_grams=Decimal("100.000"),
+                resolution_status=ComponentResolutionStatus.REQUIRES_FOOD_SELECTION,
+                candidates=candidates,
+            )
+        ],
+    )
+
+
+def _selection_food(*, food_id: int, calories: str, reference: str) -> Food:
+    food = create_test_food()
+    food.id = food_id
+    food.calories_per_100g = Decimal(calories)
+    food.source_type = "USDA"
+    food.source_reference = reference
+    return food
+
+
+def test_selection_uses_duplicate_display_name_candidate_fdc_id_exactly(database_session) -> None:
+    class ExactUsda:
+        def __init__(self) -> None:
+            self.fdc_ids: list[int] = []
+
+        def search_food(self, _: str):
+            raise AssertionError("USDA search must not run during stored-candidate selection.")
+
+        def load_by_fdc_id(self, fdc_id: int) -> Food | None:
+            self.fdc_ids.append(fdc_id)
+            return _selection_food(food_id=fdc_id, calories="222.000", reference=f"fdcId:{fdc_id}")
+
+    user = User(email="selection-exact@example.com", password_hash="x", first_name="Selection", last_name="Exact")
+    database_session.add(user)
+    database_session.flush()
+    candidate_a = {"candidate_id": "00000000-0000-0000-0000-000000000111", "name": "Chicken, fried", "source": "usda", "source_reference_id": "111"}
+    candidate_b = {"candidate_id": "00000000-0000-0000-0000-000000000222", "name": "Chicken, fried", "source": "usda", "source_reference_id": "222"}
+    session_service = MealAnalysisSessionService(MealAnalysisSessionRepository(database_session))
+    persisted = session_service.create_session(user.id, _selection_state(candidates=[candidate_a, candidate_b]), "requires_food_selection")
+    provider = _NoRecognitionProvider()
+    usda = ExactUsda()
+    result = MealAnalysisService(
+        provider,
+        NutritionService(_SelectionFoodRepository()),  # type: ignore[arg-type]
+        usda_food_reference_service=usda,  # type: ignore[arg-type]
+    ).apply_selection(
+        user_id=user.id,
+        session_id=persisted.id,
+        component_id="00000000-0000-0000-0000-000000000001",
+        candidate_id=candidate_b["candidate_id"],
+        candidate_name=None,
+        session_service=session_service,
+    )
+
+    component = result.state.components[0]
+    assert result.status == "calculated"
+    assert usda.fdc_ids == [222]
+    assert 111 not in usda.fdc_ids
+    assert provider.calls == 0
+    assert result.nutrition is not None and result.nutrition.calories == Decimal("222.000")
+    assert component.resolved_reference == "fdcId:222"
+
+
+def test_legacy_selection_rejects_duplicate_display_names(database_session) -> None:
+    user = User(email="selection-legacy@example.com", password_hash="x", first_name="Selection", last_name="Legacy")
+    database_session.add(user)
+    database_session.flush()
+    candidates = [
+        {"candidate_id": "00000000-0000-0000-0000-000000000111", "name": "Chicken, fried", "source": "usda", "source_reference_id": "111"},
+        {"candidate_id": "00000000-0000-0000-0000-000000000222", "name": "Chicken, fried", "source": "usda", "source_reference_id": "222"},
+    ]
+    session_service = MealAnalysisSessionService(MealAnalysisSessionRepository(database_session))
+    persisted = session_service.create_session(user.id, _selection_state(candidates=candidates), "requires_food_selection")
+    provider = _NoRecognitionProvider()
+    service = MealAnalysisService(provider, NutritionService(_SelectionFoodRepository()))  # type: ignore[arg-type]
+
+    with pytest.raises(ValueError, match="not valid or is ambiguous"):
+        service.apply_selection(user_id=user.id, session_id=persisted.id, component_id="00000000-0000-0000-0000-000000000001", candidate_id=None, candidate_name="Chicken, fried", session_service=session_service)
+    assert provider.calls == 0
+    database_session.refresh(persisted)
+    assert persisted.consumed_at is None
+    assert persisted.state["components"][0]["resolution_status"] == "requires_food_selection"
+
+
+def test_selection_missing_stored_fdc_reference_keeps_session_unresolved(database_session) -> None:
+    class MissingUsda:
+        def __init__(self) -> None:
+            self.fdc_ids: list[int] = []
+
+        def search_food(self, _: str):
+            raise AssertionError("USDA search must not be a fallback for a missing stored FDC ID.")
+
+        def load_by_fdc_id(self, fdc_id: int) -> Food | None:
+            self.fdc_ids.append(fdc_id)
+            return None
+
+    user = User(email="selection-missing@example.com", password_hash="x", first_name="Selection", last_name="Missing")
+    database_session.add(user)
+    database_session.flush()
+    candidate = {"candidate_id": "00000000-0000-0000-0000-000000000333", "name": "Chicken, fried", "source": "usda", "source_reference_id": "999999"}
+    session_service = MealAnalysisSessionService(MealAnalysisSessionRepository(database_session))
+    persisted = session_service.create_session(user.id, _selection_state(candidates=[candidate]), "requires_food_selection")
+    provider = _NoRecognitionProvider()
+    usda = MissingUsda()
+    service = MealAnalysisService(provider, NutritionService(_SelectionFoodRepository()), usda_food_reference_service=usda)  # type: ignore[arg-type]
+
+    with pytest.raises(ValueError, match="no longer available"):
+        service.apply_selection(user_id=user.id, session_id=persisted.id, component_id="00000000-0000-0000-0000-000000000001", candidate_id=candidate["candidate_id"], candidate_name=None, session_service=session_service)
+    assert usda.fdc_ids == [999999]
+    assert provider.calls == 0
+    database_session.refresh(persisted)
+    assert persisted.consumed_at is None
+    assert persisted.state["components"][0]["resolution_status"] == "requires_food_selection"
+
+
+def test_selection_uses_stored_local_food_id_without_usda(database_session) -> None:
+    class NoUsda:
+        def load_by_fdc_id(self, _: int) -> Food | None:
+            raise AssertionError("USDA must not be called for a local candidate.")
+
+    user = User(email="selection-local@example.com", password_hash="x", first_name="Selection", last_name="Local")
+    database_session.add(user)
+    database_session.flush()
+    local_food = _selection_food(food_id=42, calories="142.000", reference="food:42")
+    candidate = {"candidate_id": "00000000-0000-0000-0000-000000000042", "name": "Chicken, fried", "source": "local_database", "source_reference_id": "42"}
+    session_service = MealAnalysisSessionService(MealAnalysisSessionRepository(database_session))
+    persisted = session_service.create_session(user.id, _selection_state(candidates=[candidate]), "requires_food_selection")
+    provider = _NoRecognitionProvider()
+    result = MealAnalysisService(
+        provider,
+        NutritionService(_SelectionFoodRepository({42: local_food})),  # type: ignore[arg-type]
+        usda_food_reference_service=NoUsda(),  # type: ignore[arg-type]
+    ).apply_selection(
+        user_id=user.id, session_id=persisted.id, component_id="00000000-0000-0000-0000-000000000001",
+        candidate_id=candidate["candidate_id"], candidate_name=None, session_service=session_service,
+    )
+    assert provider.calls == 0
+    assert result.nutrition is not None and result.nutrition.calories == Decimal("142.000")
+    assert result.state.components[0].resolved_reference == "food:42"
