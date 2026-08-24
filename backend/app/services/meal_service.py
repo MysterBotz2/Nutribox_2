@@ -5,10 +5,21 @@ from app.repositories.meal_repository import MealRepository
 from app.schemas.meal import MealItemCreateRequest
 from app.services.nutrient_calculator import PORTION_NUTRIENT_QUANTUM, NutrientCalculator
 from app.services.nutrition_service import NutritionService
+from app.repositories.meal_analysis_session_repository import MealAnalysisSessionRepository
+from app.schemas.meal_analysis_session import MealAnalysisSessionState
+from app.services.meal_analysis_session_service import (
+    MealAnalysisSessionConsumedError,
+    MealAnalysisSessionExpiredError,
+    MealAnalysisSessionNotFoundError,
+)
 
 
 class MealFoodNotFoundError(ValueError):
     """Raised when a requested canonical food cannot be recorded."""
+
+
+class MealAnalysisSessionNotCalculatedError(ValueError):
+    """Raised when a continuation session is incomplete."""
 
 
 class MealService:
@@ -72,6 +83,7 @@ class MealService:
                             if food.source_type is not None
                             else None
                         ),
+                        weight_source="manual",
                     )
                 )
             meal = Meal(
@@ -84,6 +96,57 @@ class MealService:
                 items=meal_items,
             )
             self._meal_repository.add(meal)
+            session.flush()
+        return meal
+
+    def create_meal_from_analysis_session(self, analysis_session_id: int, user_id: int) -> Meal:
+        """Atomically materialize only an owned, calculated, unused session."""
+        session = self._meal_repository.session
+        transaction = session.begin_nested() if session.in_transaction() else session.begin()
+        with transaction:
+            repository = MealAnalysisSessionRepository(session)
+            item = repository.get_for_user(analysis_session_id, user_id, lock=True)
+            if item is None:
+                raise MealAnalysisSessionNotFoundError("Meal analysis session was not found.")
+            from datetime import datetime, timezone
+            if item.consumed_at is not None:
+                raise MealAnalysisSessionConsumedError("Meal analysis session was already consumed.")
+            if datetime.now(timezone.utc) >= item.expires_at:
+                raise MealAnalysisSessionExpiredError("Meal analysis session has expired.")
+            if item.status != "calculated":
+                raise MealAnalysisSessionNotCalculatedError("Meal analysis session is not ready to create a meal.")
+            state = MealAnalysisSessionState.model_validate(item.state)
+            meal_items: list[MealItem] = []
+            for component in state.components:
+                if component.resolved_reference is None or component.nutrition is None:
+                    raise MealAnalysisSessionNotCalculatedError("Meal analysis session is incomplete.")
+                food = self._nutrition_service.get_food_by_reference(component.resolved_reference)
+                if food is None:
+                    raise MealFoodNotFoundError("Food reference for meal analysis session was not found.")
+                nutrient = component.nutrition
+                meal_items.append(MealItem(
+                    food_id=food.id, weight_grams=component.estimated_weight_grams,
+                    calculated_calories=Decimal(nutrient["calories"]), calculated_protein_g=Decimal(nutrient["protein_g"]),
+                    calculated_carbohydrates_g=Decimal(nutrient["carbohydrates_g"]), calculated_fat_g=Decimal(nutrient["fat_g"]), calculated_fiber_g=Decimal(nutrient["fiber_g"]),
+                    food_name_snapshot=food.name, food_normalized_name_snapshot=food.normalized_name,
+                    nutrition_source_type=food.source_type, nutrition_source_name_snapshot=food.source_name,
+                    nutrition_source_reference_snapshot=food.source_reference,
+                    nutrition_is_estimated=(food.source_type == "AI_estimate" if food.source_type else None),
+                    weight_source="ai_estimate",
+                    **{f"calculated_{name}": (Decimal(value) if value is not None else None) for name, value in nutrient.items() if name not in {"calories", "protein_g", "carbohydrates_g", "fat_g", "fiber_g"}},
+                ))
+            meal = Meal(
+                user_id=user_id, measured_weight_grams=state.measured_weight_grams,
+                total_calories=self._total(item.calculated_calories for item in meal_items),
+                total_protein_g=self._total(item.calculated_protein_g for item in meal_items),
+                total_carbohydrates_g=self._total(item.calculated_carbohydrates_g for item in meal_items),
+                total_fat_g=self._total(item.calculated_fat_g for item in meal_items),
+                total_fiber_g=self._total(item.calculated_fiber_g for item in meal_items), items=meal_items,
+            )
+            self._meal_repository.add(meal)
+            session.flush()
+            from datetime import datetime, timezone
+            item.consumed_at = datetime.now(timezone.utc)
             session.flush()
         return meal
 

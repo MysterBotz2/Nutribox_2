@@ -34,6 +34,7 @@ class Meal(Base):
         nullable=True,
         index=True,
     )
+    measured_weight_grams: Mapped[Decimal | None] = mapped_column(Numeric(8, 3), nullable=True)
 
     items: Mapped[list["MealItem"]] = relationship(
         back_populates="meal", cascade="all, delete-orphan", passive_deletes=True
@@ -111,6 +112,7 @@ class MealItem(Base):
     nutrition_source_name_snapshot: Mapped[str | None] = mapped_column(String(160), nullable=True)
     nutrition_source_reference_snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
     nutrition_is_estimated: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    weight_source: Mapped[str | None] = mapped_column(String(32), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

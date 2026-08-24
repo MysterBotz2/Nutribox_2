@@ -6,12 +6,19 @@ from sqlalchemy.orm import Session
 
 from app.core.constants import MAXIMUM_PROTOTYPE_WEIGHT_GRAMS
 from app.database.database import get_db
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import get_current_user, get_optional_current_user
 from app.models.user import User
 from app.repositories.food_repository import FoodRepository
 from app.repositories.meal_repository import MealRepository
 from app.routers.nutrition import get_nutrition_service
 from app.schemas.meal import (
+    CalculatedMealAnalysis,
+    MealAnalysisCandidateResponse,
+    MealAnalysisComponentResponse,
+    MealAnalysisSelectionRequest,
+    MealAnalysisStatus,
+    NutritionReferenceNotFoundMealAnalysis,
+    RequiresFoodSelectionMealAnalysis,
     MealAnalysisResponse,
     MealCreateRequest,
     MealItemResponse,
@@ -22,12 +29,16 @@ from app.schemas.meal import (
     MealResponse,
     MealTotals,
 )
+from app.schemas.ai import RecognizedFood
 from app.schemas.nutrition import AdditionalNutrientValues, CalculatedFood, NutrientValues, PortionNutrition
-from app.services.food_recognition_provider import FoodRecognitionProvider
+from app.services.food_recognition_provider import FoodRecognitionProvider, FoodRecognitionProviderError
 from app.services.food_recognition_selector import get_food_recognition_provider
 from app.services.image_validation import read_validated_image
 from app.services.meal_analysis_service import MealAnalysisService
 from app.services.meal_service import MealFoodNotFoundError, MealService
+from app.services.meal_service import MealAnalysisSessionNotCalculatedError
+from app.repositories.meal_analysis_session_repository import MealAnalysisSessionRepository
+from app.services.meal_analysis_session_service import MealAnalysisSessionConsumedError, MealAnalysisSessionExpiredError, MealAnalysisSessionNotFoundError, MealAnalysisSessionService
 from app.services.nutrition_service import NutritionService
 from app.services.usda_food_data_client import UsdaFoodDataClient
 from app.services.usda_food_reference_service import UsdaFoodReferenceService
@@ -65,6 +76,36 @@ def get_meal_service(database_session: Annotated[Session, Depends(get_db)]) -> M
         NutritionService(FoodRepository(database_session)),
         MealRepository(database_session),
     )
+
+
+def get_meal_analysis_session_service(database_session: Annotated[Session, Depends(get_db)]) -> MealAnalysisSessionService:
+    return MealAnalysisSessionService(MealAnalysisSessionRepository(database_session))
+
+
+def _component_response(component) -> MealAnalysisComponentResponse:
+    return MealAnalysisComponentResponse(
+        component_id=component.component_id, recognized_name=component.recognized_name,
+        raw_estimated_proportion=component.raw_estimated_proportion, normalized_proportion=component.normalized_proportion,
+        estimated_weight_grams=component.estimated_weight_grams, weight_source=component.weight_source.value,
+        resolution_status=component.resolution_status.value, nutrition_source=component.nutrition_source, resolved_reference=component.resolved_reference,
+        candidates=[MealAnalysisCandidateResponse(**candidate) for candidate in component.candidates],
+        nutrition=PortionNutrition(**component.nutrition) if component.nutrition is not None else None,
+    )
+
+
+def composed_analysis_response(result, expires_at):
+    common = dict(
+        recognized_foods=[RecognizedFood(name=component.recognized_name) for component in result.state.components],
+        recognition_source=result.recognition_source, analysis_session_id=result.session_id,
+        analysis_session_expires_at=expires_at, measured_weight_grams=result.state.measured_weight_grams,
+        components=[_component_response(component) for component in result.state.components],
+    )
+    if result.status == MealAnalysisStatus.CALCULATED:
+        return CalculatedMealAnalysis(**common, status=result.status, weight_grams=result.state.measured_weight_grams,
+            nutrition=PortionNutrition.from_extended(result.nutrition), weight_source="ai_estimate")
+    if result.status == MealAnalysisStatus.REQUIRES_FOOD_SELECTION:
+        return RequiresFoodSelectionMealAnalysis(**common, status=result.status)
+    return NutritionReferenceNotFoundMealAnalysis(**common, status=result.status)
 
 def get_leftover_analysis_service(database_session: Annotated[Session, Depends(get_db)], meal_analysis_service: Annotated[MealAnalysisService, Depends(get_meal_analysis_service)]) -> LeftoverAnalysisService:
     return LeftoverAnalysisService(LeftoverAnalysisRepository(database_session), meal_analysis_service)
@@ -112,9 +153,58 @@ async def analyze_meal(
     file: UploadFile = File(description="JPEG, PNG, or WEBP meal image."),
     weight_grams: Decimal = Form(ge=0, le=MAXIMUM_PROTOTYPE_WEIGHT_GRAMS, allow_inf_nan=False),
     meal_analysis_service: MealAnalysisService = Depends(get_meal_analysis_service),
+    current_user: Annotated[User | None, Depends(get_optional_current_user)] = None,
+    session_service: Annotated[MealAnalysisSessionService, Depends(get_meal_analysis_session_service)] = None,
 ) -> MealAnalysisResponse:
     image_bytes, content_type = await read_validated_image(file)
-    return meal_analysis_service.analyze(image_bytes=image_bytes, content_type=content_type, weight_grams=weight_grams)
+    try:
+        if current_user is None:
+            return meal_analysis_service.analyze(
+                image_bytes=image_bytes, content_type=content_type, weight_grams=weight_grams,
+            )
+        composed = meal_analysis_service.analyze_composed(
+            user_id=current_user.id,
+            image_bytes=image_bytes, content_type=content_type, measured_weight_grams=weight_grams,
+            session_service=session_service,
+        )
+        if composed is not None:
+            persisted = session_service.get_session_for_user(composed.session_id, current_user.id)
+            return composed_analysis_response(composed, persisted.expires_at)
+        return meal_analysis_service.analyze(
+            image_bytes=image_bytes,
+            content_type=content_type,
+            weight_grams=weight_grams,
+        )
+    except FoodRecognitionProviderError as error:
+        if error.status_code == status.HTTP_429_TOO_MANY_REQUESTS:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Food recognition service is temporarily unavailable. Please try again later.",
+            ) from None
+        raise HTTPException(status_code=error.status_code, detail=error.detail) from None
+
+
+@router.post("/analysis-sessions/{analysis_session_id}/selections", response_model=MealAnalysisResponse)
+def select_meal_analysis_component(
+    analysis_session_id: int,
+    selection: MealAnalysisSelectionRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    meal_analysis_service: Annotated[MealAnalysisService, Depends(get_meal_analysis_service)],
+    session_service: Annotated[MealAnalysisSessionService, Depends(get_meal_analysis_session_service)],
+) -> MealAnalysisResponse:
+    try:
+        result = meal_analysis_service.apply_selection(user_id=current_user.id, session_id=analysis_session_id,
+            component_id=str(selection.component_id), candidate_name=selection.candidate_name, session_service=session_service)
+        persisted = session_service.get_session_for_user(analysis_session_id, current_user.id)
+        return composed_analysis_response(result, persisted.expires_at)
+    except MealAnalysisSessionNotFoundError:
+        raise HTTPException(status_code=404, detail="Meal analysis session was not found.") from None
+    except MealAnalysisSessionExpiredError:
+        raise HTTPException(status_code=410, detail="Meal analysis session has expired.") from None
+    except MealAnalysisSessionConsumedError:
+        raise HTTPException(status_code=409, detail="Meal analysis session was already consumed.") from None
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
 
 
 def _legacy_nutrition_from_item(item) -> NutrientValues:
@@ -198,9 +288,17 @@ def meal_list_item_from_model(meal) -> MealListItem:
 @router.post("", response_model=MealResponse, status_code=status.HTTP_201_CREATED)
 def create_meal(meal_request: MealCreateRequest, current_user: Annotated[User, Depends(get_current_user)], meal_service: Annotated[MealService, Depends(get_meal_service)]) -> MealResponse:
     try:
-        return meal_response_from_model(meal_service.create_meal(meal_request.items, current_user.id))
+        if meal_request.analysis_session_id is not None:
+            return meal_response_from_model(meal_service.create_meal_from_analysis_session(meal_request.analysis_session_id, current_user.id))
+        return meal_response_from_model(meal_service.create_meal(meal_request.items or [], current_user.id))
     except MealFoodNotFoundError as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from None
+    except MealAnalysisSessionNotFoundError:
+        raise HTTPException(status_code=404, detail="Meal analysis session was not found.") from None
+    except MealAnalysisSessionExpiredError:
+        raise HTTPException(status_code=410, detail="Meal analysis session has expired.") from None
+    except (MealAnalysisSessionConsumedError, MealAnalysisSessionNotCalculatedError) as error:
+        raise HTTPException(status_code=409, detail=str(error)) from None
 
 
 @router.get("", response_model=MealListResponse)

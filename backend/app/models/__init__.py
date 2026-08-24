@@ -9,6 +9,7 @@ from app.models.food import Food
 from app.models.food_alias import FoodAlias
 from app.models.leftover_analysis import LeftoverAnalysis
 from app.models.meal import Meal, MealItem
+from app.models.meal_analysis_session import MealAnalysisSession
 from app.models.nutrition_profile import NutritionProfile
 from app.models.nutrition_target import NutritionTarget
 from app.models.paired_device import PairedDevice
@@ -20,6 +21,6 @@ from app.models.weight_entry import WeightEntry
 
 __all__ = [
     "ChatConversation", "ChatMessage", "Food", "FoodAlias", "LeftoverAnalysis",
-    "Meal", "MealItem", "NutritionProfile", "NutritionTarget", "PairedDevice",
+    "Meal", "MealItem", "MealAnalysisSession", "NutritionProfile", "NutritionTarget", "PairedDevice",
     "ProfileConsent", "ScheduledMeal", "SensitiveProfileContext", "User", "WeightEntry",
 ]

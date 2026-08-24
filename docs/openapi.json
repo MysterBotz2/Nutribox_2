@@ -418,8 +418,64 @@
       },
       "CalculatedMealAnalysis": {
         "properties": {
+          "analysis_session_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Expires At"
+          },
+          "analysis_session_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Id"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MealAnalysisComponentResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
           "food": {
-            "$ref": "#/components/schemas/CalculatedFood"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalculatedFood"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "measured_weight_grams": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Weight Grams"
           },
           "nutrition": {
             "$ref": "#/components/schemas/PortionNutrition"
@@ -446,7 +502,11 @@
             "type": "string"
           },
           "weight_source": {
-            "const": "manual",
+            "default": "manual",
+            "enum": [
+              "manual",
+              "ai_estimate"
+            ],
             "title": "Weight Source",
             "type": "string"
           }
@@ -455,10 +515,8 @@
           "recognized_foods",
           "recognition_source",
           "status",
-          "food",
           "weight_grams",
-          "nutrition",
-          "weight_source"
+          "nutrition"
         ],
         "title": "CalculatedMealAnalysis",
         "type": "object"
@@ -743,6 +801,55 @@
       },
       "FoodNotRecognizedMealAnalysis": {
         "properties": {
+          "analysis_session_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Expires At"
+          },
+          "analysis_session_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Id"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MealAnalysisComponentResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
+          "measured_weight_grams": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Weight Grams"
+          },
           "recognition_source": {
             "title": "Recognition Source",
             "type": "string"
@@ -1025,22 +1132,162 @@
         "title": "LeftoverNutrition",
         "type": "object"
       },
-      "MealCreateRequest": {
-        "additionalProperties": false,
+      "MealAnalysisCandidateResponse": {
         "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/MealItemCreateRequest"
-            },
-            "maxItems": 50,
-            "minItems": 1,
-            "title": "Items",
-            "type": "array"
+          "name": {
+            "title": "Name",
+            "type": "string"
           }
         },
         "required": [
-          "items"
+          "name"
         ],
+        "title": "MealAnalysisCandidateResponse",
+        "type": "object"
+      },
+      "MealAnalysisComponentResponse": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/MealAnalysisCandidateResponse"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "component_id": {
+            "format": "uuid",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "estimated_weight_grams": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Estimated Weight Grams",
+            "type": "string"
+          },
+          "normalized_proportion": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Normalized Proportion",
+            "type": "string"
+          },
+          "nutrition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PortionNutrition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nutrition_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nutrition Source"
+          },
+          "raw_estimated_proportion": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Raw Estimated Proportion",
+            "type": "string"
+          },
+          "recognized_name": {
+            "title": "Recognized Name",
+            "type": "string"
+          },
+          "resolution_status": {
+            "title": "Resolution Status",
+            "type": "string"
+          },
+          "resolved_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved Reference"
+          },
+          "weight_source": {
+            "title": "Weight Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id",
+          "recognized_name",
+          "raw_estimated_proportion",
+          "normalized_proportion",
+          "estimated_weight_grams",
+          "weight_source",
+          "resolution_status",
+          "nutrition_source",
+          "resolved_reference",
+          "candidates",
+          "nutrition"
+        ],
+        "title": "MealAnalysisComponentResponse",
+        "type": "object"
+      },
+      "MealAnalysisSelectionRequest": {
+        "properties": {
+          "candidate_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Candidate Name",
+            "type": "string"
+          },
+          "component_id": {
+            "format": "uuid",
+            "title": "Component Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id",
+          "candidate_name"
+        ],
+        "title": "MealAnalysisSelectionRequest",
+        "type": "object"
+      },
+      "MealCreateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "analysis_session_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Id"
+          },
+          "items": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MealItemCreateRequest"
+                },
+                "maxItems": 50,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Items"
+          }
+        },
         "title": "MealCreateRequest",
         "type": "object"
       },
@@ -2171,6 +2418,55 @@
       },
       "NutritionReferenceNotFoundMealAnalysis": {
         "properties": {
+          "analysis_session_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Expires At"
+          },
+          "analysis_session_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Id"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MealAnalysisComponentResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
+          "measured_weight_grams": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Weight Grams"
+          },
           "recognition_source": {
             "title": "Recognition Source",
             "type": "string"
@@ -3199,6 +3495,55 @@
       },
       "RequiresFoodSelectionMealAnalysis": {
         "properties": {
+          "analysis_session_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Expires At"
+          },
+          "analysis_session_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Id"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MealAnalysisComponentResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
+          "measured_weight_grams": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Weight Grams"
+          },
           "recognition_source": {
             "title": "Recognition Source",
             "type": "string"
@@ -4986,6 +5331,86 @@
         ]
       }
     },
+    "/api/meals/analysis-sessions/{analysis_session_id}/selections": {
+      "post": {
+        "operationId": "select_meal_analysis_component_api_meals_analysis_sessions__analysis_session_id__selections_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_session_id",
+            "required": true,
+            "schema": {
+              "title": "Analysis Session Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MealAnalysisSelectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "calculated": "#/components/schemas/CalculatedMealAnalysis",
+                      "food_not_recognized": "#/components/schemas/FoodNotRecognizedMealAnalysis",
+                      "nutrition_reference_not_found": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis",
+                      "requires_food_selection": "#/components/schemas/RequiresFoodSelectionMealAnalysis"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CalculatedMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FoodNotRecognizedMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresFoodSelectionMealAnalysis"
+                    }
+                  ],
+                  "title": "Response Select Meal Analysis Component Api Meals Analysis Sessions  Analysis Session Id  Selections Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Select Meal Analysis Component",
+        "tags": [
+          "meals"
+        ]
+      }
+    },
     "/api/meals/analyze": {
       "post": {
         "operationId": "analyze_meal_api_meals_analyze_post",
@@ -5044,6 +5469,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Analyze Meal",
         "tags": [
           "meals"

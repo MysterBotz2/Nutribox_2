@@ -2,8 +2,9 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Literal
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.ai import RecognizedFood
 from app.schemas.nutrition import (
@@ -26,14 +27,18 @@ class MealAnalysisStatus(str, Enum):
 class MealAnalysisBase(BaseModel):
     recognized_foods: list[RecognizedFood]
     recognition_source: str
+    analysis_session_id: int | None = None
+    analysis_session_expires_at: datetime | None = None
+    measured_weight_grams: Decimal | None = None
+    components: list["MealAnalysisComponentResponse"] | None = None
 
 
 class CalculatedMealAnalysis(MealAnalysisBase):
     status: Literal[MealAnalysisStatus.CALCULATED]
-    food: CalculatedFood
+    food: CalculatedFood | None = None
     weight_grams: Decimal
     nutrition: PortionNutrition
-    weight_source: Literal["manual"]
+    weight_source: Literal["manual", "ai_estimate"] = "manual"
 
 
 class FoodNotRecognizedMealAnalysis(MealAnalysisBase):
@@ -65,7 +70,37 @@ class MealItemCreateRequest(BaseModel):
 class MealCreateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    items: list[MealItemCreateRequest] = Field(min_length=1, max_length=50)
+    items: list[MealItemCreateRequest] | None = Field(default=None, min_length=1, max_length=50)
+    analysis_session_id: int | None = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def exactly_one_creation_mode(self):
+        if (self.items is None) == (self.analysis_session_id is None):
+            raise ValueError("Provide either manual items or analysis_session_id.")
+        return self
+
+
+class MealAnalysisCandidateResponse(BaseModel):
+    name: str
+
+
+class MealAnalysisComponentResponse(BaseModel):
+    component_id: UUID
+    recognized_name: str
+    raw_estimated_proportion: Decimal
+    normalized_proportion: Decimal
+    estimated_weight_grams: Decimal
+    weight_source: str
+    resolution_status: str
+    nutrition_source: str | None
+    resolved_reference: str | None
+    candidates: list[MealAnalysisCandidateResponse]
+    nutrition: PortionNutrition | None
+
+
+class MealAnalysisSelectionRequest(BaseModel):
+    component_id: UUID
+    candidate_name: str = Field(min_length=1, max_length=160)
 
 
 class MealItemResponse(BaseModel):

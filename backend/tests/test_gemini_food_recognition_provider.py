@@ -70,6 +70,42 @@ def test_gemini_maps_multiple_foods_and_non_food_result() -> None:
     assert provider.recognize_food(image_bytes=b"x", content_type="image/png").food_names == ()
 
 
+def test_gemini_maps_decimal_top_level_component_proportions() -> None:
+    provider, _ = make_provider(FakeResponse({"components": [
+        {"name": "rice", "estimated_proportion": "0.50"},
+        {"name": "beef stew", "estimated_proportion": "0.30"},
+        {"name": "mixed vegetables", "estimated_proportion": "0.30"},
+    ]}))
+    result = provider.recognize_food(image_bytes=b"x", content_type="image/png")
+    assert result.food_names == ("rice", "beef stew", "mixed vegetables")
+    assert [str(component.estimated_proportion) for component in result.components] == ["0.50", "0.30", "0.30"]
+
+
+@pytest.mark.parametrize("proportion", ["-1", "NaN", "Infinity", "-Infinity"])
+def test_gemini_rejects_invalid_component_proportion(proportion: str) -> None:
+    provider, _ = make_provider(FakeResponse({"components": [{"name": "rice", "estimated_proportion": proportion}]}))
+    with pytest.raises(FoodRecognitionProviderError, match="invalid response"):
+        provider.recognize_food(image_bytes=b"x", content_type="image/png")
+
+
+@pytest.mark.parametrize(
+    ("food_names", "expected"),
+    [
+        (
+            ["beef stew", "beef", "carrot", "potato", "green bell pepper", "red bell pepper", "green olives"],
+            ("beef stew",),
+        ),
+        (["beef stew", "beef", "carrot", "potato", "rice"], ("beef stew", "rice")),
+        (["chicken sandwich", "bread", "chicken", "lettuce", "tomato"], ("chicken sandwich",)),
+        (["garden salad", "lettuce", "tomato", "cucumber", "onion"], ("garden salad",)),
+    ],
+)
+def test_gemini_keeps_only_top_level_foods_for_composite_dishes(food_names, expected) -> None:
+    provider, _ = make_provider(FakeResponse({"food_names": food_names}))
+
+    assert provider.recognize_food(image_bytes=b"x", content_type="image/jpeg").food_names == expected
+
+
 @pytest.mark.parametrize(
     ("exception", "expected_status", "expected_detail"),
     [

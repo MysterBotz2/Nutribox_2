@@ -2,9 +2,13 @@
 
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
+import logging
 from typing import Any
 
 import httpx
+
+
+logger = logging.getLogger(__name__)
 
 
 class UsdaFoodDataError(RuntimeError):
@@ -29,6 +33,7 @@ class UsdaFoodDataClient:
     """Fetch USDA data without exposing HTTP exceptions or API-key details."""
 
     _DATA_TYPES = ("Foundation", "Survey (FNDDS)", "SR Legacy")
+    _SEARCH_PAGE_SIZE = 25
     _NUTRIENTS = {
         1008: ("calories", "kcal"), 1003: ("protein_g", "g"),
         1005: ("carbohydrates_g", "g"), 1004: ("fat_g", "g"),
@@ -47,7 +52,7 @@ class UsdaFoodDataClient:
         self._client = client or httpx.Client(timeout=timeout_seconds)
 
     def search_food(self, query: str) -> list[UsdaSearchFood]:
-        payload = self._request("POST", "/foods/search", json={"query": query, "dataType": list(self._DATA_TYPES), "pageSize": 10})
+        payload = self._request("POST", "/foods/search", json={"query": query, "dataType": list(self._DATA_TYPES), "pageSize": self._SEARCH_PAGE_SIZE})
         foods = payload.get("foods") if isinstance(payload, dict) else None
         if not isinstance(foods, list):
             raise UsdaFoodDataError("USDA returned an invalid search response.")
@@ -56,9 +61,27 @@ class UsdaFoodDataClient:
             if not isinstance(food, dict):
                 continue
             fdc_id, description, data_type = food.get("fdcId"), food.get("description"), food.get("dataType")
-            if isinstance(fdc_id, int) and isinstance(description, str) and isinstance(data_type, str) and data_type in self._DATA_TYPES:
-                result.append(UsdaSearchFood(fdc_id, description, data_type))
-        return sorted(result, key=lambda item: (item.data_type != "Foundation", item.description.casefold(), item.fdc_id))
+            if (
+                isinstance(fdc_id, int)
+                and isinstance(description, str)
+                and description.strip()
+                and isinstance(data_type, str)
+                and data_type in self._DATA_TYPES
+            ):
+                result.append(UsdaSearchFood(fdc_id, description.strip(), data_type))
+        # Preserve USDA result order as a deterministic tie-breaker for the
+        # resolver's relevance scoring. It does not choose nutrition values.
+        logger.info(
+            "USDA search query=%r raw_candidates=%d eligible_candidates=%d",
+            query,
+            len(foods),
+            len(result),
+        )
+        logger.debug(
+            "USDA search eligible_descriptions=%s",
+            [food.description for food in result],
+        )
+        return result
 
     def get_food(self, fdc_id: int) -> UsdaFoodReference:
         payload = self._request("GET", f"/food/{fdc_id}")

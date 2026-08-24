@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     nutrition_coach_gemini_timeout_seconds: int = Field(default=20, gt=0, le=120)
     device_pairing_secret: str | None = None
     device_pairing_ttl_seconds: int = Field(default=300, ge=60, le=3600)
+    meal_analysis_session_ttl_minutes: int = Field(default=30, ge=1, le=1440)
     jwt_secret_key: str | None = None
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = Field(default=30, gt=0, le=1440)

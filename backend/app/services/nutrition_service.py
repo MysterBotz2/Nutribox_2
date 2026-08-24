@@ -23,6 +23,14 @@ class NutritionService:
     def get_food(self, food_id: int) -> Food | None:
         return self._food_repository.get_by_id(food_id)
 
+    def get_food_by_reference(self, reference: str) -> Food | None:
+        if reference.startswith("food:"):
+            try:
+                return self.get_food(int(reference.removeprefix("food:")))
+            except ValueError:
+                return None
+        return self._food_repository.get_by_source_reference(reference)
+
     def get_food_by_recognized_name(self, recognized_name: str) -> Food | None:
         """Backward-compatible name for exact canonical then alias resolution."""
         return self.resolve_food_name(recognized_name)
