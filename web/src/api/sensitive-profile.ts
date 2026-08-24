@@ -4,6 +4,7 @@ import type {
   ProfileConsentUpdateRequest,
   SensitiveProfileResponse,
   SensitiveProfileUpdateRequest,
+  OnboardingStatusResponse,
 } from './types'
 
 export const sensitiveProfileApi = {
@@ -13,4 +14,6 @@ export const sensitiveProfileApi = {
   get: (): Promise<SensitiveProfileResponse> => apiClient.get('/api/users/me/sensitive-profile'),
   replace: (request: SensitiveProfileUpdateRequest): Promise<SensitiveProfileResponse> =>
     apiClient.put('/api/users/me/sensitive-profile', request),
+  getOnboardingStatus: (): Promise<OnboardingStatusResponse> =>
+    apiClient.get('/api/users/me/onboarding-status'),
 }

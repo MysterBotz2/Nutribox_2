@@ -1,8 +1,9 @@
 export const queryKeys = {
   currentUser: ['auth', 'current-user'] as const,
   profile: ['profile'] as const,
-  profileConsent: ['profile', 'consent'] as const,
-  sensitiveProfile: ['profile', 'sensitive'] as const,
+  profileConsent: ['profile-consent'] as const,
+  sensitiveProfile: ['sensitive-profile'] as const,
+  onboardingStatus: ['onboarding-status'] as const,
   targets: ['targets'] as const,
   todayProgress: (timezone: string) => ['progress', 'today', timezone] as const,
   targetStatus: (timezone: string) => ['progress', 'target-status', timezone] as const,

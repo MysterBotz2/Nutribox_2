@@ -12,6 +12,7 @@ export type ProfileConsentUpdateRequest = components['schemas']['ProfileConsentU
 export type ProfileConsentState = components['schemas']['ProfileConsentState']
 export type SensitiveProfileResponse = components['schemas']['SensitiveProfileResponse']
 export type SensitiveProfileUpdateRequest = components['schemas']['SensitiveProfileUpdateRequest']
+export type OnboardingStatusResponse = components['schemas']['OnboardingStatusResponse']
 export type NutritionTargetResponse = components['schemas']['NutritionTargetResponse']
 export type NutritionTargetUpdateRequest = components['schemas']['NutritionTargetUpdateRequest']
 export type TargetSourceType = components['schemas']['TargetSourceType']

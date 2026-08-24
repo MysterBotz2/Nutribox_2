@@ -21,6 +21,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearSessionToken()
     setTokenPresent(false)
     queryClient.removeQueries({ queryKey: queryKeys.currentUser })
+    queryClient.removeQueries({ queryKey: queryKeys.sensitiveProfile })
+    queryClient.removeQueries({ queryKey: queryKeys.profileConsent })
+    queryClient.removeQueries({ queryKey: queryKeys.onboardingStatus })
   }, [queryClient])
 
   useEffect(() => {
