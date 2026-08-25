@@ -1,5 +1,7 @@
 from decimal import Decimal
 from dataclasses import dataclass, fields
+from enum import Enum
+import logging
 from uuid import uuid4
 
 from app.schemas.ai import RecognizedFood
@@ -13,7 +15,10 @@ from app.schemas.meal import (
 )
 from app.schemas.nutrition import CalculatedFood, PortionNutrition
 from app.services.food_recognition_provider import FoodRecognitionProvider
-from app.services.composite_dish_estimator import CompositeDishEstimator
+from app.services.composite_dish_estimator import (
+    CompositeDishEstimator,
+    CompositeDishEstimatorError,
+)
 from app.services.nutrient_calculator import NutrientCalculator
 from app.services.nutrition_service import NutritionService
 from app.services.usda_food_reference_service import UsdaFoodReferenceService
@@ -28,6 +33,21 @@ from app.schemas.meal_analysis_session import (
 from app.services.meal_analysis_session_service import MealAnalysisSessionService
 from app.services.meal_composition_service import ComposedPortion, allocate_component_weights
 from app.services.nutrient_calculator import ExtendedPortionNutrition
+
+
+logger = logging.getLogger(__name__)
+
+
+class _InternalIngredientResolutionStatus(str, Enum):
+    RESOLVED = "resolved"
+    AMBIGUOUS = "ambiguous"
+    NUTRITION_REFERENCE_NOT_FOUND = "nutrition_reference_not_found"
+
+
+@dataclass(frozen=True)
+class _InternalIngredientResolution:
+    food: object | None
+    status: _InternalIngredientResolutionStatus
 
 
 @dataclass(frozen=True)
@@ -238,10 +258,31 @@ class MealAnalysisService:
         self, name: str, raw_proportion: Decimal, portion: ComposedPortion
     ) -> MealAnalysisSessionComponent | None:
         """Resolve one prepared dish through non-recursive ingredient references."""
-        if self._composite_dish_estimator is None or not self._is_composite_dish_eligible(name):
+        eligible = self._is_composite_dish_eligible(name)
+        if self._composite_dish_estimator is None or not eligible:
+            logger.info(
+                "composite_fallback eligibility=%s estimator_called=false fallback_outcome=unresolved "
+                "reason=%s",
+                eligible,
+                "estimator_unconfigured" if self._composite_dish_estimator is None else "ineligible",
+            )
             return None
-        estimate = self._composite_dish_estimator.estimate_composition(
-            dish_name=name, dish_weight_grams=portion.estimated_weight_grams
+        logger.info("composite_fallback eligibility=true estimator_called=true")
+        try:
+            estimate = self._composite_dish_estimator.estimate_composition(
+                dish_name=name, dish_weight_grams=portion.estimated_weight_grams
+            )
+        except CompositeDishEstimatorError as error:
+            logger.warning(
+                "composite_fallback estimator_called=true estimator_outcome=%s fallback_outcome=unresolved "
+                "provider_status_code=%d",
+                "invalid_output" if "invalid response" in error.detail else "provider_error",
+                error.status_code,
+            )
+            raise
+        logger.info(
+            "composite_fallback estimator_called=true estimator_outcome=success ingredient_count=%d",
+            len(estimate.ingredients),
         )
         internal_portions = allocate_component_weights(
             portion.estimated_weight_grams,
@@ -249,10 +290,34 @@ class MealAnalysisService:
         )
         snapshots: list[CompositeIngredientSnapshot] = []
         nutrition_values: list[ExtendedPortionNutrition] = []
-        for ingredient, internal_portion in zip(estimate.ingredients, internal_portions, strict=True):
-            food = self._resolve_internal_ingredient(ingredient.name)
-            if food is None:
-                return None
+        internal_resolutions = [
+            (ingredient, internal_portion, self._resolve_internal_ingredient(ingredient.name))
+            for ingredient, internal_portion in zip(estimate.ingredients, internal_portions, strict=True)
+        ]
+        internal_resolved_count = sum(
+            result.status == _InternalIngredientResolutionStatus.RESOLVED
+            for _, _, result in internal_resolutions
+        )
+        internal_ambiguous_count = sum(
+            result.status == _InternalIngredientResolutionStatus.AMBIGUOUS
+            for _, _, result in internal_resolutions
+        )
+        internal_not_found_count = sum(
+            result.status == _InternalIngredientResolutionStatus.NUTRITION_REFERENCE_NOT_FOUND
+            for _, _, result in internal_resolutions
+        )
+        if internal_ambiguous_count or internal_not_found_count:
+            logger.info(
+                "composite_fallback internal_resolved_count=%d internal_ambiguous_count=%d "
+                "internal_not_found_count=%d fallback_outcome=unresolved",
+                internal_resolved_count,
+                internal_ambiguous_count,
+                internal_not_found_count,
+            )
+            return None
+        for ingredient, internal_portion, resolution in internal_resolutions:
+            food = resolution.food
+            assert food is not None
             calculated = self._nutrient_calculator.calculate_extended(
                 self._nutrition_service.get_extended_nutrition_per_100g(food),
                 internal_portion.estimated_weight_grams,
@@ -274,6 +339,13 @@ class MealAnalysisService:
             dish_weight_grams=portion.estimated_weight_grams,
             ingredients=snapshots,
         )
+        logger.info(
+            "composite_fallback internal_resolved_count=%d internal_ambiguous_count=%d "
+            "internal_not_found_count=%d fallback_outcome=resolved",
+            internal_resolved_count,
+            internal_ambiguous_count,
+            internal_not_found_count,
+        )
         return MealAnalysisSessionComponent(
             recognized_name=name,
             raw_estimated_proportion=raw_proportion,
@@ -286,17 +358,19 @@ class MealAnalysisService:
             composite_provenance_snapshot=provenance,
         )
 
-    def _resolve_internal_ingredient(self, name: str):
+    def _resolve_internal_ingredient(self, name: str) -> _InternalIngredientResolution:
         """One-level direct resolution; ambiguous candidates are deliberately unsafe."""
         food = self._nutrition_service.get_food_by_recognized_name(name)
         if food is not None:
-            return food
+            return _InternalIngredientResolution(food, _InternalIngredientResolutionStatus.RESOLVED)
         if self._usda_food_reference_service is None:
-            return None
+            return _InternalIngredientResolution(None, _InternalIngredientResolutionStatus.NUTRITION_REFERENCE_NOT_FOUND)
         resolution = self._usda_food_reference_service.resolve(name)
         if resolution.candidates or resolution.candidate_names:
-            return None
-        return resolution.food
+            return _InternalIngredientResolution(None, _InternalIngredientResolutionStatus.AMBIGUOUS)
+        if resolution.food is None:
+            return _InternalIngredientResolution(None, _InternalIngredientResolutionStatus.NUTRITION_REFERENCE_NOT_FOUND)
+        return _InternalIngredientResolution(resolution.food, _InternalIngredientResolutionStatus.RESOLVED)
 
     def apply_selection(
         self,

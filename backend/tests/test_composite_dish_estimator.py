@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from decimal import Decimal
+import logging
 
 import httpx
 import pytest
@@ -66,6 +67,11 @@ class _Estimator(CompositeDishEstimator):
     def estimate_composition(self, *, dish_name: str, dish_weight_grams: Decimal) -> CompositeDishEstimate:
         self.calls.append(dish_name)
         return self.estimate
+
+
+class _FailingEstimator(CompositeDishEstimator):
+    def estimate_composition(self, *, dish_name: str, dish_weight_grams: Decimal) -> CompositeDishEstimate:
+        raise CompositeDishEstimatorError("Composite dish estimation provider timed out.", 504)
 
 
 class _NoDirectUsda:
@@ -243,6 +249,86 @@ def test_ambiguous_or_missing_internal_ingredient_fails_without_nested_selection
     assert usda.calls == ["pork sinigang", "broth"]
 
 
+def test_composite_fallback_ineligible_component_does_not_call_estimator(database_session, caplog) -> None:
+    caplog.set_level(logging.INFO)
+    user = User(email="ineligible-composite@example.com", password_hash="x", first_name="Test", last_name="User")
+    database_session.add(user); database_session.flush()
+    estimator = _Estimator(_estimate())
+    result = MealAnalysisService(
+        _Recognition((RecognizedMealComponent("unknown side", Decimal("1")),)),
+        NutritionService(_Foods([])),  # type: ignore[arg-type]
+        usda_food_reference_service=_NoDirectUsda(),  # type: ignore[arg-type]
+        composite_dish_estimator=estimator,
+    ).analyze_composed(
+        user_id=user.id, image_bytes=b"x", content_type="image/jpeg", measured_weight_grams=Decimal("100"),
+        session_service=MealAnalysisSessionService(MealAnalysisSessionRepository(database_session)),
+    )
+
+    assert result is not None and result.status == MealAnalysisStatus.NUTRITION_REFERENCE_NOT_FOUND
+    assert estimator.calls == []
+    assert "eligibility=False estimator_called=false" in caplog.text
+
+
+def test_composite_fallback_logs_not_found_internal_reason(database_session, caplog) -> None:
+    caplog.set_level(logging.INFO)
+    user = User(email="not-found-composite@example.com", password_hash="x", first_name="Test", last_name="User")
+    database_session.add(user); database_session.flush()
+    estimator = _Estimator(_estimate())
+    result = MealAnalysisService(
+        _Recognition((RecognizedMealComponent("pork sinigang", Decimal("1")),)),
+        NutritionService(_Foods([_food("cooked pork", identifier=1), _food("mixed vegetables", identifier=2)])),  # type: ignore[arg-type]
+        usda_food_reference_service=_NoDirectUsda(),  # type: ignore[arg-type]
+        composite_dish_estimator=estimator,
+    ).analyze_composed(
+        user_id=user.id, image_bytes=b"x", content_type="image/jpeg", measured_weight_grams=Decimal("275"),
+        session_service=MealAnalysisSessionService(MealAnalysisSessionRepository(database_session)),
+    )
+
+    assert result is not None and result.status == MealAnalysisStatus.NUTRITION_REFERENCE_NOT_FOUND
+    assert "estimator_outcome=success ingredient_count=3" in caplog.text
+    assert "internal_resolved_count=2 internal_ambiguous_count=0 internal_not_found_count=1" in caplog.text
+
+
+def test_composite_fallback_logs_ambiguous_internal_reason(database_session, caplog) -> None:
+    caplog.set_level(logging.INFO)
+    user = User(email="ambiguous-composite@example.com", password_hash="x", first_name="Test", last_name="User")
+    database_session.add(user); database_session.flush()
+    estimator = _Estimator(_estimate())
+    result = MealAnalysisService(
+        _Recognition((RecognizedMealComponent("pork sinigang", Decimal("1")),)),
+        NutritionService(_Foods([_food("cooked pork", identifier=1), _food("mixed vegetables", identifier=2)])),  # type: ignore[arg-type]
+        usda_food_reference_service=_NoDirectUsda(ambiguous_internal=True),  # type: ignore[arg-type]
+        composite_dish_estimator=estimator,
+    ).analyze_composed(
+        user_id=user.id, image_bytes=b"x", content_type="image/jpeg", measured_weight_grams=Decimal("275"),
+        session_service=MealAnalysisSessionService(MealAnalysisSessionRepository(database_session)),
+    )
+
+    assert result is not None and result.status == MealAnalysisStatus.NUTRITION_REFERENCE_NOT_FOUND
+    assert "internal_resolved_count=2 internal_ambiguous_count=1 internal_not_found_count=0" in caplog.text
+
+
+def test_composite_fallback_preserves_estimator_errors(database_session, caplog) -> None:
+    caplog.set_level(logging.INFO)
+    user = User(email="provider-error-composite@example.com", password_hash="x", first_name="Test", last_name="User")
+    database_session.add(user); database_session.flush()
+    service = MealAnalysisService(
+        _Recognition((RecognizedMealComponent("pork sinigang", Decimal("1")),)),
+        NutritionService(_Foods([])),  # type: ignore[arg-type]
+        usda_food_reference_service=_NoDirectUsda(),  # type: ignore[arg-type]
+        composite_dish_estimator=_FailingEstimator(),
+    )
+
+    with pytest.raises(CompositeDishEstimatorError) as raised:
+        service.analyze_composed(
+            user_id=user.id, image_bytes=b"x", content_type="image/jpeg", measured_weight_grams=Decimal("275"),
+            session_service=MealAnalysisSessionService(MealAnalysisSessionRepository(database_session)),
+        )
+
+    assert raised.value.status_code == 504
+    assert "estimator_outcome=provider_error" in caplog.text
+
+
 @dataclass
 class _Response:
     parsed: object
@@ -285,3 +371,60 @@ def test_gemini_estimator_returns_proportions_only_with_a_separate_prompt() -> N
     prompt = client.models.calls[0]["contents"][0].casefold()
     assert "do not provide calories" in prompt
     assert "top-level" not in prompt
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"ingredients": []},
+        {},
+        {"ingredients": [{"name": "   ", "estimated_proportion": 1}]},
+        {"ingredients": [{"name": "pork", "estimated_proportion": -1}]},
+        {"ingredients": [{"name": "pork", "estimated_proportion": 0}]},
+        {"ingredients": [{"name": "pork", "estimated_proportion": "NaN"}]},
+        {"ingredients": [{"name": "pork", "estimated_proportion": "Infinity"}]},
+        {"ingredients": [{"name": "pork", "estimated_proportion": 1, "calories": 100}]},
+        {"components": []},
+        "```json\n{\"ingredients\": []}\n```",
+    ],
+)
+def test_gemini_estimator_rejects_invalid_structured_output(payload: object) -> None:
+    provider = GeminiCompositeDishEstimator(
+        api_key="test", model="test", timeout_seconds=1, client=_Client(_Response(payload))
+    )
+
+    with pytest.raises(CompositeDishEstimatorError, match="invalid response") as raised:
+        provider.estimate_composition(dish_name="pork sinigang", dish_weight_grams=Decimal("275"))
+
+    assert raised.value.status_code == 502
+
+
+def test_gemini_estimator_uses_native_sdk_schema_and_logs_success(caplog) -> None:
+    caplog.set_level(logging.INFO)
+    client = _Client(
+        _Response({"ingredients": [{"name": "cooked pork", "estimated_proportion": 1}]})
+    )
+    provider = GeminiCompositeDishEstimator(api_key="test", model="test-model", timeout_seconds=1, client=client)
+
+    provider.estimate_composition(dish_name="pork sinigang", dish_weight_grams=Decimal("275"))
+
+    config = client.models.calls[0]["config"]
+    assert config.response_schema.type.value == "OBJECT"
+    assert "outcome=success" in caplog.text
+    assert "ingredient_count=1" in caplog.text
+
+
+def test_gemini_estimator_distinguishes_provider_400_from_invalid_output(caplog) -> None:
+    provider = GeminiCompositeDishEstimator(
+        api_key="test",
+        model="test-model",
+        timeout_seconds=1,
+        client=_Client(errors.ClientError(400, {"error": {"status": "INVALID_ARGUMENT"}})),
+    )
+
+    with pytest.raises(CompositeDishEstimatorError, match="request failed") as raised:
+        provider.estimate_composition(dish_name="pork sinigang", dish_weight_grams=Decimal("275"))
+
+    assert raised.value.status_code == 502
+    assert "outcome=provider_request_failure" in caplog.text
+    assert "provider_status_code=400" in caplog.text
