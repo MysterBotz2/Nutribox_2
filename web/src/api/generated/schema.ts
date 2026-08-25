@@ -858,7 +858,7 @@ export interface components {
          */
         CalculatedFood: {
             /** Id */
-            id: number;
+            id: number | null;
             /** Name */
             name: string;
         };
@@ -1151,6 +1151,11 @@ export interface components {
              * Format: uuid
              */
             component_id: string;
+            /**
+             * Composite Estimation
+             * @default false
+             */
+            composite_estimation: boolean;
             /** Estimated Weight Grams */
             estimated_weight_grams: string;
             /** Normalized Proportion */
@@ -1213,6 +1218,11 @@ export interface components {
         };
         /** MealItemResponse */
         MealItemResponse: {
+            /**
+             * Composite Estimation
+             * @default false
+             */
+            composite_estimation: boolean;
             food: components["schemas"]["CalculatedFood"];
             /** Id */
             id: number;
@@ -1510,7 +1520,7 @@ export interface components {
          * @description Approved nutrition provenance categories exposed to API clients.
          * @enum {string}
          */
-        NutritionSourceCategory: "canteen_recipe" | "local_database" | "USDA" | "AI_estimate";
+        NutritionSourceCategory: "canteen_recipe" | "local_database" | "USDA" | "AI_estimate" | "ai_recipe_estimate";
         /** NutritionTargetResponse */
         NutritionTargetResponse: {
             /** Calories */

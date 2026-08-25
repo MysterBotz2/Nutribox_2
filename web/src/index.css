@@ -114,7 +114,13 @@ textarea { min-height: 6rem; resize: vertical; }
 .chart-values { display: grid; gap: .3rem; list-style: none; margin: .8rem 0 0; padding: 0; }
 .chart-values li { color: #526359; display: flex; font-size: .85rem; gap: .5rem; justify-content: space-between; }
 .scan-form { margin: 0; max-width: 44rem; }
+.scan-image-picker { border: 0; margin: 0; padding: 0; }
+.scan-image-picker legend { font-weight: 700; margin-bottom: .65rem; padding: 0; }
+.scan-picker-actions { justify-content: flex-start; }
+.scan-picker-actions label { cursor: pointer; }
+.scan-preview-wrap { display: grid; gap: .75rem; }
 .scan-preview { border: 1px solid #dce8df; border-radius: .7rem; max-height: 20rem; max-width: 100%; object-fit: contain; }
+.visually-hidden { clip: rect(0 0 0 0); height: 1px; margin: -1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
 .result-card { max-width: 52rem; }
 .result-card .nutrient-grid { margin-bottom: 1.25rem; }
 .form-card { margin: 0; }
