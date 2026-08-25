@@ -1,5 +1,6 @@
 from decimal import Decimal, ROUND_HALF_UP
 
+from app.models.food import normalize_food_name
 from app.models.meal import Meal, MealItem
 from app.repositories.meal_repository import MealRepository
 from app.schemas.meal import MealItemCreateRequest
@@ -118,20 +119,46 @@ class MealService:
             state = MealAnalysisSessionState.model_validate(item.state)
             meal_items: list[MealItem] = []
             for component in state.components:
-                if component.resolved_reference is None or component.nutrition is None:
+                if component.nutrition is None:
                     raise MealAnalysisSessionNotCalculatedError("Meal analysis session is incomplete.")
-                food = self._nutrition_service.get_food_by_reference(component.resolved_reference)
-                if food is None:
-                    raise MealFoodNotFoundError("Food reference for meal analysis session was not found.")
                 nutrient = component.nutrition
+                composite = component.composite_provenance_snapshot
+                if composite is not None:
+                    if component.nutrition_source != "ai_recipe_estimate":
+                        raise MealAnalysisSessionNotCalculatedError("Composite meal analysis provenance is invalid.")
+                    if composite.dish_name != component.recognized_name or composite.dish_weight_grams != component.estimated_weight_grams:
+                        raise MealAnalysisSessionNotCalculatedError("Composite meal analysis provenance does not match its component.")
+                    food_id = None
+                    food_name = component.recognized_name
+                    normalized_name = normalize_food_name(component.recognized_name)
+                    source_type = "ai_recipe_estimate"
+                    source_name = "AI recipe composition estimate"
+                    source_reference = None
+                    is_estimated = True
+                    provenance = composite.model_dump(mode="json")
+                else:
+                    if component.resolved_reference is None:
+                        raise MealAnalysisSessionNotCalculatedError("Meal analysis session is incomplete.")
+                    food = self._nutrition_service.get_food_by_reference(component.resolved_reference)
+                    if food is None:
+                        raise MealFoodNotFoundError("Food reference for meal analysis session was not found.")
+                    food_id = food.id
+                    food_name = food.name
+                    normalized_name = food.normalized_name
+                    source_type = food.source_type
+                    source_name = food.source_name
+                    source_reference = food.source_reference
+                    is_estimated = food.source_type == "AI_estimate" if food.source_type else None
+                    provenance = None
                 meal_items.append(MealItem(
-                    food_id=food.id, weight_grams=component.estimated_weight_grams,
+                    food_id=food_id, weight_grams=component.estimated_weight_grams,
                     calculated_calories=Decimal(nutrient["calories"]), calculated_protein_g=Decimal(nutrient["protein_g"]),
                     calculated_carbohydrates_g=Decimal(nutrient["carbohydrates_g"]), calculated_fat_g=Decimal(nutrient["fat_g"]), calculated_fiber_g=Decimal(nutrient["fiber_g"]),
-                    food_name_snapshot=food.name, food_normalized_name_snapshot=food.normalized_name,
-                    nutrition_source_type=food.source_type, nutrition_source_name_snapshot=food.source_name,
-                    nutrition_source_reference_snapshot=food.source_reference,
-                    nutrition_is_estimated=(food.source_type == "AI_estimate" if food.source_type else None),
+                    food_name_snapshot=food_name, food_normalized_name_snapshot=normalized_name,
+                    nutrition_source_type=source_type, nutrition_source_name_snapshot=source_name,
+                    nutrition_source_reference_snapshot=source_reference,
+                    nutrition_is_estimated=is_estimated,
+                    composite_provenance_snapshot=provenance,
                     weight_source="ai_estimate",
                     **{f"calculated_{name}": (Decimal(value) if value is not None else None) for name, value in nutrient.items() if name not in {"calories", "protein_g", "carbohydrates_g", "fat_g", "fiber_g"}},
                 ))

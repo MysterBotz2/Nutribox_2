@@ -28,7 +28,14 @@ class UsdaFoodReferenceService:
     _COMPOSITE_TERMS = frozenset({"sandwich", "burger", "bun", "wrap", "burrito", "taco", "pizza", "salad", "soup", "casserole", "stew"})
     # These are composite dishes, but remain part of the food identity.  A
     # query for beef stew must not devolve into a query for any beef cut.
-    _DISH_IDENTITY_TERMS = frozenset({"stew"})
+    # A direct reference for a named prepared dish must retain this identity.
+    # This intentionally prevents generic meat/cut token overlap from becoming
+    # a false direct-reference path.
+    _DISH_IDENTITY_TERMS = frozenset({
+        "stew", "soup", "curry", "sinigang", "adobo", "caldereta", "tinola",
+        "pinakbet", "laing", "pancit",
+    })
+    _CONDIMENT_IDENTITY_TERMS = frozenset({"sauce", "dressing"})
     _PREPARATION_TERMS = frozenset({"fried", "baked", "grilled", "roasted", "boiled", "steamed", "raw", "breaded", "coated"})
     _FRIED_COMPATIBLE_TERMS = frozenset({"fried", "breaded", "coated"})
     _COMMON_CUTS = frozenset({"wing", "breast", "thigh", "leg", "drumstick"})
@@ -86,16 +93,25 @@ class UsdaFoodReferenceService:
             [candidate.description for candidate in fallback_candidates],
             [candidate.description for candidate in candidates],
         )
-        exact = [candidate for candidate in candidates if normalize_food_name(candidate.description) == normalize_food_name(recognized_name)]
-        underlying_exact = [candidate for candidate in raw_candidates if normalize_food_name(candidate.description) == normalize_food_name(recognized_name)]
-        if len(exact) != 1 or len(underlying_exact) != 1:
+        # A single strict candidate is safe to load by its immutable FDC ID.
+        # Duplicate raw rows with the same display name still represent an
+        # ambiguous reference identity and must not be guessed.
+        duplicate_identity_count = 0
+        if len(candidates) == 1:
+            selected_name = normalize_food_name(candidates[0].description)
+            duplicate_identity_count = sum(
+                1 for candidate in raw_candidates
+                if normalize_food_name(candidate.description) == selected_name
+                and self._is_semantically_eligible(recognized_name, candidate.description)
+            )
+        if len(candidates) != 1 or duplicate_identity_count != 1:
             logger.info(
                 "USDA relevance outcome=%s",
                 "requires_food_selection" if candidates else "nutrition_reference_not_found",
             )
             visible = tuple(candidates[:self._RESULT_LIMIT])
             return UsdaResolution(candidates=visible, candidate_names=tuple(candidate.description for candidate in visible))
-        selected = exact[0]
+        selected = candidates[0]
         return UsdaResolution(food=self.load_by_fdc_id(selected.fdc_id, selected.data_type))
 
     def load_by_fdc_id(self, fdc_id: int, data_type: str = "USDA") -> Food | None:
@@ -184,6 +200,8 @@ class UsdaFoodReferenceService:
             tokens = set(candidate_token_sequence)
             if not cls._is_query_identity_compatible(query_token_set, tokens, candidate_token_sequence):
                 continue
+            if not cls._is_semantically_eligible(recognized_name, candidate.description):
+                continue
             score, reasons = cls._candidate_relevance(
                 query_text=query_text,
                 candidate_text=" ".join(candidate_token_sequence),
@@ -241,6 +259,9 @@ class UsdaFoodReferenceService:
             return False
         dish_identity_tokens = core_tokens & cls._DISH_IDENTITY_TERMS
         if dish_identity_tokens and not dish_identity_tokens.issubset(candidate_tokens):
+            return False
+        condiment_identity_tokens = query_tokens & cls._CONDIMENT_IDENTITY_TERMS
+        if condiment_identity_tokens and not condiment_identity_tokens.issubset(candidate_tokens):
             return False
         query_preparation = query_tokens & cls._PREPARATION_TERMS
         candidate_preparation = candidate_tokens & cls._PREPARATION_TERMS

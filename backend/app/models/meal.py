@@ -2,6 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.constants import MAXIMUM_PROTOTYPE_WEIGHT_GRAMS
@@ -74,15 +75,15 @@ class MealItem(Base):
         CheckConstraint("calculated_vitamin_c_mg IS NULL OR calculated_vitamin_c_mg >= 0", name="ck_meal_items_vitamin_c_mg_nonnegative"),
         CheckConstraint("calculated_vitamin_d_mcg IS NULL OR calculated_vitamin_d_mcg >= 0", name="ck_meal_items_vitamin_d_mcg_nonnegative"),
         CheckConstraint("calculated_folate_mcg_dfe IS NULL OR calculated_folate_mcg_dfe >= 0", name="ck_meal_items_folate_mcg_dfe_nonnegative"),
-        CheckConstraint("nutrition_source_type IS NULL OR nutrition_source_type IN ('canteen_recipe', 'local_database', 'USDA', 'AI_estimate')", name="ck_meal_items_nutrition_source_type"),
+        CheckConstraint("nutrition_source_type IS NULL OR nutrition_source_type IN ('canteen_recipe', 'local_database', 'USDA', 'AI_estimate', 'ai_recipe_estimate')", name="ck_meal_items_nutrition_source_type"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     meal_id: Mapped[int] = mapped_column(
         ForeignKey("meals.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    food_id: Mapped[int] = mapped_column(
-        ForeignKey("foods.id", ondelete="RESTRICT"), nullable=False, index=True
+    food_id: Mapped[int | None] = mapped_column(
+        ForeignKey("foods.id", ondelete="RESTRICT"), nullable=True, index=True
     )
     weight_grams: Mapped[Decimal] = mapped_column(Numeric(8, 3), nullable=False)
     calculated_calories: Mapped[Decimal] = mapped_column(Numeric(12, 3), nullable=False)
@@ -112,6 +113,9 @@ class MealItem(Base):
     nutrition_source_name_snapshot: Mapped[str | None] = mapped_column(String(160), nullable=True)
     nutrition_source_reference_snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
     nutrition_is_estimated: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    composite_provenance_snapshot: Mapped[dict | None] = mapped_column(
+        JSONB(none_as_null=True), nullable=True
+    )
     weight_source: Mapped[str | None] = mapped_column(String(32), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

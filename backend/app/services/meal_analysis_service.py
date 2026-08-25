@@ -13,11 +13,14 @@ from app.schemas.meal import (
 )
 from app.schemas.nutrition import CalculatedFood, PortionNutrition
 from app.services.food_recognition_provider import FoodRecognitionProvider
+from app.services.composite_dish_estimator import CompositeDishEstimator
 from app.services.nutrient_calculator import NutrientCalculator
 from app.services.nutrition_service import NutritionService
 from app.services.usda_food_reference_service import UsdaFoodReferenceService
 from app.schemas.meal_analysis_session import (
     ComponentResolutionStatus,
+    CompositeIngredientSnapshot,
+    CompositeProvenanceSnapshot,
     MealAnalysisSessionComponent,
     MealAnalysisSessionState,
     WeightSource,
@@ -47,11 +50,22 @@ class MealAnalysisService:
         nutrition_service: NutritionService,
         nutrient_calculator: NutrientCalculator | None = None,
         usda_food_reference_service: UsdaFoodReferenceService | None = None,
+        composite_dish_estimator: CompositeDishEstimator | None = None,
     ) -> None:
         self._food_recognition_provider = food_recognition_provider
         self._nutrition_service = nutrition_service
         self._nutrient_calculator = nutrient_calculator or NutrientCalculator()
         self._usda_food_reference_service = usda_food_reference_service
+        self._composite_dish_estimator = composite_dish_estimator
+
+    # These are dish-form markers, not a cuisine-specific recipe catalogue.
+    # When absent, an unresolved item remains unresolved rather than risking a
+    # speculative decomposition of a simple food.
+    _PREPARED_DISH_MARKERS = frozenset({
+        "stew", "soup", "curry", "casserole", "sandwich", "pizza", "salad",
+        "sinigang", "adobo", "caldereta", "tinola", "pinakbet", "laing",
+        "pancit", "bicol", "express",
+    })
 
     def analyze(
         self, *, image_bytes: bytes, content_type: str, weight_grams: Decimal
@@ -182,6 +196,9 @@ class MealAnalysisService:
             reference = None
             source = None
         elif food is None:
+            composite = self._resolve_composite_component(name, raw_proportion, portion)
+            if composite is not None:
+                return composite
             status = ComponentResolutionStatus.NUTRITION_REFERENCE_NOT_FOUND
             nutrition = None
             reference = None
@@ -211,6 +228,75 @@ class MealAnalysisService:
             nutrition_source=source,
             nutrition=nutrition,
         )
+
+    @classmethod
+    def _is_composite_dish_eligible(cls, name: str) -> bool:
+        tokens = set(name.casefold().replace("-", " ").split())
+        return bool(tokens & cls._PREPARED_DISH_MARKERS)
+
+    def _resolve_composite_component(
+        self, name: str, raw_proportion: Decimal, portion: ComposedPortion
+    ) -> MealAnalysisSessionComponent | None:
+        """Resolve one prepared dish through non-recursive ingredient references."""
+        if self._composite_dish_estimator is None or not self._is_composite_dish_eligible(name):
+            return None
+        estimate = self._composite_dish_estimator.estimate_composition(
+            dish_name=name, dish_weight_grams=portion.estimated_weight_grams
+        )
+        internal_portions = allocate_component_weights(
+            portion.estimated_weight_grams,
+            [ingredient.estimated_proportion for ingredient in estimate.ingredients],
+        )
+        snapshots: list[CompositeIngredientSnapshot] = []
+        nutrition_values: list[ExtendedPortionNutrition] = []
+        for ingredient, internal_portion in zip(estimate.ingredients, internal_portions, strict=True):
+            food = self._resolve_internal_ingredient(ingredient.name)
+            if food is None:
+                return None
+            calculated = self._nutrient_calculator.calculate_extended(
+                self._nutrition_service.get_extended_nutrition_per_100g(food),
+                internal_portion.estimated_weight_grams,
+            )
+            nutrition_values.append(calculated)
+            snapshots.append(CompositeIngredientSnapshot(
+                ingredient_name=ingredient.name,
+                raw_estimated_proportion=ingredient.estimated_proportion,
+                normalized_proportion=internal_portion.normalized_proportion,
+                estimated_weight_grams=internal_portion.estimated_weight_grams,
+                nutrition_source=food.source_type or "local_database",
+                source_reference_id=food.source_reference or f"food:{food.id}",
+                reference_name=food.name,
+                nutrition={field.name: (str(value) if value is not None else None) for field in fields(calculated) for value in (getattr(calculated, field.name),)},
+            ))
+        aggregate = self._aggregate_extended(nutrition_values)
+        provenance = CompositeProvenanceSnapshot(
+            dish_name=name,
+            dish_weight_grams=portion.estimated_weight_grams,
+            ingredients=snapshots,
+        )
+        return MealAnalysisSessionComponent(
+            recognized_name=name,
+            raw_estimated_proportion=raw_proportion,
+            normalized_proportion=portion.normalized_proportion,
+            estimated_weight_grams=portion.estimated_weight_grams,
+            weight_source=WeightSource.AI_ESTIMATE,
+            resolution_status=ComponentResolutionStatus.RESOLVED,
+            nutrition_source="ai_recipe_estimate",
+            nutrition={field.name: (str(value) if value is not None else None) for field in fields(aggregate) for value in (getattr(aggregate, field.name),)},
+            composite_provenance_snapshot=provenance,
+        )
+
+    def _resolve_internal_ingredient(self, name: str):
+        """One-level direct resolution; ambiguous candidates are deliberately unsafe."""
+        food = self._nutrition_service.get_food_by_recognized_name(name)
+        if food is not None:
+            return food
+        if self._usda_food_reference_service is None:
+            return None
+        resolution = self._usda_food_reference_service.resolve(name)
+        if resolution.candidates or resolution.candidate_names:
+            return None
+        return resolution.food
 
     def apply_selection(
         self,

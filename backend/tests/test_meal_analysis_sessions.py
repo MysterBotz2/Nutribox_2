@@ -2,6 +2,8 @@ from datetime import timedelta, timezone
 from decimal import Decimal
 
 import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
@@ -10,7 +12,10 @@ from app.database.base import Base
 from app.models.meal_analysis_session import MealAnalysisSession
 from app.models.user import User
 from app.repositories.meal_analysis_session_repository import MealAnalysisSessionRepository
+from app.repositories.meal_repository import MealRepository
 from app.schemas.meal_analysis_session import (
+    CompositeIngredientSnapshot,
+    CompositeProvenanceSnapshot,
     ComponentResolutionStatus,
     MealAnalysisSessionComponent,
     MealAnalysisSessionState,
@@ -21,6 +26,9 @@ from app.services.meal_analysis_session_service import (
     MealAnalysisSessionNotFoundError,
     MealAnalysisSessionService,
 )
+from app.services.meal_service import MealService
+from app.services.nutrition_service import NutritionService
+from app.repositories.food_repository import FoodRepository
 
 
 def _state(weight: str = "150.000") -> MealAnalysisSessionState:
@@ -133,3 +141,116 @@ def test_session_ttl_bounds_accept_minimum_default_and_maximum() -> None:
     assert Settings(_env_file=None).meal_analysis_session_ttl_minutes == 30
     assert Settings(_env_file=None, meal_analysis_session_ttl_minutes=1).meal_analysis_session_ttl_minutes == 1
     assert Settings(_env_file=None, meal_analysis_session_ttl_minutes=1440).meal_analysis_session_ttl_minutes == 1440
+
+
+def _composite_state() -> MealAnalysisSessionState:
+    ingredient_nutrition = {
+        "calories": "100.000", "protein_g": "10.000", "carbohydrates_g": "5.000",
+        "fat_g": "3.000", "fiber_g": "1.000",
+    }
+    composite = CompositeProvenanceSnapshot(
+        dish_name="Pork sinigang",
+        dish_weight_grams=Decimal("275.000"),
+        ingredients=[
+            CompositeIngredientSnapshot(
+                ingredient_name="Cooked pork", raw_estimated_proportion=Decimal("0.5"),
+                normalized_proportion=Decimal("0.5"), estimated_weight_grams=Decimal("137.500"),
+                nutrition_source="USDA", source_reference_id="fdcId:111", reference_name="Pork, cooked",
+                nutrition=ingredient_nutrition,
+            ),
+            CompositeIngredientSnapshot(
+                ingredient_name="Sinigang vegetables", raw_estimated_proportion=Decimal("0.5"),
+                normalized_proportion=Decimal("0.5"), estimated_weight_grams=Decimal("137.500"),
+                nutrition_source="local_database", source_reference_id="food:12", reference_name="Mixed vegetables",
+                nutrition=ingredient_nutrition,
+            ),
+        ],
+    )
+    return MealAnalysisSessionState(
+        measured_weight_grams=Decimal("275.000"),
+        components=[
+            MealAnalysisSessionComponent(
+                recognized_name="Pork sinigang", raw_estimated_proportion=Decimal("1"),
+                normalized_proportion=Decimal("1"), estimated_weight_grams=Decimal("275.000"),
+                resolution_status=ComponentResolutionStatus.RESOLVED,
+                nutrition_source="ai_recipe_estimate",
+                nutrition={
+                    "calories": "275.000", "protein_g": "27.500", "carbohydrates_g": "13.750",
+                    "fat_g": "8.250", "fiber_g": "2.750",
+                },
+                composite_provenance_snapshot=composite,
+            )
+        ],
+    )
+
+
+def test_composite_snapshot_preserves_decimal_weights_and_requires_exact_reconciliation() -> None:
+    state = _composite_state()
+    snapshot = state.components[0].composite_provenance_snapshot
+    assert snapshot is not None
+    assert sum((item.estimated_weight_grams for item in snapshot.ingredients), Decimal("0")) == Decimal("275.000")
+    assert state.model_dump(mode="json")["components"][0]["composite_provenance_snapshot"]["dish_weight_grams"] == "275.000"
+
+    with pytest.raises(ValueError, match="must equal the dish weight"):
+        CompositeProvenanceSnapshot(
+            dish_name="Invalid", dish_weight_grams=Decimal("10.000"),
+            ingredients=[
+                CompositeIngredientSnapshot(
+                    ingredient_name="Only ingredient", raw_estimated_proportion=Decimal("1"),
+                    normalized_proportion=Decimal("1"), estimated_weight_grams=Decimal("9.999"),
+                    nutrition_source="USDA", source_reference_id="fdcId:1", reference_name="Reference",
+                    nutrition={"calories": "1.000", "protein_g": "1.000", "carbohydrates_g": "1.000", "fat_g": "1.000", "fiber_g": "1.000"},
+                )
+            ],
+        )
+
+
+def test_session_backed_composite_meal_persists_one_foodless_snapshot(database_session: Session) -> None:
+    user = _user(database_session, "composite-persistence@example.com")
+    session_service = _service(database_session)
+    analysis = session_service.create_session(user.id, _composite_state(), "calculated")
+    meal = MealService(
+        NutritionService(FoodRepository(database_session)), MealRepository(database_session)
+    ).create_meal_from_analysis_session(analysis.id, user.id)
+    database_session.refresh(meal)
+
+    assert meal.measured_weight_grams == Decimal("275.000")
+    assert len(meal.items) == 1
+    item = meal.items[0]
+    assert item.food_id is None
+    assert item.food_name_snapshot == "Pork sinigang"
+    assert item.weight_grams == Decimal("275.000")
+    assert item.nutrition_source_type == "ai_recipe_estimate"
+    assert item.nutrition_is_estimated is True
+    assert item.calculated_calories == Decimal("275.000")
+    assert item.composite_provenance_snapshot is not None
+    assert item.composite_provenance_snapshot["ingredients"][0]["source_reference_id"] == "fdcId:111"
+    assert sum((Decimal(entry["estimated_weight_grams"]) for entry in item.composite_provenance_snapshot["ingredients"]), Decimal("0")) == item.weight_grams
+    assert analysis.consumed_at is not None
+
+    analysis.state = _composite_state().model_dump(mode="json")
+    analysis.state["components"][0]["composite_provenance_snapshot"]["ingredients"][0]["reference_name"] = "Changed upstream reference"
+    database_session.flush()
+    database_session.refresh(item)
+    assert item.composite_provenance_snapshot["ingredients"][0]["reference_name"] == "Pork, cooked"
+
+
+def test_session_backed_post_persists_one_composite_meal_item(
+    database_session: Session, client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    user = database_session.scalar(select(User).where(User.email == "user@example.com"))
+    assert user is not None
+    analysis = _service(database_session).create_session(user.id, _composite_state(), "calculated")
+
+    response = client.post(
+        "/api/meals", json={"analysis_session_id": analysis.id}, headers=auth_headers
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert len(payload["items"]) == 1
+    assert payload["items"][0]["food"] == {"id": None, "name": "Pork sinigang"}
+    assert payload["items"][0]["nutrition_source"]["category"] == "ai_recipe_estimate"
+    assert payload["items"][0]["composite_estimation"] is True
+    database_session.refresh(analysis)
+    assert analysis.consumed_at is not None

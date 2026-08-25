@@ -33,6 +33,8 @@ from app.schemas.ai import RecognizedFood
 from app.schemas.nutrition import AdditionalNutrientValues, CalculatedFood, NutrientValues, PortionNutrition
 from app.services.food_recognition_provider import FoodRecognitionProvider, FoodRecognitionProviderError
 from app.services.food_recognition_selector import get_food_recognition_provider
+from app.services.composite_dish_estimator import CompositeDishEstimator, CompositeDishEstimatorError
+from app.services.composite_dish_estimator_selector import get_composite_dish_estimator
 from app.services.image_validation import read_validated_image
 from app.services.meal_analysis_service import MealAnalysisService
 from app.services.meal_service import MealFoodNotFoundError, MealService
@@ -52,6 +54,7 @@ router = APIRouter(prefix="/api/meals", tags=["meals"])
 
 def get_meal_analysis_service(
     provider: Annotated[FoodRecognitionProvider, Depends(get_food_recognition_provider)],
+    composite_dish_estimator: Annotated[CompositeDishEstimator, Depends(get_composite_dish_estimator)],
     nutrition_service: Annotated[NutritionService, Depends(get_nutrition_service)],
     database_session: Annotated[Session, Depends(get_db)],
 ) -> MealAnalysisService:
@@ -68,6 +71,7 @@ def get_meal_analysis_service(
         usda_food_reference_service=UsdaFoodReferenceService(
             FoodRepository(database_session), client
         ),
+        composite_dish_estimator=composite_dish_estimator,
     )
 
 
@@ -90,6 +94,7 @@ def _component_response(component) -> MealAnalysisComponentResponse:
         resolution_status=component.resolution_status.value, nutrition_source=component.nutrition_source, resolved_reference=component.resolved_reference,
         candidates=[MealAnalysisCandidateResponse(**candidate) for candidate in component.candidates],
         nutrition=PortionNutrition(**component.nutrition) if component.nutrition is not None else None,
+        composite_estimation=component.composite_provenance_snapshot is not None,
     )
 
 
@@ -175,11 +180,16 @@ async def analyze_meal(
             content_type=content_type,
             weight_grams=weight_grams,
         )
-    except FoodRecognitionProviderError as error:
+    except (FoodRecognitionProviderError, CompositeDishEstimatorError) as error:
         if error.status_code == status.HTTP_429_TOO_MANY_REQUESTS:
+            detail = (
+                "Composite dish estimation service is temporarily unavailable. Please try again later."
+                if isinstance(error, CompositeDishEstimatorError)
+                else "Food recognition service is temporarily unavailable. Please try again later."
+            )
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Food recognition service is temporarily unavailable. Please try again later.",
+                detail=detail,
             ) from None
         raise HTTPException(status_code=error.status_code, detail=error.detail) from None
 
@@ -271,7 +281,7 @@ def meal_response_from_model(meal) -> MealResponse:
     return MealResponse(
         id=meal.id,
         recorded_at=meal.recorded_at,
-        items=[MealItemResponse(id=item.id, food=CalculatedFood(id=item.food_id, name=item.food_name_snapshot), weight_grams=item.weight_grams, nutrition=_portion_nutrition_from_item(item), nutrition_source=MealItemNutritionSource(category=item.nutrition_source_type, name=item.nutrition_source_name_snapshot, reference=item.nutrition_source_reference_snapshot, is_estimated=item.nutrition_is_estimated)) for item in meal.items],
+        items=[MealItemResponse(id=item.id, food=CalculatedFood(id=item.food_id, name=item.food_name_snapshot), weight_grams=item.weight_grams, nutrition=_portion_nutrition_from_item(item), nutrition_source=MealItemNutritionSource(category=item.nutrition_source_type, name=item.nutrition_source_name_snapshot, reference=item.nutrition_source_reference_snapshot, is_estimated=item.nutrition_is_estimated), composite_estimation=item.composite_provenance_snapshot is not None) for item in meal.items],
         totals=MealTotals(calories=meal.total_calories, protein_g=meal.total_protein_g, carbohydrates_g=meal.total_carbohydrates_g, fat_g=meal.total_fat_g, fiber_g=meal.total_fiber_g),
         additional_totals=_additional_totals_from_items(meal.items),
     )

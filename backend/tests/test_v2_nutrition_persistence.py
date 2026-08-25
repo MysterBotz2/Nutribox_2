@@ -112,6 +112,7 @@ def test_meal_item_persists_extended_snapshot_and_provenance(database_session: S
     assert item.nutrition_source_name_snapshot == "USDA FoodData Central"
     assert item.nutrition_source_reference_snapshot == "fdcId:12345"
     assert item.nutrition_is_estimated is False
+    assert item.composite_provenance_snapshot is None
 
 
 def test_new_meal_snapshots_use_calculated_v2_values_and_preserve_unknowns(

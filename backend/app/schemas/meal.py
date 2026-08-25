@@ -97,6 +97,7 @@ class MealAnalysisComponentResponse(BaseModel):
     resolved_reference: str | None
     candidates: list[MealAnalysisCandidateResponse]
     nutrition: PortionNutrition | None
+    composite_estimation: bool = False
 
 
 class MealAnalysisSelectionRequest(BaseModel):
@@ -117,6 +118,7 @@ class MealItemResponse(BaseModel):
     weight_grams: Decimal
     nutrition: PortionNutrition
     nutrition_source: "MealItemNutritionSource | None" = None
+    composite_estimation: bool = False
 
 
 class MealItemNutritionSource(BaseModel):

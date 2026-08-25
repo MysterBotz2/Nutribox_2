@@ -167,13 +167,16 @@ def test_semantic_fallback_returns_safe_candidates_when_strict_threshold_has_non
                 UsdaSearchFood(3, "Chicken, broilers or fryers, giblets, cooked, fried", "Survey (FNDDS)"),
             ]
 
+        def get_food(self, fdc_id: int):
+            return _FakeClient().get_food(fdc_id)
+
     monkeypatch.setattr(UsdaFoodReferenceService, "_MINIMUM_RELEVANCE_SCORE", 100)
     resolution = UsdaFoodReferenceService(
         FoodRepository(database_session), FallbackClient()  # type: ignore[arg-type]
     ).resolve("fried chicken")
 
-    assert resolution.food is None
-    assert resolution.candidate_names == ("Chicken wing, fried, coated, from raw",)
+    assert resolution.food is not None
+    assert resolution.food.source_reference == "fdcId:1"
 
 
 def test_semantic_fallback_returns_not_found_when_no_safe_candidate_survives(
@@ -237,7 +240,7 @@ def test_usda_relevance_respects_explicit_composites_and_specific_cuts() -> None
     assert cut_ranked[0] == "Chicken wing, fried, coated"
 
 
-def test_usda_relevance_penalizes_conflicting_preparation_and_filters_irrelevant_results() -> None:
+def test_usda_relevance_rejects_conflicting_preparation_and_irrelevant_results() -> None:
     ranked = _ranked_names(
         "grilled chicken",
         "Chicken, grilled",
@@ -245,7 +248,60 @@ def test_usda_relevance_penalizes_conflicting_preparation_and_filters_irrelevant
         "Apple pie",
     )
 
-    assert ranked == ["Chicken, grilled", "Chicken, fried"]
+    assert ranked == ["Chicken, grilled"]
+
+
+def test_prepared_dish_identity_rejects_generic_pork_rows_for_composite_fallback(database_session: Session) -> None:
+    class PorkRows:
+        def search_food(self, _: str):
+            return [
+                UsdaSearchFood(1, "Pork, pickled pork hocks", "Survey (FNDDS)"),
+                UsdaSearchFood(2, "Pork, cured, salt pork, raw", "Survey (FNDDS)"),
+                UsdaSearchFood(3, "Pork, cracklings", "Survey (FNDDS)"),
+                UsdaSearchFood(4, "Pork, belly", "Survey (FNDDS)"),
+                UsdaSearchFood(5, "Pork, bones", "Survey (FNDDS)"),
+            ]
+
+    resolution = UsdaFoodReferenceService(FoodRepository(database_session), PorkRows()).resolve("pork sinigang")  # type: ignore[arg-type]
+    assert resolution.food is None
+    assert resolution.candidates == ()
+    assert resolution.candidate_names == ()
+
+
+def test_one_strict_steamed_rice_candidate_auto_resolves_by_fdc_id(database_session: Session) -> None:
+    class RiceRows:
+        def __init__(self) -> None:
+            self.loaded: list[int] = []
+
+        def search_food(self, _: str):
+            return [UsdaSearchFood(25, "Rice, white, steamed, Chinese restaurant", "Survey (FNDDS)")]
+
+        def get_food(self, fdc_id: int):
+            self.loaded.append(fdc_id)
+            return _FakeClient().get_food(fdc_id)
+
+    client = RiceRows()
+    resolution = UsdaFoodReferenceService(FoodRepository(database_session), client).resolve("steamed rice")  # type: ignore[arg-type]
+    assert resolution.food is not None
+    assert resolution.food.source_reference == "fdcId:25"
+    assert client.loaded == [25]
+
+
+def test_chili_sauce_suitability_rejects_cheese_dip_but_preserves_real_sauce_ambiguity(database_session: Session) -> None:
+    class ChiliRows:
+        def search_food(self, _: str):
+            return [
+                UsdaSearchFood(1, "Tomato chili sauce", "Survey (FNDDS)"),
+                UsdaSearchFood(2, "Sauce, tomato chili sauce, bottled, with salt", "Survey (FNDDS)"),
+                UsdaSearchFood(3, "Sauce, peppers, hot, chili, mature red, canned", "Survey (FNDDS)"),
+                UsdaSearchFood(4, "Cheese dip with chili pepper", "Survey (FNDDS)"),
+            ]
+
+    resolution = UsdaFoodReferenceService(FoodRepository(database_session), ChiliRows()).resolve("chili dipping sauce")  # type: ignore[arg-type]
+    assert resolution.food is None
+    assert resolution.candidate_names == (
+        "Tomato chili sauce", "Sauce, tomato chili sauce, bottled, with salt", "Sauce, peppers, hot, chili, mature red, canned",
+    )
 
 
 def test_usda_relevance_returns_ranked_ambiguity_without_changing_selection_behavior(

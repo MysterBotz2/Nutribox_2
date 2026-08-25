@@ -25,6 +25,7 @@ class NutritionSourceCategory(str, Enum):
     LOCAL_DATABASE = "local_database"
     USDA = "USDA"
     AI_ESTIMATE = "AI_estimate"
+    AI_RECIPE_ESTIMATE = "ai_recipe_estimate"
 
 
 class AdditionalNutrientValues(BaseModel):
@@ -162,7 +163,7 @@ class PortionCalculationRequest(BaseModel):
 class CalculatedFood(BaseModel):
     """The canonical food reference used for a portion calculation."""
 
-    id: int
+    id: int | None
     name: str
 
 
