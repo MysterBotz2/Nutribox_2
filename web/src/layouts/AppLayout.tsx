@@ -12,7 +12,10 @@ const primarySections = [
   { to: '/app/ai/chat', label: 'AI' },
   { to: '/app/profile', label: 'Profile' },
 ]
-const secondarySections = [{ to: '/app/profile', label: 'Settings' }]
+const secondarySections = [
+  { to: '/app/profile', label: 'Settings' },
+  { to: '/app/devices', label: 'Devices' },
+]
 
 export function AppLayout() {
   const { user, logout } = useAuth()

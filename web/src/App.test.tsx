@@ -13,7 +13,7 @@ function renderRoute(path: string) {
 
 afterEach(() => { cleanup(); clearSessionToken(); vi.unstubAllGlobals() })
 
-it.each(['/app/meals', '/app/progress', '/app/coach'])('redirects unauthenticated protected route %s to login', async (path) => {
+it.each(['/app/meals', '/app/progress', '/app/coach', '/app/devices'])('redirects unauthenticated protected route %s to login', async (path) => {
   renderRoute(path)
   expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
 })
