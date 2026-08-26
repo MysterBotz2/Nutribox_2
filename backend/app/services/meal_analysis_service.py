@@ -135,7 +135,11 @@ class MealAnalysisService:
             if usda_resolution.candidate_names:
                 return RequiresFoodSelectionMealAnalysis(
                     status=MealAnalysisStatus.REQUIRES_FOOD_SELECTION,
-                    recognized_foods=[RecognizedFood(name=name) for name in usda_resolution.candidate_names],
+                    # USDA descriptions are reference-candidate display data, not new
+                    # recognition output.  Keep this legacy response field within its
+                    # recognition-domain contract; authenticated session responses put
+                    # candidate identity/display data in components[].candidates.
+                    recognized_foods=recognized_foods,
                     recognition_source=recognition.source,
                 )
             food = usda_resolution.food

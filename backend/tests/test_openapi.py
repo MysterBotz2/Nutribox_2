@@ -67,6 +67,14 @@ def test_openapi_exposes_additive_v2_nutrition_fields() -> None:
     ]
 
 
+def test_openapi_keeps_recognition_and_candidate_fields_semantically_separate() -> None:
+    schema = app.openapi()
+    schemas = schema["components"]["schemas"]
+
+    assert schemas["RecognizedFood"]["properties"]["name"]["maxLength"] == 120
+    assert set(schemas["MealAnalysisCandidateResponse"]["properties"]) == {"candidate_id", "name"}
+
+
 def test_openapi_preserves_r2_profile_privacy_boundaries() -> None:
     """Protect the owner-only, separated R2 profile contract from accidental drift."""
     schema = app.openapi()

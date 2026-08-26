@@ -27,6 +27,7 @@ from app.services.meal_analysis_session_service import MealAnalysisSessionServic
 from app.services.meal_analysis_service import MealAnalysisService
 from app.services.nutrient_calculator import NutrientCalculator
 from app.services.nutrition_service import NutritionService
+from app.services.usda_food_data_client import UsdaSearchFood
 from app.services.usda_food_reference_service import UsdaResolution
 
 
@@ -148,7 +149,7 @@ def test_usda_fallback_uses_existing_calculator_for_measured_weight() -> None:
     assert result.nutrition.calories == Decimal("180.000")
 
 
-def test_usda_ranked_candidates_preserve_existing_selection_outcome() -> None:
+def test_usda_ranked_candidates_preserve_recognition_output_and_selection_outcome() -> None:
     class AmbiguousUsdaFallback:
         def resolve(self, _: str) -> UsdaResolution:
             return UsdaResolution(candidate_names=("Chicken wing, fried", "Chicken thigh, fried"))
@@ -160,7 +161,35 @@ def test_usda_ranked_candidates_preserve_existing_selection_outcome() -> None:
     ).analyze(image_bytes=b"test", content_type="image/jpeg", weight_grams=Decimal("180"))
 
     assert result.status == "requires_food_selection"
-    assert [food.name for food in result.recognized_foods] == ["Chicken wing, fried", "Chicken thigh, fried"]
+    assert [food.name for food in result.recognized_foods] == ["fried chicken"]
+
+
+def test_long_usda_candidate_description_returns_selection_state_without_validation_error() -> None:
+    long_description = "Chicken, broilers or fryers, meat and skin, cooked, fried, " + "with a deliberately long USDA reference description " * 3
+    assert len(long_description) > 120
+
+    class AmbiguousUsdaFallback:
+        def resolve(self, _: str) -> UsdaResolution:
+            return UsdaResolution(candidate_names=(long_description, "Chicken thigh, fried"))
+
+    service = MealAnalysisService(
+        StubFoodRecognitionProvider(("fried chicken",)),
+        NutritionService(StubFoodRepository(None)),  # type: ignore[arg-type]
+        usda_food_reference_service=AmbiguousUsdaFallback(),  # type: ignore[arg-type]
+    )
+
+    response = post_with_service(service)
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "requires_food_selection",
+        "recognized_foods": [{"name": "fried chicken"}],
+        "recognition_source": "simulated",
+        "analysis_session_id": None,
+        "analysis_session_expires_at": None,
+        "measured_weight_grams": None,
+        "components": None,
+    }
 
 
 def test_usda_no_relevant_candidates_preserves_not_found_outcome() -> None:
@@ -175,6 +204,7 @@ def test_usda_no_relevant_candidates_preserves_not_found_outcome() -> None:
     ).analyze(image_bytes=b"test", content_type="image/jpeg", weight_grams=Decimal("180"))
 
     assert result.status == "nutrition_reference_not_found"
+    assert [food.name for food in result.recognized_foods] == ["fried chicken"]
 
 
 def test_calculated_analysis_exposes_v2_values_without_changing_domain_state() -> None:
@@ -388,7 +418,10 @@ def test_composed_analysis_preserves_resolved_components_when_one_is_ambiguous(d
 
     class Usda:
         def resolve(self, name):
-            return UsdaResolution(candidate_names=("Chicken wing, fried", "Chicken thigh, fried")) if name == "fried chicken" else UsdaResolution()
+            return UsdaResolution(candidates=(
+                UsdaSearchFood(111, "Chicken wing, fried", "Foundation"),
+                UsdaSearchFood(222, "Chicken thigh, fried", "Survey (FNDDS)"),
+            )) if name == "fried chicken" else UsdaResolution()
 
     user = User(email="composed-ambiguous@example.com", password_hash="x", first_name="Composed", last_name="User")
     database_session.add(user); database_session.flush()
@@ -407,6 +440,7 @@ def test_composed_analysis_preserves_resolved_components_when_one_is_ambiguous(d
     assert ambiguous.nutrition is None
     assert [candidate["name"] for candidate in ambiguous.candidates] == ["Chicken wing, fried", "Chicken thigh, fried"]
     assert len({candidate["candidate_id"] for candidate in ambiguous.candidates}) == 2
+    assert [candidate["source_reference_id"] for candidate in ambiguous.candidates] == ["111", "222"]
 
 
 def test_composed_analysis_no_reference_does_not_fabricate_nutrition(database_session) -> None:
