@@ -133,3 +133,31 @@ def test_openapi_exposes_owner_only_r4a_leftover_analysis_contract() -> None:
     response_schema = operation["post"]["responses"]["201"]["content"]["application/json"]["schema"]
     assert response_schema["$ref"].endswith("/LeftoverAnalysisResponse")
     assert {"initial_nutrition", "leftover_nutrition", "consumed_nutrition", "provenance"} <= set(schema["components"]["schemas"]["LeftoverAnalysisResponse"]["properties"])
+
+
+def test_openapi_exposes_owner_only_personal_recipe_contract() -> None:
+    schema = app.openapi()
+    paths = schema["paths"]
+    bearer_security = [{"OAuth2PasswordBearer": []}]
+    save_path = "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/save-recipe"
+
+    assert paths[save_path]["post"]["security"] == bearer_security
+    assert paths[save_path]["post"]["responses"]["201"]["content"]["application/json"]["schema"]["$ref"].endswith("/UserRecipeResponse")
+    for method in ("get", "delete"):
+        assert paths["/api/users/me/recipes/{recipe_id}"][method]["security"] == bearer_security
+    assert paths["/api/users/me/recipes"]["get"]["security"] == bearer_security
+    ingredient = schema["components"]["schemas"]["UserRecipeIngredientResponse"]["properties"]
+    assert {"name", "normalized_proportion", "nutrition_source", "resolved_reference", "ingredient_source", "weight_source"} == set(ingredient)
+
+
+def test_openapi_exposes_personal_recipe_reuse_session_contract() -> None:
+    schema = app.openapi()
+    paths = schema["paths"]
+    bearer_security = [{"OAuth2PasswordBearer": []}]
+    base = "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}"
+
+    for suffix in ("use-recipe", "review-recipe", "analyze-as-new"):
+        assert paths[f"{base}/{suffix}"]["post"]["security"] == bearer_security
+    assert "RequiresRecipeConfirmationMealAnalysis" in schema["components"]["schemas"]
+    component = schema["components"]["schemas"]["MealAnalysisComponentResponse"]["properties"]
+    assert "recipe_matches" in component

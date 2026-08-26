@@ -17,10 +17,12 @@ from app.models.profile_consent import ProfileConsent
 from app.models.scheduled_meal import ScheduledMeal
 from app.models.sensitive_profile_context import SensitiveProfileContext
 from app.models.user import User
+from app.models.user_recipe import UserRecipe, UserRecipeIngredient
 from app.models.weight_entry import WeightEntry
 
 __all__ = [
     "ChatConversation", "ChatMessage", "Food", "FoodAlias", "LeftoverAnalysis",
     "Meal", "MealItem", "MealAnalysisSession", "NutritionProfile", "NutritionTarget", "PairedDevice",
-    "ProfileConsent", "ScheduledMeal", "SensitiveProfileContext", "User", "WeightEntry",
+    "ProfileConsent", "ScheduledMeal", "SensitiveProfileContext", "User", "UserRecipe",
+    "UserRecipeIngredient", "WeightEntry",
 ]

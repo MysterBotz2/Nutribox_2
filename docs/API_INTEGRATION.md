@@ -137,6 +137,8 @@ Nutrition values are Decimal-safe JSON strings where documented by the response 
 
 `POST /api/meals/analyze` accepts `file` plus a manual `weight_grams`. A `200` response can have `calculated`, `food_not_recognized`, `requires_food_selection`, or `nutrition_reference_not_found`. `requires_food_selection` means Nutri-Box did not divide a shared plate weight among foods; obtain or confirm an individual portion before creating a meal. When local/alias resolution misses, USDA candidates are deterministically filtered and ranked for relevance before this existing selection outcome. For mobile compatibility, those USDA reference candidates remain in the legacy `recognized_foods` response field; this is semantic naming debt, not additional AI recognition.
 
+For an eligible prepared dish with no safe direct nutrition reference, a calculated component can expose `nutrition_source: ai_recipe_estimate`. This means AI estimated only internal ingredient proportions; each ingredient was resolved through an authoritative local/USDA reference and nutrients were calculated deterministically. It is not an AI-generated nutrition value and is displayed to users as “Estimated from dish composition.”
+
 For `POST /api/meals`, submit only canonical `food_id` and positive `weight_grams`; never submit trusted nutrient totals or `user_id`.
 
 ## Core profile contract (R2A)

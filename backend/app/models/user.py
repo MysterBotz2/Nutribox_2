@@ -45,3 +45,6 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
     paired_devices: Mapped[list["PairedDevice"]] = relationship(back_populates="user")
+    recipes: Mapped[list["UserRecipe"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan", passive_deletes=True
+    )

@@ -1,0 +1,16 @@
+warning: in the working copy of 'backend/alembic/env.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/models/__init__.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/models/user.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/routers/meals.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/routers/users.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/schemas/meal.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/schemas/meal_analysis_session.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/services/meal_analysis_service.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_composite_dish_estimator.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_openapi.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/API_INTEGRATION.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/api/generated/schema.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/api/scan.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/api/types.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/pages/Phase16D.test.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/pages/ScanPage.tsx', LF will be replaced by CRLF the next time Git touches it

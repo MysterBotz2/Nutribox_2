@@ -22,6 +22,8 @@ class MealAnalysisStatus(str, Enum):
     FOOD_NOT_RECOGNIZED = "food_not_recognized"
     NUTRITION_REFERENCE_NOT_FOUND = "nutrition_reference_not_found"
     REQUIRES_FOOD_SELECTION = "requires_food_selection"
+    REQUIRES_INGREDIENT_VERIFICATION = "requires_ingredient_verification"
+    REQUIRES_RECIPE_CONFIRMATION = "requires_recipe_confirmation"
 
 
 class MealAnalysisBase(BaseModel):
@@ -53,11 +55,21 @@ class RequiresFoodSelectionMealAnalysis(MealAnalysisBase):
     status: Literal[MealAnalysisStatus.REQUIRES_FOOD_SELECTION]
 
 
+class RequiresIngredientVerificationMealAnalysis(MealAnalysisBase):
+    status: Literal[MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION]
+
+
+class RequiresRecipeConfirmationMealAnalysis(MealAnalysisBase):
+    status: Literal[MealAnalysisStatus.REQUIRES_RECIPE_CONFIRMATION]
+
+
 MealAnalysisResponse = Annotated[
     CalculatedMealAnalysis
     | FoodNotRecognizedMealAnalysis
     | NutritionReferenceNotFoundMealAnalysis
-    | RequiresFoodSelectionMealAnalysis,
+    | RequiresFoodSelectionMealAnalysis
+    | RequiresIngredientVerificationMealAnalysis
+    | RequiresRecipeConfirmationMealAnalysis,
     Field(discriminator="status"),
 ]
 
@@ -98,6 +110,55 @@ class MealAnalysisComponentResponse(BaseModel):
     candidates: list[MealAnalysisCandidateResponse]
     nutrition: PortionNutrition | None
     composite_estimation: bool = False
+    suggested_ingredients: list["SuggestedIngredientResponse"] = Field(default_factory=list)
+    recipe_matches: list["PersonalRecipeMatchResponse"] = Field(default_factory=list)
+
+
+class SuggestedIngredientResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    ingredient_id: UUID
+    name: str
+    suggested_proportion: Decimal
+    ingredient_source: str
+    included: bool
+    weight_grams: Decimal | None = None
+    weight_source: str
+    resolution_status: str
+    candidates: list[MealAnalysisCandidateResponse] = Field(default_factory=list)
+    resolved_reference: str | None = None
+    nutrition_source: str | None = None
+    recipe_derived: bool = False
+
+
+class PersonalRecipeMatchResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    recipe_id: int
+    name: str
+    source: Literal["personal"]
+
+
+class IngredientVerificationItemRequest(BaseModel):
+    ingredient_id: UUID | None = None
+    name: str = Field(min_length=1, max_length=160)
+    included: bool
+    weight_grams: Decimal | None = Field(default=None, gt=0, le=MAXIMUM_PROTOTYPE_WEIGHT_GRAMS)
+
+
+class IngredientVerificationRequest(BaseModel):
+    ingredients: list[IngredientVerificationItemRequest] = Field(min_length=1, max_length=50)
+
+
+class IngredientCandidateSelectionRequest(BaseModel):
+    ingredient_id: UUID
+    candidate_id: UUID
+
+
+class PersonalRecipeSelectionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    recipe_id: int = Field(gt=0)
 
 
 class MealAnalysisSelectionRequest(BaseModel):

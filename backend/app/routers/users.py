@@ -30,8 +30,16 @@ from app.repositories.device_pairing_repository import DevicePairingRepository
 from app.schemas.device_pairing import PairDeviceRequest, PairedDeviceListResponse, PairedDeviceResponse
 from app.routers.device_pairing import device_response, get_pairing_service
 from app.services.device_pairing_service import DevicePairingService, PairingError
+from app.dependencies.user_recipes import get_user_recipe_service
+from app.schemas.user_recipe import (
+    UserRecipeListResponse,
+    UserRecipeResponse,
+    user_recipe_response_from_model,
+)
+from app.services.user_recipe_service import UserRecipeNotFoundError, UserRecipeService
 
 router = APIRouter(prefix="/api/users", tags=["users"])
+
 
 @router.post("/me/devices/pair", response_model=PairedDeviceResponse, status_code=status.HTTP_201_CREATED)
 def pair_my_device(request: PairDeviceRequest, current_user: Annotated[User, Depends(get_current_user)], service: Annotated[DevicePairingService, Depends(get_pairing_service)]):
@@ -89,6 +97,40 @@ def get_onboarding_service(
 @router.get("/me", response_model=PublicUser)
 def get_me(current_user: Annotated[User, Depends(get_current_user)]) -> PublicUser:
     return PublicUser.model_validate(current_user)
+
+
+@router.get("/me/recipes", response_model=UserRecipeListResponse)
+def list_my_recipes(
+    current_user: Annotated[User, Depends(get_current_user)],
+    recipe_service: Annotated[UserRecipeService, Depends(get_user_recipe_service)],
+) -> UserRecipeListResponse:
+    return UserRecipeListResponse(
+        recipes=[user_recipe_response_from_model(recipe) for recipe in recipe_service.list_for_user(current_user.id)]
+    )
+
+
+@router.get("/me/recipes/{recipe_id}", response_model=UserRecipeResponse)
+def get_my_recipe(
+    recipe_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    recipe_service: Annotated[UserRecipeService, Depends(get_user_recipe_service)],
+) -> UserRecipeResponse:
+    try:
+        return user_recipe_response_from_model(recipe_service.get_for_user(recipe_id, current_user.id))
+    except UserRecipeNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Personal recipe was not found.") from None
+
+
+@router.delete("/me/recipes/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_my_recipe(
+    recipe_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    recipe_service: Annotated[UserRecipeService, Depends(get_user_recipe_service)],
+) -> None:
+    try:
+        recipe_service.delete_for_user(recipe_id, current_user.id)
+    except UserRecipeNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Personal recipe was not found.") from None
 
 
 @router.get("/me/profile", response_model=NutritionProfileResponse)

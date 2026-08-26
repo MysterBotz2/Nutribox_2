@@ -401,8 +401,15 @@
         "description": "The canonical food reference used for a portion calculation.",
         "properties": {
           "id": {
-            "title": "Id",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
           },
           "name": {
             "title": "Name",
@@ -1000,6 +1007,93 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "IngredientCandidateSelectionRequest": {
+        "properties": {
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "ingredient_id": {
+            "format": "uuid",
+            "title": "Ingredient Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ingredient_id",
+          "candidate_id"
+        ],
+        "title": "IngredientCandidateSelectionRequest",
+        "type": "object"
+      },
+      "IngredientVerificationItemRequest": {
+        "properties": {
+          "included": {
+            "title": "Included",
+            "type": "boolean"
+          },
+          "ingredient_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingredient Id"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "weight_grams": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 5000.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Grams"
+          }
+        },
+        "required": [
+          "name",
+          "included"
+        ],
+        "title": "IngredientVerificationItemRequest",
+        "type": "object"
+      },
+      "IngredientVerificationRequest": {
+        "properties": {
+          "ingredients": {
+            "items": {
+              "$ref": "#/components/schemas/IngredientVerificationItemRequest"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Ingredients",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ingredients"
+        ],
+        "title": "IngredientVerificationRequest",
+        "type": "object"
+      },
       "LastAlcoholConsumption": {
         "enum": [
           "last_24_hours",
@@ -1171,6 +1265,11 @@
             "title": "Component Id",
             "type": "string"
           },
+          "composite_estimation": {
+            "default": false,
+            "title": "Composite Estimation",
+            "type": "boolean"
+          },
           "estimated_weight_grams": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Estimated Weight Grams",
@@ -1207,6 +1306,13 @@
             "title": "Raw Estimated Proportion",
             "type": "string"
           },
+          "recipe_matches": {
+            "items": {
+              "$ref": "#/components/schemas/PersonalRecipeMatchResponse"
+            },
+            "title": "Recipe Matches",
+            "type": "array"
+          },
           "recognized_name": {
             "title": "Recognized Name",
             "type": "string"
@@ -1225,6 +1331,13 @@
               }
             ],
             "title": "Resolved Reference"
+          },
+          "suggested_ingredients": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedIngredientResponse"
+            },
+            "title": "Suggested Ingredients",
+            "type": "array"
           },
           "weight_source": {
             "title": "Weight Source",
@@ -1409,6 +1522,11 @@
       },
       "MealItemResponse": {
         "properties": {
+          "composite_estimation": {
+            "default": false,
+            "title": "Composite Estimation",
+            "type": "boolean"
+          },
           "food": {
             "$ref": "#/components/schemas/CalculatedFood"
           },
@@ -2529,7 +2647,8 @@
           "canteen_recipe",
           "local_database",
           "USDA",
-          "AI_estimate"
+          "AI_estimate",
+          "ai_recipe_estimate"
         ],
         "title": "NutritionSourceCategory",
         "type": "string"
@@ -3046,6 +3165,45 @@
           "status"
         ],
         "title": "PairingStatusResponse",
+        "type": "object"
+      },
+      "PersonalRecipeMatchResponse": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "recipe_id": {
+            "title": "Recipe Id",
+            "type": "integer"
+          },
+          "source": {
+            "const": "personal",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recipe_id",
+          "name",
+          "source"
+        ],
+        "title": "PersonalRecipeMatchResponse",
+        "type": "object"
+      },
+      "PersonalRecipeSelectionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "recipe_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Recipe Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recipe_id"
+        ],
+        "title": "PersonalRecipeSelectionRequest",
         "type": "object"
       },
       "PortionCalculationRequest": {
@@ -3598,6 +3756,179 @@
           "status"
         ],
         "title": "RequiresFoodSelectionMealAnalysis",
+        "type": "object"
+      },
+      "RequiresIngredientVerificationMealAnalysis": {
+        "properties": {
+          "analysis_session_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Expires At"
+          },
+          "analysis_session_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Id"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MealAnalysisComponentResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
+          "measured_weight_grams": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Weight Grams"
+          },
+          "recognition_source": {
+            "title": "Recognition Source",
+            "type": "string"
+          },
+          "recognized_foods": {
+            "items": {
+              "$ref": "#/components/schemas/RecognizedFood"
+            },
+            "title": "Recognized Foods",
+            "type": "array"
+          },
+          "status": {
+            "const": "requires_ingredient_verification",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recognized_foods",
+          "recognition_source",
+          "status"
+        ],
+        "title": "RequiresIngredientVerificationMealAnalysis",
+        "type": "object"
+      },
+      "RequiresRecipeConfirmationMealAnalysis": {
+        "properties": {
+          "analysis_session_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Expires At"
+          },
+          "analysis_session_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Session Id"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MealAnalysisComponentResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
+          "measured_weight_grams": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Weight Grams"
+          },
+          "recognition_source": {
+            "title": "Recognition Source",
+            "type": "string"
+          },
+          "recognized_foods": {
+            "items": {
+              "$ref": "#/components/schemas/RecognizedFood"
+            },
+            "title": "Recognized Foods",
+            "type": "array"
+          },
+          "status": {
+            "const": "requires_recipe_confirmation",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recognized_foods",
+          "recognition_source",
+          "status"
+        ],
+        "title": "RequiresRecipeConfirmationMealAnalysis",
+        "type": "object"
+      },
+      "SaveUserRecipeRequest": {
+        "additionalProperties": false,
+        "description": "Optional safe display-name override for trusted session-derived recipes.",
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "SaveUserRecipeRequest",
         "type": "object"
       },
       "ScheduledMealCreateRequest": {
@@ -4194,6 +4525,97 @@
         "title": "SmokingStatus",
         "type": "string"
       },
+      "SuggestedIngredientResponse": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/MealAnalysisCandidateResponse"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "included": {
+            "title": "Included",
+            "type": "boolean"
+          },
+          "ingredient_id": {
+            "format": "uuid",
+            "title": "Ingredient Id",
+            "type": "string"
+          },
+          "ingredient_source": {
+            "title": "Ingredient Source",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nutrition_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nutrition Source"
+          },
+          "recipe_derived": {
+            "default": false,
+            "title": "Recipe Derived",
+            "type": "boolean"
+          },
+          "resolution_status": {
+            "title": "Resolution Status",
+            "type": "string"
+          },
+          "resolved_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved Reference"
+          },
+          "suggested_proportion": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Suggested Proportion",
+            "type": "string"
+          },
+          "weight_grams": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Grams"
+          },
+          "weight_source": {
+            "title": "Weight Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ingredient_id",
+          "name",
+          "suggested_proportion",
+          "ingredient_source",
+          "included",
+          "weight_source",
+          "resolution_status"
+        ],
+        "title": "SuggestedIngredientResponse",
+        "type": "object"
+      },
       "TargetNutrientValues": {
         "properties": {
           "calories": {
@@ -4324,6 +4746,104 @@
           "percent_of_target"
         ],
         "title": "TargetStatusResponse",
+        "type": "object"
+      },
+      "UserRecipeIngredientResponse": {
+        "properties": {
+          "ingredient_source": {
+            "title": "Ingredient Source",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "normalized_proportion": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Normalized Proportion",
+            "type": "string"
+          },
+          "nutrition_source": {
+            "title": "Nutrition Source",
+            "type": "string"
+          },
+          "resolved_reference": {
+            "title": "Resolved Reference",
+            "type": "string"
+          },
+          "weight_source": {
+            "title": "Weight Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "normalized_proportion",
+          "nutrition_source",
+          "resolved_reference",
+          "ingredient_source",
+          "weight_source"
+        ],
+        "title": "UserRecipeIngredientResponse",
+        "type": "object"
+      },
+      "UserRecipeListResponse": {
+        "properties": {
+          "recipes": {
+            "items": {
+              "$ref": "#/components/schemas/UserRecipeResponse"
+            },
+            "title": "Recipes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "recipes"
+        ],
+        "title": "UserRecipeListResponse",
+        "type": "object"
+      },
+      "UserRecipeResponse": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "ingredients": {
+            "items": {
+              "$ref": "#/components/schemas/UserRecipeIngredientResponse"
+            },
+            "title": "Ingredients",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "source_type": {
+            "title": "Source Type",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "source_type",
+          "created_at",
+          "updated_at",
+          "ingredients"
+        ],
+        "title": "UserRecipeResponse",
         "type": "object"
       },
       "UserRegistrationRequest": {
@@ -5362,6 +5882,555 @@
         ]
       }
     },
+    "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/analyze-as-new": {
+      "post": {
+        "operationId": "analyze_component_as_new_api_meals_analysis_sessions__analysis_session_id__components__component_id__analyze_as_new_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_session_id",
+            "required": true,
+            "schema": {
+              "title": "Analysis Session Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "component_id",
+            "required": true,
+            "schema": {
+              "title": "Component Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "calculated": "#/components/schemas/CalculatedMealAnalysis",
+                      "food_not_recognized": "#/components/schemas/FoodNotRecognizedMealAnalysis",
+                      "nutrition_reference_not_found": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis",
+                      "requires_food_selection": "#/components/schemas/RequiresFoodSelectionMealAnalysis",
+                      "requires_ingredient_verification": "#/components/schemas/RequiresIngredientVerificationMealAnalysis",
+                      "requires_recipe_confirmation": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CalculatedMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FoodNotRecognizedMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresFoodSelectionMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresIngredientVerificationMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
+                    }
+                  ],
+                  "title": "Response Analyze Component As New Api Meals Analysis Sessions  Analysis Session Id  Components  Component Id  Analyze As New Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Analyze Component As New",
+        "tags": [
+          "meals"
+        ]
+      }
+    },
+    "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/ingredients": {
+      "put": {
+        "operationId": "verify_meal_analysis_ingredients_api_meals_analysis_sessions__analysis_session_id__components__component_id__ingredients_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_session_id",
+            "required": true,
+            "schema": {
+              "title": "Analysis Session Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "component_id",
+            "required": true,
+            "schema": {
+              "title": "Component Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngredientVerificationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "calculated": "#/components/schemas/CalculatedMealAnalysis",
+                      "food_not_recognized": "#/components/schemas/FoodNotRecognizedMealAnalysis",
+                      "nutrition_reference_not_found": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis",
+                      "requires_food_selection": "#/components/schemas/RequiresFoodSelectionMealAnalysis",
+                      "requires_ingredient_verification": "#/components/schemas/RequiresIngredientVerificationMealAnalysis",
+                      "requires_recipe_confirmation": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CalculatedMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FoodNotRecognizedMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresFoodSelectionMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresIngredientVerificationMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
+                    }
+                  ],
+                  "title": "Response Verify Meal Analysis Ingredients Api Meals Analysis Sessions  Analysis Session Id  Components  Component Id  Ingredients Put"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Verify Meal Analysis Ingredients",
+        "tags": [
+          "meals"
+        ]
+      }
+    },
+    "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/ingredients/selections": {
+      "post": {
+        "operationId": "select_ingredient_reference_api_meals_analysis_sessions__analysis_session_id__components__component_id__ingredients_selections_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_session_id",
+            "required": true,
+            "schema": {
+              "title": "Analysis Session Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "component_id",
+            "required": true,
+            "schema": {
+              "title": "Component Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngredientCandidateSelectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "calculated": "#/components/schemas/CalculatedMealAnalysis",
+                      "food_not_recognized": "#/components/schemas/FoodNotRecognizedMealAnalysis",
+                      "nutrition_reference_not_found": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis",
+                      "requires_food_selection": "#/components/schemas/RequiresFoodSelectionMealAnalysis",
+                      "requires_ingredient_verification": "#/components/schemas/RequiresIngredientVerificationMealAnalysis",
+                      "requires_recipe_confirmation": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CalculatedMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FoodNotRecognizedMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresFoodSelectionMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresIngredientVerificationMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
+                    }
+                  ],
+                  "title": "Response Select Ingredient Reference Api Meals Analysis Sessions  Analysis Session Id  Components  Component Id  Ingredients Selections Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Select Ingredient Reference",
+        "tags": [
+          "meals"
+        ]
+      }
+    },
+    "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/review-recipe": {
+      "post": {
+        "operationId": "review_personal_recipe_api_meals_analysis_sessions__analysis_session_id__components__component_id__review_recipe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_session_id",
+            "required": true,
+            "schema": {
+              "title": "Analysis Session Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "component_id",
+            "required": true,
+            "schema": {
+              "title": "Component Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonalRecipeSelectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "calculated": "#/components/schemas/CalculatedMealAnalysis",
+                      "food_not_recognized": "#/components/schemas/FoodNotRecognizedMealAnalysis",
+                      "nutrition_reference_not_found": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis",
+                      "requires_food_selection": "#/components/schemas/RequiresFoodSelectionMealAnalysis",
+                      "requires_ingredient_verification": "#/components/schemas/RequiresIngredientVerificationMealAnalysis",
+                      "requires_recipe_confirmation": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CalculatedMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FoodNotRecognizedMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresFoodSelectionMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresIngredientVerificationMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
+                    }
+                  ],
+                  "title": "Response Review Personal Recipe Api Meals Analysis Sessions  Analysis Session Id  Components  Component Id  Review Recipe Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Review Personal Recipe",
+        "tags": [
+          "meals"
+        ]
+      }
+    },
+    "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/save-recipe": {
+      "post": {
+        "description": "Save a verified composite before its analysis session is consumed by meal logging.",
+        "operationId": "save_analysis_component_as_recipe_api_meals_analysis_sessions__analysis_session_id__components__component_id__save_recipe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_session_id",
+            "required": true,
+            "schema": {
+              "title": "Analysis Session Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "component_id",
+            "required": true,
+            "schema": {
+              "title": "Component Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/SaveUserRecipeRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRecipeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Save Analysis Component As Recipe",
+        "tags": [
+          "meals"
+        ]
+      }
+    },
+    "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/use-recipe": {
+      "post": {
+        "operationId": "use_personal_recipe_api_meals_analysis_sessions__analysis_session_id__components__component_id__use_recipe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_session_id",
+            "required": true,
+            "schema": {
+              "title": "Analysis Session Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "component_id",
+            "required": true,
+            "schema": {
+              "title": "Component Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonalRecipeSelectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "calculated": "#/components/schemas/CalculatedMealAnalysis",
+                      "food_not_recognized": "#/components/schemas/FoodNotRecognizedMealAnalysis",
+                      "nutrition_reference_not_found": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis",
+                      "requires_food_selection": "#/components/schemas/RequiresFoodSelectionMealAnalysis",
+                      "requires_ingredient_verification": "#/components/schemas/RequiresIngredientVerificationMealAnalysis",
+                      "requires_recipe_confirmation": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
+                    },
+                    "propertyName": "status"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CalculatedMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FoodNotRecognizedMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresFoodSelectionMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresIngredientVerificationMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
+                    }
+                  ],
+                  "title": "Response Use Personal Recipe Api Meals Analysis Sessions  Analysis Session Id  Components  Component Id  Use Recipe Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Use Personal Recipe",
+        "tags": [
+          "meals"
+        ]
+      }
+    },
     "/api/meals/analysis-sessions/{analysis_session_id}/selections": {
       "post": {
         "operationId": "select_meal_analysis_component_api_meals_analysis_sessions__analysis_session_id__selections_post",
@@ -5396,7 +6465,9 @@
                       "calculated": "#/components/schemas/CalculatedMealAnalysis",
                       "food_not_recognized": "#/components/schemas/FoodNotRecognizedMealAnalysis",
                       "nutrition_reference_not_found": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis",
-                      "requires_food_selection": "#/components/schemas/RequiresFoodSelectionMealAnalysis"
+                      "requires_food_selection": "#/components/schemas/RequiresFoodSelectionMealAnalysis",
+                      "requires_ingredient_verification": "#/components/schemas/RequiresIngredientVerificationMealAnalysis",
+                      "requires_recipe_confirmation": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
                     },
                     "propertyName": "status"
                   },
@@ -5412,6 +6483,12 @@
                     },
                     {
                       "$ref": "#/components/schemas/RequiresFoodSelectionMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresIngredientVerificationMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
                     }
                   ],
                   "title": "Response Select Meal Analysis Component Api Meals Analysis Sessions  Analysis Session Id  Selections Post"
@@ -5465,7 +6542,9 @@
                       "calculated": "#/components/schemas/CalculatedMealAnalysis",
                       "food_not_recognized": "#/components/schemas/FoodNotRecognizedMealAnalysis",
                       "nutrition_reference_not_found": "#/components/schemas/NutritionReferenceNotFoundMealAnalysis",
-                      "requires_food_selection": "#/components/schemas/RequiresFoodSelectionMealAnalysis"
+                      "requires_food_selection": "#/components/schemas/RequiresFoodSelectionMealAnalysis",
+                      "requires_ingredient_verification": "#/components/schemas/RequiresIngredientVerificationMealAnalysis",
+                      "requires_recipe_confirmation": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
                     },
                     "propertyName": "status"
                   },
@@ -5481,6 +6560,12 @@
                     },
                     {
                       "$ref": "#/components/schemas/RequiresFoodSelectionMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresIngredientVerificationMealAnalysis"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequiresRecipeConfirmationMealAnalysis"
                     }
                   ],
                   "title": "Response Analyze Meal Api Meals Analyze Post"
@@ -6701,6 +7786,117 @@
           }
         ],
         "summary": "Replace My Profile Consent",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/me/recipes": {
+      "get": {
+        "operationId": "list_my_recipes_api_users_me_recipes_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRecipeListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List My Recipes",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/me/recipes/{recipe_id}": {
+      "delete": {
+        "operationId": "delete_my_recipe_api_users_me_recipes__recipe_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "title": "Recipe Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete My Recipe",
+        "tags": [
+          "users"
+        ]
+      },
+      "get": {
+        "operationId": "get_my_recipe_api_users_me_recipes__recipe_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recipe_id",
+            "required": true,
+            "schema": {
+              "title": "Recipe Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRecipeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get My Recipe",
         "tags": [
           "users"
         ]

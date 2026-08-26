@@ -11,7 +11,8 @@ from app.models.user import User
 from app.repositories.meal_analysis_session_repository import MealAnalysisSessionRepository
 from app.repositories.meal_repository import MealRepository
 from app.schemas.meal import MealAnalysisStatus
-from app.schemas.meal_analysis_session import ComponentResolutionStatus
+from app.schemas.meal import IngredientVerificationItemRequest
+from app.schemas.meal_analysis_session import ComponentResolutionStatus, IngredientResolutionStatus
 from app.services.composite_dish_estimator import (
     CompositeDishEstimate,
     CompositeDishEstimator,
@@ -146,20 +147,34 @@ def test_composite_fallback_resolves_pork_sinigang_without_changing_top_level_we
         session_service=MealAnalysisSessionService(MealAnalysisSessionRepository(database_session)),
     )
 
-    assert result is not None and result.status == MealAnalysisStatus.CALCULATED
+    assert result is not None and result.status == MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION
     assert recognition.calls == 1
     assert estimator.calls == ["pork sinigang"]
     sinigang, rice, fish_sauce = result.state.components
+    assert sinigang.resolution_status == ComponentResolutionStatus.REQUIRES_INGREDIENT_VERIFICATION
+    assert sinigang.composite_provenance_snapshot is None
+    assert sinigang.nutrition is None
+    assert len(sinigang.suggested_ingredients) == 3
+    verified = service.verify_ingredients(
+        user_id=user.id,
+        session_id=result.session_id,
+        component_id=str(sinigang.component_id),
+        ingredients=[IngredientVerificationItemRequest(ingredient_id=item.ingredient_id, name=item.name, included=True) for item in sinigang.suggested_ingredients],
+        session_service=MealAnalysisSessionService(MealAnalysisSessionRepository(database_session)),
+    )
+    assert verified.status == MealAnalysisStatus.CALCULATED
+    sinigang = verified.state.components[0]
     assert [item.estimated_weight_grams for item in result.state.components] == [Decimal("275.000"), Decimal("200.000"), Decimal("25.000")]
     assert rice.nutrition_source == "local_database" and fish_sauce.nutrition_source == "local_database"
     assert sinigang.nutrition_source == "ai_recipe_estimate"
     assert sinigang.composite_provenance_snapshot is not None
+    assert sinigang.composite_provenance_snapshot.composition_source == "user_confirmed"
     assert sum((item.estimated_weight_grams for item in sinigang.composite_provenance_snapshot.ingredients), Decimal("0")) == Decimal("275.000")
     assert [item.source_reference_id for item in sinigang.composite_provenance_snapshot.ingredients] == ["food:3", "food:4", "food:5"]
-    assert result.nutrition is not None and result.nutrition.calories == Decimal("496.625")
+    assert verified.nutrition is not None and verified.nutrition.calories == Decimal("496.625")
     meal = MealService(
         NutritionService(repository), MealRepository(database_session)  # type: ignore[arg-type]
-    ).create_meal_from_analysis_session(result.session_id, user.id)
+    ).create_meal_from_analysis_session(verified.session_id, user.id)
     assert len(meal.items) == 3
     composite_item = next(item for item in meal.items if item.food_id is None)
     assert composite_item.food_name_snapshot == "pork sinigang"
@@ -224,7 +239,10 @@ def test_live_like_sinigang_rice_and_chili_fixture_only_needs_sauce_selection(da
     assert result is not None and result.status == MealAnalysisStatus.REQUIRES_FOOD_SELECTION
     sinigang, rice, sauce = result.state.components
     assert [item.estimated_weight_grams for item in result.state.components] == [Decimal("275.000"), Decimal("200.000"), Decimal("25.000")]
-    assert sinigang.nutrition_source == "ai_recipe_estimate"
+    assert sinigang.resolution_status == ComponentResolutionStatus.REQUIRES_INGREDIENT_VERIFICATION
+    assert sinigang.nutrition_source is None
+    assert sinigang.composite_provenance_snapshot is None
+    assert len(sinigang.suggested_ingredients) == 3
     assert rice.nutrition_source == "USDA"
     assert sauce.resolution_status == ComponentResolutionStatus.REQUIRES_FOOD_SELECTION
     assert [candidate["name"] for candidate in sauce.candidates] == ["Tomato chili sauce", "Sauce, tomato chili sauce, bottled, with salt"]
@@ -243,10 +261,12 @@ def test_ambiguous_or_missing_internal_ingredient_fails_without_nested_selection
         usda_food_reference_service=usda,  # type: ignore[arg-type]
         composite_dish_estimator=estimator,
     ).analyze_composed(user_id=user.id, image_bytes=b"x", content_type="image/jpeg", measured_weight_grams=Decimal("275.000"), session_service=MealAnalysisSessionService(MealAnalysisSessionRepository(database_session)))
-    assert result is not None and result.status == MealAnalysisStatus.NUTRITION_REFERENCE_NOT_FOUND
-    assert result.state.components[0].resolution_status == ComponentResolutionStatus.NUTRITION_REFERENCE_NOT_FOUND
+    assert result is not None and result.status == MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION
+    assert result.state.components[0].resolution_status == ComponentResolutionStatus.REQUIRES_INGREDIENT_VERIFICATION
+    assert result.state.components[0].nutrition is None
+    assert len(result.state.components[0].suggested_ingredients) == 3
     assert estimator.calls == ["pork sinigang"]
-    assert usda.calls == ["pork sinigang", "broth"]
+    assert usda.calls == ["pork sinigang"]
 
 
 def test_composite_fallback_ineligible_component_does_not_call_estimator(database_session, caplog) -> None:
@@ -284,9 +304,10 @@ def test_composite_fallback_logs_not_found_internal_reason(database_session, cap
         session_service=MealAnalysisSessionService(MealAnalysisSessionRepository(database_session)),
     )
 
-    assert result is not None and result.status == MealAnalysisStatus.NUTRITION_REFERENCE_NOT_FOUND
+    assert result is not None and result.status == MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION
+    assert result.state.components[0].nutrition is None
+    assert len(result.state.components[0].suggested_ingredients) == 3
     assert "estimator_outcome=success ingredient_count=3" in caplog.text
-    assert "internal_resolved_count=2 internal_ambiguous_count=0 internal_not_found_count=1" in caplog.text
 
 
 def test_composite_fallback_logs_ambiguous_internal_reason(database_session, caplog) -> None:
@@ -304,8 +325,9 @@ def test_composite_fallback_logs_ambiguous_internal_reason(database_session, cap
         session_service=MealAnalysisSessionService(MealAnalysisSessionRepository(database_session)),
     )
 
-    assert result is not None and result.status == MealAnalysisStatus.NUTRITION_REFERENCE_NOT_FOUND
-    assert "internal_resolved_count=2 internal_ambiguous_count=1 internal_not_found_count=0" in caplog.text
+    assert result is not None and result.status == MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION
+    assert result.state.components[0].nutrition is None
+    assert len(result.state.components[0].suggested_ingredients) == 3
 
 
 def test_composite_fallback_preserves_estimator_errors(database_session, caplog) -> None:
@@ -327,6 +349,51 @@ def test_composite_fallback_preserves_estimator_errors(database_session, caplog)
 
     assert raised.value.status_code == 504
     assert "estimator_outcome=provider_error" in caplog.text
+
+
+def test_ingredient_candidate_id_selects_exact_duplicate_name_reference_and_reevaluates(database_session) -> None:
+    user = User(email="candidate-id@example.com", password_hash="x", first_name="Candidate", last_name="Test")
+    database_session.add(user); database_session.flush()
+    selected = _food("Pork, cooked", identifier=222, calories="300")
+    repository = _Foods([selected, _food("broth", identifier=2), _food("mixed vegetables", identifier=3)])
+    repository._foods.pop(normalize_food_name("Pork, cooked"))
+
+    class DuplicateNameReferences:
+        def __init__(self) -> None: self.loaded: list[int] = []
+        def resolve(self, name: str) -> UsdaResolution:
+            if name == "pork sinigang": return UsdaResolution()
+            if name == "cooked pork": return UsdaResolution(candidates=(UsdaSearchFood(111, "Pork, cooked", "USDA"), UsdaSearchFood(222, "Pork, cooked", "USDA")))
+            return UsdaResolution()
+        def load_by_fdc_id(self, fdc_id: int):
+            self.loaded.append(fdc_id)
+            return selected if fdc_id == 222 else None
+
+    recognition = _Recognition((RecognizedMealComponent("pork sinigang", Decimal("1")),))
+    estimator = _Estimator(_estimate())
+    references = DuplicateNameReferences()
+    service = MealAnalysisService(recognition, NutritionService(repository), usda_food_reference_service=references, composite_dish_estimator=estimator)  # type: ignore[arg-type]
+    sessions = MealAnalysisSessionService(MealAnalysisSessionRepository(database_session))
+    analysis = service.analyze_composed(user_id=user.id, image_bytes=b"x", content_type="image/jpeg", measured_weight_grams=Decimal("275.000"), session_service=sessions)
+    assert analysis is not None and analysis.status == MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION
+    component = analysis.state.components[0]
+    verified = service.verify_ingredients(user_id=user.id, session_id=analysis.session_id, component_id=str(component.component_id), ingredients=[IngredientVerificationItemRequest(ingredient_id=item.ingredient_id, name=item.name, included=True) for item in component.suggested_ingredients], session_service=sessions)
+    component = verified.state.components[0]
+    pork = next(item for item in component.suggested_ingredients if item.name == "cooked pork")
+    assert pork.resolution_status == IngredientResolutionStatus.REQUIRES_FOOD_SELECTION
+    assert [item["source_reference_id"] for item in pork.candidates] == ["111", "222"]
+    selected_candidate = pork.candidates[1]["candidate_id"]
+    with pytest.raises(ValueError):
+        service.apply_ingredient_selection(user_id=user.id, session_id=analysis.session_id, component_id=str(component.component_id), ingredient_id=str(component.suggested_ingredients[1].ingredient_id), candidate_id=selected_candidate, session_service=sessions)
+    final = service.apply_ingredient_selection(user_id=user.id, session_id=analysis.session_id, component_id=str(component.component_id), ingredient_id=str(pork.ingredient_id), candidate_id=selected_candidate, session_service=sessions)
+    composite = final.state.components[0]
+    assert references.loaded == [222]
+    assert final.status == MealAnalysisStatus.CALCULATED
+    assert composite.resolution_status == ComponentResolutionStatus.RESOLVED
+    assert composite.composite_provenance_snapshot is not None
+    assert composite.composite_provenance_snapshot.composition_source == "user_confirmed"
+    assert composite.composite_provenance_snapshot.ingredients[0].source_reference_id == "food:222"
+    assert sum(item.estimated_weight_grams for item in composite.composite_provenance_snapshot.ingredients) == Decimal("275.000")
+    assert recognition.calls == 1 and estimator.calls == ["pork sinigang"]
 
 
 @dataclass
