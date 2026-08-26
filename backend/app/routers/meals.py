@@ -6,7 +6,12 @@ from sqlalchemy.orm import Session
 
 from app.core.constants import MAXIMUM_PROTOTYPE_WEIGHT_GRAMS
 from app.database.database import get_db
-from app.dependencies.auth import get_current_user, get_optional_current_user
+from app.dependencies.auth import get_current_user
+from app.dependencies.meal_operation_auth import (
+    MealOperationPrincipal,
+    get_optional_meal_operation_principal,
+    require_meal_operation_principal,
+)
 from app.models.user import User
 from app.repositories.food_repository import FoodRepository
 from app.repositories.meal_repository import MealRepository
@@ -160,16 +165,16 @@ def use_personal_recipe(
     analysis_session_id: int,
     component_id: str,
     selection: PersonalRecipeSelectionRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
+    principal: Annotated[MealOperationPrincipal, Depends(require_meal_operation_principal)],
     meal_analysis_service: Annotated[MealAnalysisService, Depends(get_meal_analysis_service)],
     session_service: Annotated[MealAnalysisSessionService, Depends(get_meal_analysis_session_service)],
 ) -> MealAnalysisResponse:
     try:
         result = meal_analysis_service.use_personal_recipe(
-            user_id=current_user.id, session_id=analysis_session_id, component_id=component_id,
+            user_id=principal.user_id, session_id=analysis_session_id, component_id=component_id,
             recipe_id=selection.recipe_id, session_service=session_service,
         )
-        return _recipe_reuse_response(result, session_service, analysis_session_id, current_user.id)
+        return _recipe_reuse_response(result, session_service, analysis_session_id, principal.user_id)
     except (MealAnalysisSessionNotFoundError, MealAnalysisSessionExpiredError, MealAnalysisSessionConsumedError, PersonalRecipeNotFoundError, PersonalRecipeReuseError, ValueError) as error:
         _raise_recipe_reuse_http_error(error)
 
@@ -179,16 +184,16 @@ def review_personal_recipe(
     analysis_session_id: int,
     component_id: str,
     selection: PersonalRecipeSelectionRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
+    principal: Annotated[MealOperationPrincipal, Depends(require_meal_operation_principal)],
     meal_analysis_service: Annotated[MealAnalysisService, Depends(get_meal_analysis_service)],
     session_service: Annotated[MealAnalysisSessionService, Depends(get_meal_analysis_session_service)],
 ) -> MealAnalysisResponse:
     try:
         result = meal_analysis_service.review_personal_recipe(
-            user_id=current_user.id, session_id=analysis_session_id, component_id=component_id,
+            user_id=principal.user_id, session_id=analysis_session_id, component_id=component_id,
             recipe_id=selection.recipe_id, session_service=session_service,
         )
-        return _recipe_reuse_response(result, session_service, analysis_session_id, current_user.id)
+        return _recipe_reuse_response(result, session_service, analysis_session_id, principal.user_id)
     except (MealAnalysisSessionNotFoundError, MealAnalysisSessionExpiredError, MealAnalysisSessionConsumedError, PersonalRecipeNotFoundError, PersonalRecipeReuseError, ValueError) as error:
         _raise_recipe_reuse_http_error(error)
 
@@ -197,16 +202,16 @@ def review_personal_recipe(
 def analyze_component_as_new(
     analysis_session_id: int,
     component_id: str,
-    current_user: Annotated[User, Depends(get_current_user)],
+    principal: Annotated[MealOperationPrincipal, Depends(require_meal_operation_principal)],
     meal_analysis_service: Annotated[MealAnalysisService, Depends(get_meal_analysis_service)],
     session_service: Annotated[MealAnalysisSessionService, Depends(get_meal_analysis_session_service)],
 ) -> MealAnalysisResponse:
     try:
         result = meal_analysis_service.analyze_component_as_new(
-            user_id=current_user.id, session_id=analysis_session_id, component_id=component_id,
+            user_id=principal.user_id, session_id=analysis_session_id, component_id=component_id,
             session_service=session_service,
         )
-        return _recipe_reuse_response(result, session_service, analysis_session_id, current_user.id)
+        return _recipe_reuse_response(result, session_service, analysis_session_id, principal.user_id)
     except CompositeDishEstimatorError as error:
         detail = "Composite dish estimation service is temporarily unavailable. Please try again later."
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE if error.status_code == status.HTTP_429_TOO_MANY_REQUESTS else error.status_code, detail=detail if error.status_code == status.HTTP_429_TOO_MANY_REQUESTS else error.detail) from None
@@ -292,22 +297,22 @@ async def analyze_meal(
     file: UploadFile = File(description="JPEG, PNG, or WEBP meal image."),
     weight_grams: Decimal = Form(ge=0, le=MAXIMUM_PROTOTYPE_WEIGHT_GRAMS, allow_inf_nan=False),
     meal_analysis_service: MealAnalysisService = Depends(get_meal_analysis_service),
-    current_user: Annotated[User | None, Depends(get_optional_current_user)] = None,
+    principal: Annotated[MealOperationPrincipal | None, Depends(get_optional_meal_operation_principal)] = None,
     session_service: Annotated[MealAnalysisSessionService, Depends(get_meal_analysis_session_service)] = None,
 ) -> MealAnalysisResponse:
     image_bytes, content_type = await read_validated_image(file)
     try:
-        if current_user is None:
+        if principal is None:
             return meal_analysis_service.analyze(
                 image_bytes=image_bytes, content_type=content_type, weight_grams=weight_grams,
             )
         composed = meal_analysis_service.analyze_composed(
-            user_id=current_user.id,
+            user_id=principal.user_id,
             image_bytes=image_bytes, content_type=content_type, measured_weight_grams=weight_grams,
             session_service=session_service,
         )
         if composed is not None:
-            persisted = session_service.get_session_for_user(composed.session_id, current_user.id)
+            persisted = session_service.get_session_for_user(composed.session_id, principal.user_id)
             return composed_analysis_response(composed, persisted.expires_at)
         return meal_analysis_service.analyze(
             image_bytes=image_bytes,
@@ -332,15 +337,15 @@ async def analyze_meal(
 def select_meal_analysis_component(
     analysis_session_id: int,
     selection: MealAnalysisSelectionRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
+    principal: Annotated[MealOperationPrincipal, Depends(require_meal_operation_principal)],
     meal_analysis_service: Annotated[MealAnalysisService, Depends(get_meal_analysis_service)],
     session_service: Annotated[MealAnalysisSessionService, Depends(get_meal_analysis_session_service)],
 ) -> MealAnalysisResponse:
     try:
-        result = meal_analysis_service.apply_selection(user_id=current_user.id, session_id=analysis_session_id,
+        result = meal_analysis_service.apply_selection(user_id=principal.user_id, session_id=analysis_session_id,
             component_id=str(selection.component_id), candidate_id=str(selection.candidate_id) if selection.candidate_id else None,
             candidate_name=selection.candidate_name, session_service=session_service)
-        persisted = session_service.get_session_for_user(analysis_session_id, current_user.id)
+        persisted = session_service.get_session_for_user(analysis_session_id, principal.user_id)
         return composed_analysis_response(result, persisted.expires_at)
     except MealAnalysisSessionNotFoundError:
         raise HTTPException(status_code=404, detail="Meal analysis session was not found.") from None
@@ -357,13 +362,13 @@ def verify_meal_analysis_ingredients(
     analysis_session_id: int,
     component_id: str,
     verification: IngredientVerificationRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
+    principal: Annotated[MealOperationPrincipal, Depends(require_meal_operation_principal)],
     meal_analysis_service: Annotated[MealAnalysisService, Depends(get_meal_analysis_service)],
     session_service: Annotated[MealAnalysisSessionService, Depends(get_meal_analysis_session_service)],
 ) -> MealAnalysisResponse:
     try:
-        result = meal_analysis_service.verify_ingredients(user_id=current_user.id, session_id=analysis_session_id, component_id=component_id, ingredients=verification.ingredients, session_service=session_service)
-        persisted = session_service.get_session_for_user(analysis_session_id, current_user.id)
+        result = meal_analysis_service.verify_ingredients(user_id=principal.user_id, session_id=analysis_session_id, component_id=component_id, ingredients=verification.ingredients, session_service=session_service)
+        persisted = session_service.get_session_for_user(analysis_session_id, principal.user_id)
         return composed_analysis_response(result, persisted.expires_at)
     except MealAnalysisSessionNotFoundError:
         raise HTTPException(status_code=404, detail="Meal analysis session was not found.") from None
@@ -378,13 +383,13 @@ def verify_meal_analysis_ingredients(
 @router.post("/analysis-sessions/{analysis_session_id}/components/{component_id}/ingredients/selections", response_model=MealAnalysisResponse)
 def select_ingredient_reference(
     analysis_session_id: int, component_id: str, selection: IngredientCandidateSelectionRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
+    principal: Annotated[MealOperationPrincipal, Depends(require_meal_operation_principal)],
     meal_analysis_service: Annotated[MealAnalysisService, Depends(get_meal_analysis_service)],
     session_service: Annotated[MealAnalysisSessionService, Depends(get_meal_analysis_session_service)],
 ) -> MealAnalysisResponse:
     try:
-        result = meal_analysis_service.apply_ingredient_selection(user_id=current_user.id, session_id=analysis_session_id, component_id=component_id, ingredient_id=str(selection.ingredient_id), candidate_id=str(selection.candidate_id), session_service=session_service)
-        persisted = session_service.get_session_for_user(analysis_session_id, current_user.id)
+        result = meal_analysis_service.apply_ingredient_selection(user_id=principal.user_id, session_id=analysis_session_id, component_id=component_id, ingredient_id=str(selection.ingredient_id), candidate_id=str(selection.candidate_id), session_service=session_service)
+        persisted = session_service.get_session_for_user(analysis_session_id, principal.user_id)
         return composed_analysis_response(result, persisted.expires_at)
     except MealAnalysisSessionNotFoundError:
         raise HTTPException(status_code=404, detail="Meal analysis session was not found.") from None
@@ -475,11 +480,13 @@ def meal_list_item_from_model(meal) -> MealListItem:
 
 
 @router.post("", response_model=MealResponse, status_code=status.HTTP_201_CREATED)
-def create_meal(meal_request: MealCreateRequest, current_user: Annotated[User, Depends(get_current_user)], meal_service: Annotated[MealService, Depends(get_meal_service)]) -> MealResponse:
+def create_meal(meal_request: MealCreateRequest, principal: Annotated[MealOperationPrincipal, Depends(require_meal_operation_principal)], meal_service: Annotated[MealService, Depends(get_meal_service)]) -> MealResponse:
     try:
         if meal_request.analysis_session_id is not None:
-            return meal_response_from_model(meal_service.create_meal_from_analysis_session(meal_request.analysis_session_id, current_user.id))
-        return meal_response_from_model(meal_service.create_meal(meal_request.items or [], current_user.id))
+            return meal_response_from_model(meal_service.create_meal_from_analysis_session(meal_request.analysis_session_id, principal.user_id))
+        if principal.authentication_mode == "device":
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Devices may save only completed meal analysis sessions.")
+        return meal_response_from_model(meal_service.create_meal(meal_request.items or [], principal.user_id))
     except MealFoodNotFoundError as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from None
     except MealAnalysisSessionNotFoundError:

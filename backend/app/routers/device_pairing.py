@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.database.database import get_db
 from app.repositories.device_pairing_repository import DevicePairingRepository
-from app.schemas.device_pairing import PairingStartRequest, PairingStartResponse, PairingStatusRequest, PairingStatusResponse, PairedDeviceResponse
+from app.schemas.device_pairing import DeviceIdentityResponse, PairingStartRequest, PairingStartResponse, PairingStatusRequest, PairingStatusResponse, PairedDeviceResponse
 from app.services.device_pairing_service import DevicePairingService, PairingError
 
 pairing_router=APIRouter(prefix="/api/device-pairing", tags=["device pairing"])
@@ -32,5 +32,6 @@ def get_current_device(x_device_token: Annotated[str | None, Header()] = None, s
     if device is None: raise HTTPException(status_code=401,detail="Device authentication failed.")
     return device
 
-@device_auth_router.get("/me", response_model=PairedDeviceResponse)
-def get_device_me(device=Depends(get_current_device)): return device_response(device)
+@device_auth_router.get("/me", response_model=DeviceIdentityResponse)
+def get_device_me(device=Depends(get_current_device)):
+    return DeviceIdentityResponse(**device_response(device).model_dump(), owner_first_name=device.user.first_name)

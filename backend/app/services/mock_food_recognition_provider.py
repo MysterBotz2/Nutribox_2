@@ -3,6 +3,7 @@ from app.services.food_recognition_provider import (
     FoodRecognitionResult,
     RecognizedMealComponent,
 )
+from decimal import Decimal
 
 
 class MockFoodRecognitionProvider(FoodRecognitionProvider):
@@ -14,7 +15,7 @@ class MockFoodRecognitionProvider(FoodRecognitionProvider):
         components: tuple[RecognizedMealComponent, ...] | None = None,
     ) -> None:
         self._components = components or tuple(
-            RecognizedMealComponent(name=name, estimated_proportion=1)
+            RecognizedMealComponent(name=name, estimated_proportion=Decimal("1"))
             for name in food_names
         )
 

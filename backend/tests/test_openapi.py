@@ -161,11 +161,32 @@ def test_openapi_exposes_owner_only_personal_recipe_contract() -> None:
 def test_openapi_exposes_personal_recipe_reuse_session_contract() -> None:
     schema = app.openapi()
     paths = schema["paths"]
-    bearer_security = [{"OAuth2PasswordBearer": []}]
+    bearer_or_device_security = [{"OAuth2PasswordBearer": []}, {"APIKeyHeader": []}]
     base = "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}"
 
     for suffix in ("use-recipe", "review-recipe", "analyze-as-new"):
-        assert paths[f"{base}/{suffix}"]["post"]["security"] == bearer_security
+        assert paths[f"{base}/{suffix}"]["post"]["security"] == bearer_or_device_security
     assert "RequiresRecipeConfirmationMealAnalysis" in schema["components"]["schemas"]
     component = schema["components"]["schemas"]["MealAnalysisComponentResponse"]["properties"]
     assert "recipe_matches" in component
+
+
+def test_openapi_exposes_device_authorized_meal_operations_and_safe_device_identity() -> None:
+    schema = app.openapi()
+    paths = schema["paths"]
+    schemas = schema["components"]["schemas"]
+    bearer_or_device_security = [{"OAuth2PasswordBearer": []}, {"APIKeyHeader": []}]
+
+    assert schemas["DeviceIdentityResponse"]["properties"]["owner_first_name"]["maxLength"] == 80
+    assert {"email", "last_name", "token_hash", "pairing_code", "device_token"}.isdisjoint(
+        schemas["DeviceIdentityResponse"]["properties"]
+    )
+    assert paths["/api/device/me"]["get"]["responses"]["200"]["content"]["application/json"]["schema"]["$ref"].endswith("/DeviceIdentityResponse")
+    for path, method in {
+        "/api/meals/analyze": "post",
+        "/api/meals": "post",
+        "/api/meals/analysis-sessions/{analysis_session_id}/selections": "post",
+        "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/ingredients": "put",
+        "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/ingredients/selections": "post",
+    }.items():
+        assert paths[path][method]["security"] == bearer_or_device_security

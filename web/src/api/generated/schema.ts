@@ -1104,6 +1104,24 @@ export interface components {
             meal_count: number;
             totals: components["schemas"]["NutrientTotals"];
         };
+        /** DeviceIdentityResponse */
+        DeviceIdentityResponse: {
+            /** Device Type */
+            device_type: string;
+            /** Id */
+            id: number;
+            /** Last Seen At */
+            last_seen_at?: string | null;
+            /** Name */
+            name: string;
+            /** Owner First Name */
+            owner_first_name: string;
+            /**
+             * Paired At
+             * Format: date-time
+             */
+            paired_at: string;
+        };
         /**
          * DeviceReadingResponse
          * @description A normalized sensor reading returned by a device service.
@@ -2799,7 +2817,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PairedDeviceResponse"];
+                    "application/json": components["schemas"]["DeviceIdentityResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2901,7 +2919,9 @@ export interface operations {
     create_meal_api_meals_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2934,7 +2954,9 @@ export interface operations {
     analyze_component_as_new_api_meals_analysis_sessions__analysis_session_id__components__component_id__analyze_as_new_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 analysis_session_id: number;
                 component_id: string;
@@ -2966,7 +2988,9 @@ export interface operations {
     verify_meal_analysis_ingredients_api_meals_analysis_sessions__analysis_session_id__components__component_id__ingredients_put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 analysis_session_id: number;
                 component_id: string;
@@ -3002,7 +3026,9 @@ export interface operations {
     select_ingredient_reference_api_meals_analysis_sessions__analysis_session_id__components__component_id__ingredients_selections_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 analysis_session_id: number;
                 component_id: string;
@@ -3038,7 +3064,9 @@ export interface operations {
     review_personal_recipe_api_meals_analysis_sessions__analysis_session_id__components__component_id__review_recipe_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 analysis_session_id: number;
                 component_id: string;
@@ -3110,7 +3138,9 @@ export interface operations {
     use_personal_recipe_api_meals_analysis_sessions__analysis_session_id__components__component_id__use_recipe_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 analysis_session_id: number;
                 component_id: string;
@@ -3146,7 +3176,9 @@ export interface operations {
     select_meal_analysis_component_api_meals_analysis_sessions__analysis_session_id__selections_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 analysis_session_id: number;
             };
@@ -3181,7 +3213,9 @@ export interface operations {
     analyze_meal_api_meals_analyze_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };

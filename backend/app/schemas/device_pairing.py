@@ -16,5 +16,7 @@ class PairDeviceRequest(BaseModel):
     pairing_code: str = Field(pattern=r"^\d{6}$")
 class PairedDeviceResponse(BaseModel):
     id: int; name: str; device_type: str; paired_at: datetime; last_seen_at: datetime | None = None
+class DeviceIdentityResponse(PairedDeviceResponse):
+    owner_first_name: str = Field(min_length=1, max_length=80)
 class PairedDeviceListResponse(BaseModel):
     devices: list[PairedDeviceResponse]
