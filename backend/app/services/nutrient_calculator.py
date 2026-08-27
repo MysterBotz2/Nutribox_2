@@ -6,6 +6,18 @@ from app.schemas.nutrition import NutritionPer100g, PortionNutrition
 
 REFERENCE_WEIGHT_GRAMS = Decimal("100")
 PORTION_NUTRIENT_QUANTUM = Decimal("0.001")
+KILOJOULES_PER_KILOCALORIE = Decimal("4.184")
+
+
+def derive_energy_kj(calories: Decimal | None) -> Decimal | None:
+    """Derive kJ from calories at the presentation boundary."""
+    return None if calories is None else calories_to_energy_kj(calories)
+
+
+def calories_to_energy_kj(calories: Decimal) -> Decimal:
+    return (calories * KILOJOULES_PER_KILOCALORIE).quantize(
+        PORTION_NUTRIENT_QUANTUM, rounding=ROUND_HALF_UP
+    )
 
 
 @dataclass(frozen=True)
@@ -33,6 +45,9 @@ class ExtendedNutritionPer100g:
     vitamin_c_mg: Decimal | None
     vitamin_d_mcg: Decimal | None
     folate_mcg_dfe: Decimal | None
+    phosphorus_mg: Decimal | None = None
+    vitamin_b6_mg: Decimal | None = None
+    niacin_mg: Decimal | None = None
 
     @classmethod
     def from_legacy(cls, nutrition: NutritionPer100g) -> "ExtendedNutritionPer100g":
@@ -59,6 +74,9 @@ class ExtendedNutritionPer100g:
             vitamin_c_mg=None,
             vitamin_d_mcg=None,
             folate_mcg_dfe=None,
+            phosphorus_mg=None,
+            vitamin_b6_mg=None,
+            niacin_mg=None,
         )
 
 
@@ -87,6 +105,10 @@ class ExtendedPortionNutrition:
     vitamin_c_mg: Decimal | None
     vitamin_d_mcg: Decimal | None
     folate_mcg_dfe: Decimal | None
+    energy_kj: Decimal | None = None
+    phosphorus_mg: Decimal | None = None
+    vitamin_b6_mg: Decimal | None = None
+    niacin_mg: Decimal | None = None
 
     def to_legacy_portion_nutrition(self) -> PortionNutrition:
         """Project the stable public five-nutrient response without changing its contract."""
@@ -140,6 +162,9 @@ class NutrientCalculator:
             zinc_mg=self._scale_optional(nutrition_per_100g.zinc_mg, multiplier),
             iron_mg=self._scale_optional(nutrition_per_100g.iron_mg, multiplier),
             magnesium_mg=self._scale_optional(nutrition_per_100g.magnesium_mg, multiplier),
+            phosphorus_mg=self._scale_optional(nutrition_per_100g.phosphorus_mg, multiplier),
+            vitamin_b6_mg=self._scale_optional(nutrition_per_100g.vitamin_b6_mg, multiplier),
+            niacin_mg=self._scale_optional(nutrition_per_100g.niacin_mg, multiplier),
             vitamin_a_mcg_rae=self._scale_optional(
                 nutrition_per_100g.vitamin_a_mcg_rae, multiplier
             ),
@@ -151,6 +176,7 @@ class NutrientCalculator:
             folate_mcg_dfe=self._scale_optional(
                 nutrition_per_100g.folate_mcg_dfe, multiplier
             ),
+            energy_kj=derive_energy_kj(self._round(nutrition_per_100g.calories * multiplier)),
         )
 
     @staticmethod

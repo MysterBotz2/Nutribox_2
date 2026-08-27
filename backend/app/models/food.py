@@ -72,6 +72,9 @@ class Food(Base):
         CheckConstraint("zinc_mg_per_100g IS NULL OR zinc_mg_per_100g >= 0", name="ck_foods_zinc_mg_nonnegative"),
         CheckConstraint("iron_mg_per_100g IS NULL OR iron_mg_per_100g >= 0", name="ck_foods_iron_mg_nonnegative"),
         CheckConstraint("magnesium_mg_per_100g IS NULL OR magnesium_mg_per_100g >= 0", name="ck_foods_magnesium_mg_nonnegative"),
+        CheckConstraint("phosphorus_mg_per_100g IS NULL OR phosphorus_mg_per_100g >= 0", name="ck_foods_phosphorus_mg_nonnegative"),
+        CheckConstraint("vitamin_b6_mg_per_100g IS NULL OR vitamin_b6_mg_per_100g >= 0", name="ck_foods_vitamin_b6_mg_nonnegative"),
+        CheckConstraint("niacin_mg_per_100g IS NULL OR niacin_mg_per_100g >= 0", name="ck_foods_niacin_mg_nonnegative"),
         CheckConstraint("vitamin_a_mcg_rae_per_100g IS NULL OR vitamin_a_mcg_rae_per_100g >= 0", name="ck_foods_vitamin_a_mcg_rae_nonnegative"),
         CheckConstraint("vitamin_b12_mcg_per_100g IS NULL OR vitamin_b12_mcg_per_100g >= 0", name="ck_foods_vitamin_b12_mcg_nonnegative"),
         CheckConstraint("vitamin_c_mg_per_100g IS NULL OR vitamin_c_mg_per_100g >= 0", name="ck_foods_vitamin_c_mg_nonnegative"),
@@ -105,6 +108,9 @@ class Food(Base):
     zinc_mg_per_100g: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
     iron_mg_per_100g: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
     magnesium_mg_per_100g: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
+    phosphorus_mg_per_100g: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
+    vitamin_b6_mg_per_100g: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
+    niacin_mg_per_100g: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
     vitamin_a_mcg_rae_per_100g: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
     vitamin_b12_mcg_per_100g: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
     vitamin_c_mg_per_100g: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)

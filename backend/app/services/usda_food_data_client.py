@@ -42,6 +42,8 @@ class UsdaFoodDataClient:
         1253: ("cholesterol_mg", "mg"), 1087: ("calcium_mg", "mg"),
         1092: ("potassium_mg", "mg"), 1095: ("zinc_mg", "mg"),
         1089: ("iron_mg", "mg"), 1090: ("magnesium_mg", "mg"),
+        1091: ("phosphorus_mg", "mg"), 1167: ("niacin_mg", "mg"),
+        1175: ("vitamin_b6_mg", "mg"),
         1162: ("vitamin_c_mg", "mg"), 1114: ("vitamin_d_mcg", "µg"),
         1178: ("vitamin_b12_mcg", "µg"), 1177: ("folate_mcg_dfe", "µg"),
     }
@@ -102,11 +104,14 @@ class UsdaFoodDataClient:
             name, expected_unit = self._NUTRIENTS[nutrient_id]
             unit = nutrient.get("unitName") or row.get("unitName")
             if unit is not None and not self._same_unit(str(unit), expected_unit):
-                continue
+                raise UsdaFoodDataError("USDA returned an incompatible nutrient unit.")
             try:
-                nutrients[name] = Decimal(str(amount))
+                value = Decimal(str(amount))
             except (InvalidOperation, ValueError):
                 raise UsdaFoodDataError("USDA returned an invalid nutrient value.") from None
+            if not value.is_finite() or value < 0:
+                raise UsdaFoodDataError("USDA returned an invalid nutrient value.")
+            nutrients[name] = value
         return UsdaFoodReference(fdc_id=fdc_id, description=payload["description"], nutrients=nutrients)
 
     def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:

@@ -57,6 +57,18 @@
             ],
             "title": "Cholesterol Mg"
           },
+          "energy_kj": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Energy Kj"
+          },
           "folate_mcg_dfe": {
             "anyOf": [
               {
@@ -93,6 +105,18 @@
             ],
             "title": "Magnesium Mg"
           },
+          "niacin_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Niacin Mg"
+          },
           "omega_3_g": {
             "anyOf": [
               {
@@ -116,6 +140,18 @@
               }
             ],
             "title": "Omega 6 G"
+          },
+          "phosphorus_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phosphorus Mg"
           },
           "potassium_mg": {
             "anyOf": [
@@ -188,6 +224,18 @@
               }
             ],
             "title": "Vitamin B12 Mcg"
+          },
+          "vitamin_b6_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin B6 Mg"
           },
           "vitamin_c_mg": {
             "anyOf": [
@@ -1630,7 +1678,7 @@
             "type": "string"
           },
           "totals": {
-            "$ref": "#/components/schemas/MealTotals"
+            "$ref": "#/components/schemas/NutrientValues"
           }
         },
         "required": [
@@ -1767,6 +1815,18 @@
             ],
             "title": "Cholesterol Mg"
           },
+          "energy_kj": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Energy Kj"
+          },
           "fat_g": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Fat G",
@@ -1813,6 +1873,18 @@
             ],
             "title": "Magnesium Mg"
           },
+          "niacin_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Niacin Mg"
+          },
           "omega_3_g": {
             "anyOf": [
               {
@@ -1836,6 +1908,18 @@
               }
             ],
             "title": "Omega 6 G"
+          },
+          "phosphorus_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phosphorus Mg"
           },
           "potassium_mg": {
             "anyOf": [
@@ -1913,6 +1997,18 @@
               }
             ],
             "title": "Vitamin B12 Mcg"
+          },
+          "vitamin_b6_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin B6 Mg"
           },
           "vitamin_c_mg": {
             "anyOf": [
@@ -2173,6 +2269,18 @@
             ],
             "title": "Cholesterol Mg"
           },
+          "energy_kj": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Energy Kj"
+          },
           "fat_g": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Fat G",
@@ -2219,6 +2327,18 @@
             ],
             "title": "Magnesium Mg"
           },
+          "niacin_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Niacin Mg"
+          },
           "omega_3_g": {
             "anyOf": [
               {
@@ -2242,6 +2362,18 @@
               }
             ],
             "title": "Omega 6 G"
+          },
+          "phosphorus_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phosphorus Mg"
           },
           "potassium_mg": {
             "anyOf": [
@@ -2319,6 +2451,18 @@
               }
             ],
             "title": "Vitamin B12 Mcg"
+          },
+          "vitamin_b6_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin B6 Mg"
           },
           "vitamin_c_mg": {
             "anyOf": [
@@ -3345,6 +3489,18 @@
             ],
             "title": "Cholesterol Mg"
           },
+          "energy_kj": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Energy Kj"
+          },
           "fat_g": {
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Fat G",
@@ -3391,6 +3547,18 @@
             ],
             "title": "Magnesium Mg"
           },
+          "niacin_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Niacin Mg"
+          },
           "omega_3_g": {
             "anyOf": [
               {
@@ -3414,6 +3582,18 @@
               }
             ],
             "title": "Omega 6 G"
+          },
+          "phosphorus_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phosphorus Mg"
           },
           "potassium_mg": {
             "anyOf": [
@@ -3491,6 +3671,18 @@
               }
             ],
             "title": "Vitamin B12 Mcg"
+          },
+          "vitamin_b6_mg": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vitamin B6 Mg"
           },
           "vitamin_c_mg": {
             "anyOf": [

@@ -70,6 +70,9 @@ class MealItem(Base):
         CheckConstraint("calculated_zinc_mg IS NULL OR calculated_zinc_mg >= 0", name="ck_meal_items_zinc_mg_nonnegative"),
         CheckConstraint("calculated_iron_mg IS NULL OR calculated_iron_mg >= 0", name="ck_meal_items_iron_mg_nonnegative"),
         CheckConstraint("calculated_magnesium_mg IS NULL OR calculated_magnesium_mg >= 0", name="ck_meal_items_magnesium_mg_nonnegative"),
+        CheckConstraint("calculated_phosphorus_mg IS NULL OR calculated_phosphorus_mg >= 0", name="ck_meal_items_phosphorus_mg_nonnegative"),
+        CheckConstraint("calculated_vitamin_b6_mg IS NULL OR calculated_vitamin_b6_mg >= 0", name="ck_meal_items_vitamin_b6_mg_nonnegative"),
+        CheckConstraint("calculated_niacin_mg IS NULL OR calculated_niacin_mg >= 0", name="ck_meal_items_niacin_mg_nonnegative"),
         CheckConstraint("calculated_vitamin_a_mcg_rae IS NULL OR calculated_vitamin_a_mcg_rae >= 0", name="ck_meal_items_vitamin_a_mcg_rae_nonnegative"),
         CheckConstraint("calculated_vitamin_b12_mcg IS NULL OR calculated_vitamin_b12_mcg >= 0", name="ck_meal_items_vitamin_b12_mcg_nonnegative"),
         CheckConstraint("calculated_vitamin_c_mg IS NULL OR calculated_vitamin_c_mg >= 0", name="ck_meal_items_vitamin_c_mg_nonnegative"),
@@ -102,6 +105,9 @@ class MealItem(Base):
     calculated_zinc_mg: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
     calculated_iron_mg: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
     calculated_magnesium_mg: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
+    calculated_phosphorus_mg: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
+    calculated_vitamin_b6_mg: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
+    calculated_niacin_mg: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
     calculated_vitamin_a_mcg_rae: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
     calculated_vitamin_b12_mcg: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
     calculated_vitamin_c_mg: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)

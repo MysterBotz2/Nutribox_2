@@ -53,6 +53,7 @@ from app.services.meal_analysis_service import (
     PersonalRecipeReuseError,
 )
 from app.services.meal_service import MealFoodNotFoundError, MealService
+from app.services.nutrient_calculator import derive_energy_kj
 from app.services.meal_service import MealAnalysisSessionNotCalculatedError
 from app.repositories.meal_analysis_session_repository import MealAnalysisSessionRepository
 from app.services.meal_analysis_session_service import MealAnalysisSessionConsumedError, MealAnalysisSessionExpiredError, MealAnalysisSessionNotFoundError, MealAnalysisSessionService
@@ -425,6 +426,10 @@ def _portion_nutrition_from_item(item) -> PortionNutrition:
         zinc_mg=item.calculated_zinc_mg,
         iron_mg=item.calculated_iron_mg,
         magnesium_mg=item.calculated_magnesium_mg,
+        energy_kj=derive_energy_kj(item.calculated_calories),
+        phosphorus_mg=item.calculated_phosphorus_mg,
+        vitamin_b6_mg=item.calculated_vitamin_b6_mg,
+        niacin_mg=item.calculated_niacin_mg,
         vitamin_a_mcg_rae=item.calculated_vitamin_a_mcg_rae,
         vitamin_b12_mcg=item.calculated_vitamin_b12_mcg,
         vitamin_c_mg=item.calculated_vitamin_c_mg,
@@ -447,6 +452,9 @@ def _additional_totals_from_items(items) -> AdditionalNutrientValues:
         "zinc_mg": "calculated_zinc_mg",
         "iron_mg": "calculated_iron_mg",
         "magnesium_mg": "calculated_magnesium_mg",
+        "phosphorus_mg": "calculated_phosphorus_mg",
+        "vitamin_b6_mg": "calculated_vitamin_b6_mg",
+        "niacin_mg": "calculated_niacin_mg",
         "vitamin_a_mcg_rae": "calculated_vitamin_a_mcg_rae",
         "vitamin_b12_mcg": "calculated_vitamin_b12_mcg",
         "vitamin_c_mg": "calculated_vitamin_c_mg",
@@ -457,6 +465,7 @@ def _additional_totals_from_items(items) -> AdditionalNutrientValues:
     for response_field, snapshot_field in snapshot_fields.items():
         values = [getattr(item, snapshot_field) for item in items]
         totals[response_field] = sum(values, Decimal("0")) if values and all(value is not None for value in values) else None
+    totals["energy_kj"] = derive_energy_kj(sum((item.calculated_calories for item in items), Decimal("0"))) if items else None
     return AdditionalNutrientValues(**totals)
 
 
@@ -465,7 +474,7 @@ def meal_response_from_model(meal) -> MealResponse:
         id=meal.id,
         recorded_at=meal.recorded_at,
         items=[MealItemResponse(id=item.id, food=CalculatedFood(id=item.food_id, name=item.food_name_snapshot), weight_grams=item.weight_grams, nutrition=_portion_nutrition_from_item(item), nutrition_source=MealItemNutritionSource(category=item.nutrition_source_type, name=item.nutrition_source_name_snapshot, reference=item.nutrition_source_reference_snapshot, is_estimated=item.nutrition_is_estimated), composite_estimation=item.composite_provenance_snapshot is not None) for item in meal.items],
-        totals=MealTotals(calories=meal.total_calories, protein_g=meal.total_protein_g, carbohydrates_g=meal.total_carbohydrates_g, fat_g=meal.total_fat_g, fiber_g=meal.total_fiber_g),
+        totals=MealTotals(calories=meal.total_calories, protein_g=meal.total_protein_g, carbohydrates_g=meal.total_carbohydrates_g, fat_g=meal.total_fat_g, fiber_g=meal.total_fiber_g, energy_kj=derive_energy_kj(meal.total_calories)),
         additional_totals=_additional_totals_from_items(meal.items),
     )
 
@@ -475,7 +484,7 @@ def meal_list_item_from_model(meal) -> MealListItem:
         id=meal.id,
         recorded_at=meal.recorded_at,
         items=[MealListItemResponse(id=item.id, food=CalculatedFood(id=item.food_id, name=item.food_name_snapshot), weight_grams=item.weight_grams, nutrition=_legacy_nutrition_from_item(item)) for item in meal.items],
-        totals=MealTotals(calories=meal.total_calories, protein_g=meal.total_protein_g, carbohydrates_g=meal.total_carbohydrates_g, fat_g=meal.total_fat_g, fiber_g=meal.total_fiber_g),
+        totals=NutrientValues(calories=meal.total_calories, protein_g=meal.total_protein_g, carbohydrates_g=meal.total_carbohydrates_g, fat_g=meal.total_fat_g, fiber_g=meal.total_fiber_g),
     )
 
 

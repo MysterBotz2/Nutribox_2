@@ -15,6 +15,15 @@ from app.services.meal_analysis_session_service import (
 )
 
 
+_STORED_OPTIONAL_NUTRIENTS = frozenset({
+    "saturated_fat_g", "sugars_g", "sodium_mg", "cholesterol_mg", "omega_3_g",
+    "omega_6_g", "calcium_mg", "potassium_mg", "zinc_mg", "iron_mg",
+    "magnesium_mg", "phosphorus_mg", "vitamin_b6_mg", "niacin_mg",
+    "vitamin_a_mcg_rae", "vitamin_b12_mcg", "vitamin_c_mg", "vitamin_d_mcg",
+    "folate_mcg_dfe",
+})
+
+
 class MealFoodNotFoundError(ValueError):
     """Raised when a requested canonical food cannot be recorded."""
 
@@ -69,6 +78,9 @@ class MealService:
                         calculated_zinc_mg=nutrition.zinc_mg,
                         calculated_iron_mg=nutrition.iron_mg,
                         calculated_magnesium_mg=nutrition.magnesium_mg,
+                        calculated_phosphorus_mg=nutrition.phosphorus_mg,
+                        calculated_vitamin_b6_mg=nutrition.vitamin_b6_mg,
+                        calculated_niacin_mg=nutrition.niacin_mg,
                         calculated_vitamin_a_mcg_rae=nutrition.vitamin_a_mcg_rae,
                         calculated_vitamin_b12_mcg=nutrition.vitamin_b12_mcg,
                         calculated_vitamin_c_mg=nutrition.vitamin_c_mg,
@@ -160,7 +172,10 @@ class MealService:
                     nutrition_is_estimated=is_estimated,
                     composite_provenance_snapshot=provenance,
                     weight_source="ai_estimate",
-                    **{f"calculated_{name}": (Decimal(value) if value is not None else None) for name, value in nutrient.items() if name not in {"calories", "protein_g", "carbohydrates_g", "fat_g", "fiber_g"}},
+                    **{
+                        f"calculated_{name}": Decimal(nutrient[name]) if nutrient.get(name) is not None else None
+                        for name in _STORED_OPTIONAL_NUTRIENTS
+                    },
                 ))
             meal = Meal(
                 user_id=user_id, measured_weight_grams=state.measured_weight_grams,

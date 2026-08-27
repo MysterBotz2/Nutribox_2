@@ -23,6 +23,9 @@ def _detail_response(request: httpx.Request) -> httpx.Response:
         {"nutrient": {"id": 1004, "unitName": "g"}, "amount": 0.3},
         {"nutrient": {"id": 1079, "unitName": "g"}, "amount": 0},
         {"nutrient": {"id": 1093, "unitName": "mg"}, "amount": 0},
+        {"nutrient": {"id": 1091, "unitName": "mg"}, "amount": 43},
+        {"nutrient": {"id": 1167, "unitName": "mg"}, "amount": 1.6},
+        {"nutrient": {"id": 1175, "unitName": "mg"}, "amount": 0},
     ]})
 
 
@@ -31,6 +34,19 @@ def test_usda_mapping_preserves_missing_and_explicit_zero() -> None:
     assert reference.nutrients["fiber_g"] == Decimal("0")
     assert reference.nutrients["sodium_mg"] == Decimal("0")
     assert reference.nutrients["cholesterol_mg"] is None
+    assert reference.nutrients["phosphorus_mg"] == Decimal("43")
+    assert reference.nutrients["niacin_mg"] == Decimal("1.6")
+    assert reference.nutrients["vitamin_b6_mg"] == Decimal("0")
+
+
+@pytest.mark.parametrize("amount", ["NaN", "Infinity", "-1"])
+def test_usda_rejects_invalid_mapped_nutrients(amount: str) -> None:
+    def handler(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"description": "Rice", "foodNutrients": [
+            {"nutrient": {"id": 1091, "unitName": "mg"}, "amount": amount},
+        ]})
+    with pytest.raises(UsdaFoodDataError):
+        _client(handler).get_food(1)
 
 
 def test_usda_search_requests_a_bounded_larger_set_and_preserves_source_order() -> None:

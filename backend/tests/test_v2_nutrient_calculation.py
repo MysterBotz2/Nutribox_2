@@ -23,6 +23,9 @@ def make_v2_reference(**overrides: Decimal | None) -> ExtendedNutritionPer100g:
         "zinc_mg": Decimal("1.000"),
         "iron_mg": Decimal("2.000"),
         "magnesium_mg": Decimal("3.000"),
+        "phosphorus_mg": Decimal("50.000"),
+        "vitamin_b6_mg": Decimal("0.400"),
+        "niacin_mg": Decimal("2.000"),
         "vitamin_a_mcg_rae": Decimal("4.000"),
         "vitamin_b12_mcg": Decimal("0.500"),
         "vitamin_c_mg": Decimal("5.000"),
@@ -45,6 +48,10 @@ def test_extended_calculator_scales_mandatory_v2_nutrients() -> None:
     assert result.sugars_g == Decimal("0.000")
     assert result.sodium_mg == Decimal("154.937")
     assert result.cholesterol_mg == Decimal("15.060")
+    assert result.phosphorus_mg == Decimal("62.750")
+    assert result.vitamin_b6_mg == Decimal("0.502")
+    assert result.niacin_mg == Decimal("2.510")
+    assert result.energy_kj == Decimal("525.092")
 
 
 def test_extended_calculator_scales_optional_values_and_propagates_unknowns() -> None:

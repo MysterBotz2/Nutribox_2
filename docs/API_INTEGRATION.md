@@ -251,9 +251,12 @@ or AI/provider use is involved.
 the `calculated` meal-analysis nutrition contain the existing five fields plus
 nullable V2 fields: `saturated_fat_g`, `sugars_g`, `sodium_mg`,
 `cholesterol_mg`, `omega_3_g`, `omega_6_g`, `calcium_mg`, `potassium_mg`,
-`zinc_mg`, `iron_mg`, `magnesium_mg`, `vitamin_a_mcg_rae`,
+`zinc_mg`, `iron_mg`, `magnesium_mg`, `phosphorus_mg`, `vitamin_b6_mg`,
+`niacin_mg`, `vitamin_a_mcg_rae`,
 `vitamin_b12_mcg`, `vitamin_c_mg`, `vitamin_d_mcg`, and `folate_mcg_dfe`.
-Units are kcal for calories; grams for macros and omega fats; milligrams for
+`energy_kj` is also exposed, derived from the corresponding immutable calorie
+value using `1 kcal = 4.184 kJ`; it is not stored independently. Units are kcal
+for calories; grams for macros and omega fats; milligrams for
 sodium, cholesterol, minerals, and vitamin C; and micrograms for vitamin A
 (RAE), B12, D, and folate (DFE). `fat_g` is the backward-compatible public name
 for total fat.

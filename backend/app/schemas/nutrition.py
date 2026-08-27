@@ -2,7 +2,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.core.constants import MAXIMUM_PROTOTYPE_WEIGHT_GRAMS
 from app.models.food import Food
@@ -42,6 +42,10 @@ class AdditionalNutrientValues(BaseModel):
     zinc_mg: Decimal | None = None
     iron_mg: Decimal | None = None
     magnesium_mg: Decimal | None = None
+    energy_kj: Decimal | None = None
+    phosphorus_mg: Decimal | None = None
+    vitamin_b6_mg: Decimal | None = None
+    niacin_mg: Decimal | None = None
     vitamin_a_mcg_rae: Decimal | None = None
     vitamin_b12_mcg: Decimal | None = None
     vitamin_c_mg: Decimal | None = None
@@ -63,11 +67,21 @@ class V2NutrientValues(NutrientValues):
     zinc_mg: Decimal | None = None
     iron_mg: Decimal | None = None
     magnesium_mg: Decimal | None = None
+    energy_kj: Decimal | None = None
+    phosphorus_mg: Decimal | None = None
+    vitamin_b6_mg: Decimal | None = None
+    niacin_mg: Decimal | None = None
     vitamin_a_mcg_rae: Decimal | None = None
     vitamin_b12_mcg: Decimal | None = None
     vitamin_c_mg: Decimal | None = None
     vitamin_d_mcg: Decimal | None = None
     folate_mcg_dfe: Decimal | None = None
+
+    @model_validator(mode="after")
+    def derive_energy(self):
+        """Keep derived energy synchronized with the calorie snapshot."""
+        self.energy_kj = derive_energy_kj(self.calories)
+        return self
 
 
 class NutritionPer100g(V2NutrientValues):
@@ -127,6 +141,10 @@ class FoodResponse(BaseModel):
                 zinc_mg=food.zinc_mg_per_100g,
                 iron_mg=food.iron_mg_per_100g,
                 magnesium_mg=food.magnesium_mg_per_100g,
+                energy_kj=derive_energy_kj(food.calories_per_100g),
+                phosphorus_mg=food.phosphorus_mg_per_100g,
+                vitamin_b6_mg=food.vitamin_b6_mg_per_100g,
+                niacin_mg=food.niacin_mg_per_100g,
                 vitamin_a_mcg_rae=food.vitamin_a_mcg_rae_per_100g,
                 vitamin_b12_mcg=food.vitamin_b12_mcg_per_100g,
                 vitamin_c_mg=food.vitamin_c_mg_per_100g,
@@ -140,6 +158,14 @@ class FoodResponse(BaseModel):
                 category=food.source_type,
             ),
         )
+
+
+def derive_energy_kj(calories: Decimal | None) -> Decimal | None:
+    """Return derived kilojoules without independently persisting energy."""
+    if calories is None:
+        return None
+    from decimal import ROUND_HALF_UP
+    return (calories * Decimal("4.184")).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
 
 
 class FoodListResponse(BaseModel):

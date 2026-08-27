@@ -21,7 +21,8 @@ CSV_FIELDS = (
     "saturated_fat_g_per_100g", "sugars_g_per_100g", "sodium_mg_per_100g",
     "cholesterol_mg_per_100g", "omega_3_g_per_100g", "omega_6_g_per_100g",
     "calcium_mg_per_100g", "potassium_mg_per_100g", "zinc_mg_per_100g",
-    "iron_mg_per_100g", "magnesium_mg_per_100g", "vitamin_a_mcg_rae_per_100g",
+    "iron_mg_per_100g", "magnesium_mg_per_100g", "phosphorus_mg_per_100g",
+    "vitamin_b6_mg_per_100g", "niacin_mg_per_100g", "vitamin_a_mcg_rae_per_100g",
     "vitamin_b12_mcg_per_100g", "vitamin_c_mg_per_100g", "vitamin_d_mcg_per_100g",
     "folate_mcg_dfe_per_100g", "source_name", "source_type", "source_reference",
     "is_verified", "aliases",
@@ -35,7 +36,8 @@ DEFAULT_ROW = {
     "sodium_mg_per_100g": "10.000", "cholesterol_mg_per_100g": "0.000",
     "omega_3_g_per_100g": "", "omega_6_g_per_100g": "", "calcium_mg_per_100g": "",
     "potassium_mg_per_100g": "", "zinc_mg_per_100g": "", "iron_mg_per_100g": "",
-    "magnesium_mg_per_100g": "", "vitamin_a_mcg_rae_per_100g": "",
+    "magnesium_mg_per_100g": "", "phosphorus_mg_per_100g": "",
+    "vitamin_b6_mg_per_100g": "", "niacin_mg_per_100g": "", "vitamin_a_mcg_rae_per_100g": "",
     "vitamin_b12_mcg_per_100g": "", "vitamin_c_mg_per_100g": "",
     "vitamin_d_mcg_per_100g": "", "folate_mcg_dfe_per_100g": "",
     "source_name": "TEST_SOURCE", "source_type": "local_database",
@@ -187,15 +189,15 @@ def test_cli_dry_run_missing_file_and_success(database_session: Session, tmp_pat
     assert "Rows processed: 1" in capsys.readouterr().out
 
 
-def test_blank_mandatory_nutrient_is_rejected_but_blank_optional_is_null(
+def test_blank_core_nutrient_is_rejected_but_blank_optional_is_null(
     database_session: Session, tmp_path
 ) -> None:
     with pytest.raises(FoodIngestionValidationError) as exception:
         FoodIngestionService(database_session).import_csv(
-            write_csv(tmp_path, make_row(sodium_mg_per_100g="")), dry_run=True
+            write_csv(tmp_path, make_row(protein_g_per_100g="")), dry_run=True
         )
 
-    assert any(issue.field == "sodium_mg_per_100g" for issue in exception.value.report.errors)
+    assert any(issue.field == "protein_g_per_100g" for issue in exception.value.report.errors)
     FoodIngestionService(database_session).import_csv(
         write_csv(tmp_path, make_row(omega_3_g_per_100g=""))
     )
@@ -215,17 +217,23 @@ def test_optional_v2_nutrients_reject_invalid_nonblank_values(
         )
 
 
-def test_missing_mandatory_v2_header_is_rejected(database_session: Session, tmp_path) -> None:
+def test_missing_optional_v2_header_is_allowed(database_session: Session, tmp_path) -> None:
     path = tmp_path / "missing-header.csv"
+    fields = tuple(field for field in CSV_FIELDS if field != "sodium_mg_per_100g")
     path.write_text(
-        HEADERS.replace("sodium_mg_per_100g,", "") + VALID_ROW,
+        ",".join(fields) + "\n" + ",".join(DEFAULT_ROW[field] for field in fields) + "\n",
         encoding="utf-8",
     )
 
-    with pytest.raises(FoodIngestionValidationError) as exception:
-        FoodIngestionService(database_session).import_csv(path, dry_run=True)
+    report = FoodIngestionService(database_session).import_csv(path, dry_run=True)
+    assert report.valid == 1
 
-    assert "Missing required columns" in exception.value.report.errors[0].message
+
+@pytest.mark.parametrize("field", ["phosphorus_mg_per_100g", "vitamin_b6_mg_per_100g", "niacin_mg_per_100g"])
+@pytest.mark.parametrize("value", ["-0.001", "NaN", "Infinity", "1.0001"])
+def test_new_optional_nutrients_reject_invalid_values(database_session: Session, tmp_path, field: str, value: str) -> None:
+    with pytest.raises(FoodIngestionValidationError):
+        FoodIngestionService(database_session).import_csv(write_csv(tmp_path, make_row(**{field: value})), dry_run=True)
 
 
 @pytest.mark.parametrize(

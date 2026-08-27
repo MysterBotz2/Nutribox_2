@@ -79,6 +79,9 @@ class NutritionService:
             vitamin_c_mg=food.vitamin_c_mg_per_100g,
             vitamin_d_mcg=food.vitamin_d_mcg_per_100g,
             folate_mcg_dfe=food.folate_mcg_dfe_per_100g,
+            phosphorus_mg=food.phosphorus_mg_per_100g,
+            vitamin_b6_mg=food.vitamin_b6_mg_per_100g,
+            niacin_mg=food.niacin_mg_per_100g,
         )
 
     def search_foods(self, query: str) -> list[Food]:

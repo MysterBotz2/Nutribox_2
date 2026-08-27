@@ -218,7 +218,7 @@ class MealListItem(BaseModel):
     id: int
     recorded_at: datetime
     items: list[MealListItemResponse]
-    totals: MealTotals
+    totals: NutrientValues
 
 
 class MealListResponse(BaseModel):

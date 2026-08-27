@@ -903,16 +903,22 @@ export interface components {
             calcium_mg?: string | null;
             /** Cholesterol Mg */
             cholesterol_mg?: string | null;
+            /** Energy Kj */
+            energy_kj?: string | null;
             /** Folate Mcg Dfe */
             folate_mcg_dfe?: string | null;
             /** Iron Mg */
             iron_mg?: string | null;
             /** Magnesium Mg */
             magnesium_mg?: string | null;
+            /** Niacin Mg */
+            niacin_mg?: string | null;
             /** Omega 3 G */
             omega_3_g?: string | null;
             /** Omega 6 G */
             omega_6_g?: string | null;
+            /** Phosphorus Mg */
+            phosphorus_mg?: string | null;
             /** Potassium Mg */
             potassium_mg?: string | null;
             /** Saturated Fat G */
@@ -925,6 +931,8 @@ export interface components {
             vitamin_a_mcg_rae?: string | null;
             /** Vitamin B12 Mcg */
             vitamin_b12_mcg?: string | null;
+            /** Vitamin B6 Mg */
+            vitamin_b6_mg?: string | null;
             /** Vitamin C Mg */
             vitamin_c_mg?: string | null;
             /** Vitamin D Mcg */
@@ -1436,7 +1444,7 @@ export interface components {
              * Format: date-time
              */
             recorded_at: string;
-            totals: components["schemas"]["MealTotals"];
+            totals: components["schemas"]["NutrientValues"];
         };
         /**
          * MealListItemResponse
@@ -1483,6 +1491,8 @@ export interface components {
             carbohydrates_g: string;
             /** Cholesterol Mg */
             cholesterol_mg?: string | null;
+            /** Energy Kj */
+            energy_kj?: string | null;
             /** Fat G */
             fat_g: string;
             /** Fiber G */
@@ -1493,10 +1503,14 @@ export interface components {
             iron_mg?: string | null;
             /** Magnesium Mg */
             magnesium_mg?: string | null;
+            /** Niacin Mg */
+            niacin_mg?: string | null;
             /** Omega 3 G */
             omega_3_g?: string | null;
             /** Omega 6 G */
             omega_6_g?: string | null;
+            /** Phosphorus Mg */
+            phosphorus_mg?: string | null;
             /** Potassium Mg */
             potassium_mg?: string | null;
             /** Protein G */
@@ -1511,6 +1525,8 @@ export interface components {
             vitamin_a_mcg_rae?: string | null;
             /** Vitamin B12 Mcg */
             vitamin_b12_mcg?: string | null;
+            /** Vitamin B6 Mg */
+            vitamin_b6_mg?: string | null;
             /** Vitamin C Mg */
             vitamin_c_mg?: string | null;
             /** Vitamin D Mcg */
@@ -1602,6 +1618,8 @@ export interface components {
             carbohydrates_g: string;
             /** Cholesterol Mg */
             cholesterol_mg?: string | null;
+            /** Energy Kj */
+            energy_kj?: string | null;
             /** Fat G */
             fat_g: string;
             /** Fiber G */
@@ -1612,10 +1630,14 @@ export interface components {
             iron_mg?: string | null;
             /** Magnesium Mg */
             magnesium_mg?: string | null;
+            /** Niacin Mg */
+            niacin_mg?: string | null;
             /** Omega 3 G */
             omega_3_g?: string | null;
             /** Omega 6 G */
             omega_6_g?: string | null;
+            /** Phosphorus Mg */
+            phosphorus_mg?: string | null;
             /** Potassium Mg */
             potassium_mg?: string | null;
             /** Protein G */
@@ -1630,6 +1652,8 @@ export interface components {
             vitamin_a_mcg_rae?: string | null;
             /** Vitamin B12 Mcg */
             vitamin_b12_mcg?: string | null;
+            /** Vitamin B6 Mg */
+            vitamin_b6_mg?: string | null;
             /** Vitamin C Mg */
             vitamin_c_mg?: string | null;
             /** Vitamin D Mcg */
@@ -1911,6 +1935,8 @@ export interface components {
             carbohydrates_g: string;
             /** Cholesterol Mg */
             cholesterol_mg?: string | null;
+            /** Energy Kj */
+            energy_kj?: string | null;
             /** Fat G */
             fat_g: string;
             /** Fiber G */
@@ -1921,10 +1947,14 @@ export interface components {
             iron_mg?: string | null;
             /** Magnesium Mg */
             magnesium_mg?: string | null;
+            /** Niacin Mg */
+            niacin_mg?: string | null;
             /** Omega 3 G */
             omega_3_g?: string | null;
             /** Omega 6 G */
             omega_6_g?: string | null;
+            /** Phosphorus Mg */
+            phosphorus_mg?: string | null;
             /** Potassium Mg */
             potassium_mg?: string | null;
             /** Protein G */
@@ -1939,6 +1969,8 @@ export interface components {
             vitamin_a_mcg_rae?: string | null;
             /** Vitamin B12 Mcg */
             vitamin_b12_mcg?: string | null;
+            /** Vitamin B6 Mg */
+            vitamin_b6_mg?: string | null;
             /** Vitamin C Mg */
             vitamin_c_mg?: string | null;
             /** Vitamin D Mcg */

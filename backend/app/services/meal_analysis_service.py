@@ -796,10 +796,15 @@ class MealAnalysisService:
             raise ValueError("At least one resolved component is required.")
         result: dict[str, Decimal | None] = {}
         for field in fields(ExtendedPortionNutrition):
+            if field.name == "energy_kj":
+                continue
             field_values = [getattr(value, field.name) for value in values]
             result[field.name] = (
                 sum(field_values, Decimal("0"))
                 if all(value is not None for value in field_values)
                 else None
             )
+        result["energy_kj"] = (
+            None if result["calories"] is None else NutrientCalculator._round(result["calories"] * Decimal("4.184"))
+        )
         return ExtendedPortionNutrition(**result)  # type: ignore[arg-type]
