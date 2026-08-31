@@ -1,8 +1,10 @@
 from datetime import timedelta
+from decimal import Decimal
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.paired_device import DevicePairingSession
+from app.models.food import Food
 from conftest import register_and_login
 from test_meal_analysis import image_bytes
 
@@ -45,6 +47,14 @@ def test_pairing_expiry_and_invalid_code(client: TestClient, database_session: S
 
 def test_paired_device_can_start_owner_analysis_and_credential_ambiguity_is_rejected(client: TestClient, database_session: Session, jwt_configuration: None, monkeypatch):
     monkeypatch.setattr(settings, 'device_pairing_secret', 'test-pairing-secret')
+    # Keep this authorization test independent of composite-estimator fixtures.
+    database_session.add(Food(
+        name='chicken adobo', normalized_name='chicken adobo', category='test',
+        calories_per_100g=Decimal('150'), protein_g_per_100g=Decimal('20'),
+        carbohydrates_g_per_100g=Decimal('5'), fat_g_per_100g=Decimal('6'), fiber_g_per_100g=Decimal('1'),
+        source_name='test', source_type='local_database', source_reference='test:chicken-adobo', is_verified=True,
+    ))
+    database_session.flush()
     started = _start(client)
     owner_data, owner_headers = register_and_login(client, 'device-meal-owner@example.com')
     assert client.post('/api/users/me/devices/pair', json={'pairing_code': started['pairing_code']}, headers=owner_headers).status_code == 201

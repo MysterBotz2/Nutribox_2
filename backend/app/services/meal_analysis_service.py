@@ -728,13 +728,14 @@ class MealAnalysisService:
             snapshots.append(CompositeIngredientSnapshot(ingredient_name=item.name, raw_estimated_proportion=item.suggested_proportion, normalized_proportion=(weight / component.estimated_weight_grams), estimated_weight_grams=weight, nutrition_source=food.source_type or "local_database", source_reference_id=item.resolved_reference, reference_name=food.name, nutrition=item.nutrition, ingredient_source="user_confirmed", weight_source=item.weight_source))
         component.suggested_ingredients = confirmed
         if unresolved:
-            session_service.update_session_state(session_id, user_id, state, MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION.value)
-            return ComposedMealAnalysis(status=MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION, recognition_source="session", state=state, nutrition=None, session_id=session_id)
+            # Child candidate choices are part of composition verification, not
+            # ordinary top-level food selection.  Keep the component in the
+            # ingredient continuation state so its dedicated endpoint remains
+            # the only valid next transition.
+            component.resolution_status = ComponentResolutionStatus.REQUIRES_INGREDIENT_VERIFICATION
+            return self._persist_recipe_continuation(state, session_id, user_id, session_service)
         self._reevaluate_composite_component(component)
-        status = MealAnalysisStatus.CALCULATED if all(item.resolution_status == ComponentResolutionStatus.RESOLVED for item in state.components) else MealAnalysisStatus.NUTRITION_REFERENCE_NOT_FOUND
-        nutrition = self._aggregate_extended([ExtendedPortionNutrition(**{name: Decimal(value) if value is not None else None for name, value in item.nutrition.items()}) for item in state.components if item.nutrition is not None]) if status == MealAnalysisStatus.CALCULATED else None
-        session_service.update_session_state(session_id, user_id, state, status.value)
-        return ComposedMealAnalysis(status=status, recognition_source="session", state=state, nutrition=nutrition, session_id=session_id)
+        return self._persist_recipe_continuation(state, session_id, user_id, session_service)
 
     def apply_ingredient_selection(self, *, user_id: int, session_id: int, component_id: str, ingredient_id: str, candidate_id: str, session_service: MealAnalysisSessionService) -> ComposedMealAnalysis:
         persisted = session_service.get_session_for_user(session_id, user_id, lock=True)
@@ -762,17 +763,16 @@ class MealAnalysisService:
         ingredient.nutrition_source = food.source_type
         ingredient.food_id = food.id
         self._reevaluate_composite_component(component)
-        status = MealAnalysisStatus.CALCULATED if component.resolution_status == ComponentResolutionStatus.RESOLVED else MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION
-        nutrition = ExtendedPortionNutrition(**{name: Decimal(value) if value is not None else None for name, value in component.nutrition.items()}) if component.nutrition is not None else None
-        session_service.update_session_state(session_id, user_id, state, status.value)
-        return ComposedMealAnalysis(status=status, recognition_source="session", state=state, nutrition=nutrition, session_id=session_id)
+        return self._persist_recipe_continuation(state, session_id, user_id, session_service)
 
     def _reevaluate_composite_component(self, component: MealAnalysisSessionComponent) -> None:
         ingredients = [item for item in component.suggested_ingredients if item.included]
         if any(item.resolution_status == IngredientResolutionStatus.NUTRITION_REFERENCE_NOT_FOUND for item in ingredients):
             component.resolution_status = ComponentResolutionStatus.NUTRITION_REFERENCE_NOT_FOUND; return
         if any(item.resolution_status == IngredientResolutionStatus.REQUIRES_FOOD_SELECTION for item in ingredients):
-            component.resolution_status = ComponentResolutionStatus.REQUIRES_FOOD_SELECTION; return
+            # A candidate belongs to a confirmed ingredient within this
+            # composite.  Do not turn it into a whole-food selection state.
+            component.resolution_status = ComponentResolutionStatus.REQUIRES_INGREDIENT_VERIFICATION; return
         if not ingredients or any(item.food_id is None or item.weight_grams is None for item in ingredients):
             raise ValueError("Confirmed ingredients require resolved references and reconciled weights.")
         if sum((item.weight_grams for item in ingredients if item.weight_grams is not None), Decimal("0")) != component.estimated_weight_grams:

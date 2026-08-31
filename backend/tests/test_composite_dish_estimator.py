@@ -378,6 +378,8 @@ def test_ingredient_candidate_id_selects_exact_duplicate_name_reference_and_reev
     component = analysis.state.components[0]
     verified = service.verify_ingredients(user_id=user.id, session_id=analysis.session_id, component_id=str(component.component_id), ingredients=[IngredientVerificationItemRequest(ingredient_id=item.ingredient_id, name=item.name, included=True) for item in component.suggested_ingredients], session_service=sessions)
     component = verified.state.components[0]
+    assert verified.status == MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION
+    assert component.resolution_status == ComponentResolutionStatus.REQUIRES_INGREDIENT_VERIFICATION
     pork = next(item for item in component.suggested_ingredients if item.name == "cooked pork")
     assert pork.resolution_status == IngredientResolutionStatus.REQUIRES_FOOD_SELECTION
     assert [item["source_reference_id"] for item in pork.candidates] == ["111", "222"]
@@ -394,6 +396,61 @@ def test_ingredient_candidate_id_selects_exact_duplicate_name_reference_and_reev
     assert composite.composite_provenance_snapshot.ingredients[0].source_reference_id == "food:222"
     assert sum(item.estimated_weight_grams for item in composite.composite_provenance_snapshot.ingredients) == Decimal("275.000")
     assert recognition.calls == 1 and estimator.calls == ["pork sinigang"]
+
+
+def test_multiple_ingredient_candidates_remain_in_ingredient_continuation_until_all_resolve(database_session) -> None:
+    """A child candidate never changes its composite into whole-food selection."""
+    user = User(email="multi-ingredient-candidate@example.com", password_hash="x", first_name="Multi", last_name="Candidate")
+    database_session.add(user); database_session.flush()
+    pork = _food("Pork, cooked", identifier=101, calories="200")
+    broth = _food("Broth, prepared", identifier=102, calories="10")
+    vegetables = _food("mixed vegetables", identifier=3, calories="30")
+    repository = _Foods([pork, broth, vegetables])
+    repository._foods.pop(normalize_food_name("Pork, cooked")); repository._foods.pop(normalize_food_name("Broth, prepared"))
+
+    class References:
+        def __init__(self) -> None: self.loaded: list[int] = []
+        def resolve(self, name: str) -> UsdaResolution:
+            if name == "pork sinigang": return UsdaResolution()
+            if name == "cooked pork": return UsdaResolution(candidates=(UsdaSearchFood(101, "Pork, cooked", "USDA"),))
+            if name == "broth": return UsdaResolution(candidates=(UsdaSearchFood(102, "Broth, prepared", "USDA"),))
+            return UsdaResolution()
+        def load_by_fdc_id(self, fdc_id: int):
+            self.loaded.append(fdc_id)
+            return {101: pork, 102: broth}.get(fdc_id)
+
+    recognition = _Recognition((RecognizedMealComponent("pork sinigang", Decimal("1")),))
+    references = References()
+    service = MealAnalysisService(recognition, NutritionService(repository), usda_food_reference_service=references, composite_dish_estimator=_Estimator(_estimate()))  # type: ignore[arg-type]
+    sessions = MealAnalysisSessionService(MealAnalysisSessionRepository(database_session))
+    analyzed = service.analyze_composed(user_id=user.id, image_bytes=b"image", content_type="image/jpeg", measured_weight_grams=Decimal("275.000"), session_service=sessions)
+    assert analyzed is not None and analyzed.status == MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION
+    component = analyzed.state.components[0]
+    verified = service.verify_ingredients(user_id=user.id, session_id=analyzed.session_id, component_id=str(component.component_id), ingredients=[IngredientVerificationItemRequest(ingredient_id=item.ingredient_id, name=item.name, included=True) for item in component.suggested_ingredients], session_service=sessions)
+    component = verified.state.components[0]
+    unresolved = [item for item in component.suggested_ingredients if item.resolution_status == IngredientResolutionStatus.REQUIRES_FOOD_SELECTION]
+    assert verified.status == MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION
+    assert component.resolution_status == ComponentResolutionStatus.REQUIRES_INGREDIENT_VERIFICATION
+    assert len(unresolved) == 2
+
+    with pytest.raises(ValueError, match="Ingredient is not awaiting"):
+        service.apply_ingredient_selection(user_id=user.id, session_id=analyzed.session_id, component_id=str(component.component_id), ingredient_id="00000000-0000-0000-0000-000000000000", candidate_id=unresolved[0].candidates[0]["candidate_id"], session_service=sessions)
+    with pytest.raises(ValueError, match="not valid for this ingredient"):
+        service.apply_ingredient_selection(user_id=user.id, session_id=analyzed.session_id, component_id=str(component.component_id), ingredient_id=str(unresolved[0].ingredient_id), candidate_id=unresolved[1].candidates[0]["candidate_id"], session_service=sessions)
+
+    first = service.apply_ingredient_selection(user_id=user.id, session_id=analyzed.session_id, component_id=str(component.component_id), ingredient_id=str(unresolved[0].ingredient_id), candidate_id=unresolved[0].candidates[0]["candidate_id"], session_service=sessions)
+    component = first.state.components[0]
+    assert first.status == MealAnalysisStatus.REQUIRES_INGREDIENT_VERIFICATION
+    assert component.resolution_status == ComponentResolutionStatus.REQUIRES_INGREDIENT_VERIFICATION
+    with pytest.raises(ValueError, match="Ingredient is not awaiting"):
+        service.apply_ingredient_selection(user_id=user.id, session_id=analyzed.session_id, component_id=str(component.component_id), ingredient_id=str(unresolved[0].ingredient_id), candidate_id=unresolved[0].candidates[0]["candidate_id"], session_service=sessions)
+    remaining = next(item for item in component.suggested_ingredients if item.resolution_status == IngredientResolutionStatus.REQUIRES_FOOD_SELECTION)
+
+    final = service.apply_ingredient_selection(user_id=user.id, session_id=analyzed.session_id, component_id=str(component.component_id), ingredient_id=str(remaining.ingredient_id), candidate_id=remaining.candidates[0]["candidate_id"], session_service=sessions)
+    assert final.status == MealAnalysisStatus.CALCULATED
+    assert final.state.components[0].resolution_status == ComponentResolutionStatus.RESOLVED
+    assert references.loaded == [101, 102]
+    assert recognition.calls == 1
 
 
 @dataclass
