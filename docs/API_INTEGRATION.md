@@ -297,6 +297,32 @@ are never clamped and nothing is persisted. One finalized analysis is allowed
 per meal; the original Meal and MealItems remain immutable. No clinical
 interpretation is made.
 
+## PI-4C1 paired-device leftover scans
+
+`POST /api/meals/{meal_id}/leftover-scans` accepts JSON
+`{"analysis_session_id": positive_integer}` and supports either the meal
+owner's bearer token or exactly one paired `X-Device-Token`. A request with
+both credentials is rejected with `400`; an invalid or revoked device token is
+`401`. The backend derives the paired owner and returns `404` for an unowned
+meal or analysis session.
+
+The supplied session must be owned, unexpired, unconsumed, and `calculated`.
+Anonymous analysis sessions cannot be recorded. The target Meal must have a
+positive immutable `measured_weight_grams`; manual historical meals without
+that measurement return `422` rather than receiving an invented original
+weight. The session is consumed atomically with the new immutable scan, so a
+duplicate or stale submission returns `409`.
+
+The scan response contains the target meal/session IDs, original/remaining/
+consumed weights, consumed percentage, complete remaining and consumed
+`PortionNutrition` snapshots, comparison warnings, and creation time. Stored
+snapshots use all authoritative nutrients supported by `MealItem`; `energy_kj`
+remains derived from calories and is never stored independently. A known
+remaining nutrient higher than its original snapshot is clamped to zero only
+for that consumed nutrient and produces a typed
+`remaining_exceeds_original` warning. Unknown (`null`) nutrient values remain
+unknown. Neither the original Meal nor its MealItems is modified.
+
 ## AI chat
 
 `POST /api/ai/chat?timezone=UTC` requires a bearer token and accepts

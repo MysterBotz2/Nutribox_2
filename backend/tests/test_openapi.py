@@ -29,6 +29,7 @@ def test_openapi_has_v1_metadata_routes_and_oauth2_security() -> None:
         "/api/meals",
         "/api/meals/{meal_id}",
         "/api/meals/{meal_id}/leftover-analysis",
+        "/api/meals/{meal_id}/leftover-scans",
         "/api/scheduled-meals",
         "/api/scheduled-meals/{scheduled_meal_id}",
         "/api/progress/today",
@@ -146,6 +147,25 @@ def test_openapi_exposes_owner_only_r4a_leftover_analysis_contract() -> None:
     assert {"initial_nutrition", "leftover_nutrition", "consumed_nutrition", "provenance"} <= set(schema["components"]["schemas"]["LeftoverAnalysisResponse"]["properties"])
 
 
+def test_openapi_exposes_paired_device_leftover_scan_contract() -> None:
+    schema = app.openapi()
+    operation = schema["paths"]["/api/meals/{meal_id}/leftover-scans"]["post"]
+    bearer_or_device_security = [{"OAuth2PasswordBearer": []}, {"APIKeyHeader": []}]
+
+    assert operation["security"] == bearer_or_device_security
+    assert operation["requestBody"]["content"]["application/json"]["schema"]["$ref"].endswith(
+        "/LeftoverScanCreateRequest"
+    )
+    response_schema = operation["responses"]["201"]["content"]["application/json"]["schema"]
+    assert response_schema["$ref"].endswith("/LeftoverScanResponse")
+    properties = schema["components"]["schemas"]["LeftoverScanResponse"]["properties"]
+    assert {
+        "meal_id", "analysis_session_id", "original_weight_grams", "remaining_weight_grams",
+        "consumed_weight_grams", "consumed_portion_percentage", "remaining_nutrition",
+        "estimated_consumed_nutrition", "comparison_warnings", "created_at",
+    } <= set(properties)
+
+
 def test_openapi_exposes_owner_only_personal_recipe_contract() -> None:
     schema = app.openapi()
     paths = schema["paths"]
@@ -185,11 +205,14 @@ def test_openapi_exposes_device_authorized_meal_operations_and_safe_device_ident
         schemas["DeviceIdentityResponse"]["properties"]
     )
     assert paths["/api/device/me"]["get"]["responses"]["200"]["content"]["application/json"]["schema"]["$ref"].endswith("/DeviceIdentityResponse")
-    for path, method in {
-        "/api/meals/analyze": "post",
-        "/api/meals": "post",
-        "/api/meals/analysis-sessions/{analysis_session_id}/selections": "post",
-        "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/ingredients": "put",
-        "/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/ingredients/selections": "post",
-    }.items():
+    for path, method in (
+        ("/api/meals/analyze", "post"),
+        ("/api/meals", "post"),
+        ("/api/meals", "get"),
+        ("/api/meals/{meal_id}", "get"),
+        ("/api/meals/{meal_id}/leftover-scans", "post"),
+        ("/api/meals/analysis-sessions/{analysis_session_id}/selections", "post"),
+        ("/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/ingredients", "put"),
+        ("/api/meals/analysis-sessions/{analysis_session_id}/components/{component_id}/ingredients/selections", "post"),
+    ):
         assert paths[path][method]["security"] == bearer_or_device_security

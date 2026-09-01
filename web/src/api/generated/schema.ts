@@ -432,6 +432,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meals/{meal_id}/leftover-scans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Leftover Scan
+         * @description Persist an immutable leftover estimate from one completed owner-owned analysis session.
+         */
+        post: operations["create_leftover_scan_api_meals__meal_id__leftover_scans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/nutrition/calculate": {
         parameters: {
             query?: never;
@@ -1329,6 +1349,51 @@ export interface components {
             fiber_g: string;
             /** Protein G */
             protein_g: string;
+        };
+        /**
+         * LeftoverScanComparisonNutrient
+         * @enum {string}
+         */
+        LeftoverScanComparisonNutrient: "calories" | "protein_g" | "carbohydrates_g" | "fat_g" | "fiber_g" | "saturated_fat_g" | "sugars_g" | "sodium_mg" | "cholesterol_mg" | "omega_3_g" | "omega_6_g" | "calcium_mg" | "potassium_mg" | "zinc_mg" | "iron_mg" | "magnesium_mg" | "phosphorus_mg" | "vitamin_b6_mg" | "niacin_mg" | "vitamin_a_mcg_rae" | "vitamin_b12_mcg" | "vitamin_c_mg" | "vitamin_d_mcg" | "folate_mcg_dfe";
+        /** LeftoverScanComparisonWarning */
+        LeftoverScanComparisonWarning: {
+            /**
+             * Code
+             * @constant
+             */
+            code: "remaining_exceeds_original";
+            nutrient: components["schemas"]["LeftoverScanComparisonNutrient"];
+        };
+        /** LeftoverScanCreateRequest */
+        LeftoverScanCreateRequest: {
+            /** Analysis Session Id */
+            analysis_session_id: number;
+        };
+        /** LeftoverScanResponse */
+        LeftoverScanResponse: {
+            /** Analysis Session Id */
+            analysis_session_id: number;
+            /** Comparison Warnings */
+            comparison_warnings: components["schemas"]["LeftoverScanComparisonWarning"][];
+            /** Consumed Portion Percentage */
+            consumed_portion_percentage: string;
+            /** Consumed Weight Grams */
+            consumed_weight_grams: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            estimated_consumed_nutrition: components["schemas"]["PortionNutrition"];
+            /** Id */
+            id: number;
+            /** Meal Id */
+            meal_id: number;
+            /** Original Weight Grams */
+            original_weight_grams: string;
+            remaining_nutrition: components["schemas"]["PortionNutrition"];
+            /** Remaining Weight Grams */
+            remaining_weight_grams: string;
         };
         /** MealAnalysisCandidateResponse */
         MealAnalysisCandidateResponse: {
@@ -2922,7 +2987,9 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3280,7 +3347,9 @@ export interface operations {
     get_meal_api_meals__meal_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 meal_id: number;
             };
@@ -3361,6 +3430,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeftoverAnalysisResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_leftover_scan_api_meals__meal_id__leftover_scans_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                meal_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeftoverScanCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeftoverScanResponse"];
                 };
             };
             /** @description Validation Error */

@@ -16,6 +16,7 @@ from app.models.chat import ChatConversation, ChatMessage  # noqa: F401, E402
 from app.models.paired_device import DevicePairingSession, PairedDevice  # noqa: F401, E402
 from app.models.meal import Meal, MealItem  # noqa: F401, E402
 from app.models.leftover_analysis import LeftoverAnalysis  # noqa: F401, E402
+from app.models.leftover_scan import LeftoverScan  # noqa: F401, E402
 from app.models.nutrition_profile import NutritionProfile  # noqa: F401, E402
 from app.models.nutrition_target import NutritionTarget  # noqa: F401, E402
 from app.models.profile_consent import ProfileConsent  # noqa: F401, E402

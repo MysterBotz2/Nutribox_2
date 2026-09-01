@@ -64,6 +64,14 @@ from app.core.config import settings
 from app.repositories.leftover_analysis_repository import LeftoverAnalysisRepository
 from app.schemas.leftover_analysis import LeftoverAnalysisProvenance, LeftoverAnalysisResponse, LeftoverNutrition
 from app.services.leftover_analysis_service import DuplicateLeftoverAnalysisError, LeftoverAnalysisConflictError, LeftoverAnalysisService, LeftoverRecognitionError
+from app.repositories.leftover_scan_repository import LeftoverScanRepository
+from app.schemas.leftover_scan import LeftoverScanCreateRequest, LeftoverScanResponse
+from app.services.leftover_scan_service import (
+    LeftoverScanConflictError,
+    LeftoverScanMealWeightUnavailableError,
+    LeftoverScanService,
+    LeftoverScanSessionNotCompletedError,
+)
 from app.dependencies.user_recipes import get_user_recipe_service
 from app.schemas.user_recipe import (
     SaveUserRecipeRequest,
@@ -256,6 +264,32 @@ def get_leftover_analysis_service(database_session: Annotated[Session, Depends(g
     return LeftoverAnalysisService(LeftoverAnalysisRepository(database_session), meal_analysis_service)
 
 
+def get_leftover_scan_service(
+    database_session: Annotated[Session, Depends(get_db)],
+) -> LeftoverScanService:
+    return LeftoverScanService(LeftoverScanRepository(database_session))
+
+
+def leftover_scan_response_from_model(scan) -> LeftoverScanResponse:
+    return LeftoverScanResponse(
+        id=scan.id,
+        meal_id=scan.meal_id,
+        analysis_session_id=scan.analysis_session_id,
+        original_weight_grams=scan.original_weight_grams,
+        remaining_weight_grams=scan.remaining_weight_grams,
+        consumed_weight_grams=scan.consumed_weight_grams,
+        consumed_portion_percentage=scan.consumed_portion_percentage,
+        remaining_nutrition=LeftoverScanService.response_nutrition(
+            scan.remaining_nutrition_snapshot
+        ),
+        estimated_consumed_nutrition=LeftoverScanService.response_nutrition(
+            scan.consumed_nutrition_snapshot
+        ),
+        comparison_warnings=scan.comparison_warnings,
+        created_at=scan.created_at,
+    )
+
+
 def leftover_analysis_response_from_model(analysis, meal) -> LeftoverAnalysisResponse:
     initial = LeftoverNutrition(calories=meal.total_calories, protein_g=meal.total_protein_g, carbohydrates_g=meal.total_carbohydrates_g, fat_g=meal.total_fat_g, fiber_g=meal.total_fiber_g)
     leftovers = LeftoverNutrition(calories=analysis.leftover_calories, protein_g=analysis.leftover_protein_g, carbohydrates_g=analysis.leftover_carbohydrates_g, fat_g=analysis.leftover_fat_g, fiber_g=analysis.leftover_fiber_g)
@@ -280,6 +314,39 @@ async def create_leftover(meal_id: int, current_user: Annotated[User, Depends(ge
     except LeftoverRecognitionError as error:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Leftover recognition could not be completed: {error}.") from None
     return leftover_analysis_response_from_model(analysis, meal)
+
+
+@router.post(
+    "/{meal_id}/leftover-scans",
+    response_model=LeftoverScanResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_leftover_scan(
+    meal_id: int,
+    request: LeftoverScanCreateRequest,
+    principal: Annotated[MealOperationPrincipal, Depends(require_meal_operation_principal)],
+    database_session: Annotated[Session, Depends(get_db)],
+    leftover_scan_service: Annotated[LeftoverScanService, Depends(get_leftover_scan_service)],
+) -> LeftoverScanResponse:
+    """Persist an immutable leftover estimate from one completed owner-owned analysis session."""
+    meal = MealRepository(database_session).get_by_id_for_user(meal_id, principal.user_id)
+    if meal is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal was not found.")
+    try:
+        scan = leftover_scan_service.create_from_completed_session(
+            meal=meal,
+            analysis_session_id=request.analysis_session_id,
+            user_id=principal.user_id,
+        )
+    except MealAnalysisSessionNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal analysis session was not found.") from None
+    except LeftoverScanSessionNotCompletedError:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Meal analysis session is not completed.") from None
+    except LeftoverScanMealWeightUnavailableError:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="The original meal does not have a positive measured weight.") from None
+    except (MealAnalysisSessionConsumedError, MealAnalysisSessionExpiredError, LeftoverScanConflictError) as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from None
+    return leftover_scan_response_from_model(scan)
 
 
 @router.get("/{meal_id}/leftover-analysis", response_model=LeftoverAnalysisResponse)
@@ -507,13 +574,13 @@ def create_meal(meal_request: MealCreateRequest, principal: Annotated[MealOperat
 
 
 @router.get("", response_model=MealListResponse)
-def list_meals(current_user: Annotated[User, Depends(get_current_user)], meal_service: Annotated[MealService, Depends(get_meal_service)], limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0)) -> MealListResponse:
-    return MealListResponse(meals=[meal_list_item_from_model(meal) for meal in meal_service.list_meals(current_user.id, limit, offset)], limit=limit, offset=offset)
+def list_meals(principal: Annotated[MealOperationPrincipal, Depends(require_meal_operation_principal)], meal_service: Annotated[MealService, Depends(get_meal_service)], limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0)) -> MealListResponse:
+    return MealListResponse(meals=[meal_list_item_from_model(meal) for meal in meal_service.list_meals(principal.user_id, limit, offset)], limit=limit, offset=offset)
 
 
 @router.get("/{meal_id}", response_model=MealResponse)
-def get_meal(meal_id: int, current_user: Annotated[User, Depends(get_current_user)], meal_service: Annotated[MealService, Depends(get_meal_service)]) -> MealResponse:
-    meal = meal_service.get_meal(meal_id, current_user.id)
+def get_meal(meal_id: int, principal: Annotated[MealOperationPrincipal, Depends(require_meal_operation_principal)], meal_service: Annotated[MealService, Depends(get_meal_service)]) -> MealResponse:
+    meal = meal_service.get_meal(meal_id, principal.user_id)
     if meal is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meal was not found.")
     return meal_response_from_model(meal)

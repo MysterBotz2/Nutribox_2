@@ -1322,6 +1322,138 @@
         "title": "LeftoverNutrition",
         "type": "object"
       },
+      "LeftoverScanComparisonNutrient": {
+        "enum": [
+          "calories",
+          "protein_g",
+          "carbohydrates_g",
+          "fat_g",
+          "fiber_g",
+          "saturated_fat_g",
+          "sugars_g",
+          "sodium_mg",
+          "cholesterol_mg",
+          "omega_3_g",
+          "omega_6_g",
+          "calcium_mg",
+          "potassium_mg",
+          "zinc_mg",
+          "iron_mg",
+          "magnesium_mg",
+          "phosphorus_mg",
+          "vitamin_b6_mg",
+          "niacin_mg",
+          "vitamin_a_mcg_rae",
+          "vitamin_b12_mcg",
+          "vitamin_c_mg",
+          "vitamin_d_mcg",
+          "folate_mcg_dfe"
+        ],
+        "title": "LeftoverScanComparisonNutrient",
+        "type": "string"
+      },
+      "LeftoverScanComparisonWarning": {
+        "properties": {
+          "code": {
+            "const": "remaining_exceeds_original",
+            "title": "Code",
+            "type": "string"
+          },
+          "nutrient": {
+            "$ref": "#/components/schemas/LeftoverScanComparisonNutrient"
+          }
+        },
+        "required": [
+          "nutrient",
+          "code"
+        ],
+        "title": "LeftoverScanComparisonWarning",
+        "type": "object"
+      },
+      "LeftoverScanCreateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "analysis_session_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Analysis Session Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "analysis_session_id"
+        ],
+        "title": "LeftoverScanCreateRequest",
+        "type": "object"
+      },
+      "LeftoverScanResponse": {
+        "properties": {
+          "analysis_session_id": {
+            "title": "Analysis Session Id",
+            "type": "integer"
+          },
+          "comparison_warnings": {
+            "items": {
+              "$ref": "#/components/schemas/LeftoverScanComparisonWarning"
+            },
+            "title": "Comparison Warnings",
+            "type": "array"
+          },
+          "consumed_portion_percentage": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Consumed Portion Percentage",
+            "type": "string"
+          },
+          "consumed_weight_grams": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Consumed Weight Grams",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "estimated_consumed_nutrition": {
+            "$ref": "#/components/schemas/PortionNutrition"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "meal_id": {
+            "title": "Meal Id",
+            "type": "integer"
+          },
+          "original_weight_grams": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Original Weight Grams",
+            "type": "string"
+          },
+          "remaining_nutrition": {
+            "$ref": "#/components/schemas/PortionNutrition"
+          },
+          "remaining_weight_grams": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Remaining Weight Grams",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "meal_id",
+          "analysis_session_id",
+          "original_weight_grams",
+          "remaining_weight_grams",
+          "consumed_weight_grams",
+          "consumed_portion_percentage",
+          "remaining_nutrition",
+          "estimated_consumed_nutrition",
+          "comparison_warnings",
+          "created_at"
+        ],
+        "title": "LeftoverScanResponse",
+        "type": "object"
+      },
       "MealAnalysisCandidateResponse": {
         "properties": {
           "candidate_id": {
@@ -6048,6 +6180,22 @@
               "title": "Offset",
               "type": "integer"
             }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
           }
         ],
         "responses": {
@@ -6075,6 +6223,9 @@
         "security": [
           {
             "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "List Meals",
@@ -7009,6 +7160,22 @@
               "title": "Meal Id",
               "type": "integer"
             }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
           }
         ],
         "responses": {
@@ -7036,6 +7203,9 @@
         "security": [
           {
             "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyHeader": []
           }
         ],
         "summary": "Get Meal",
@@ -7141,6 +7311,83 @@
           }
         ],
         "summary": "Create Leftover",
+        "tags": [
+          "meals"
+        ]
+      }
+    },
+    "/api/meals/{meal_id}/leftover-scans": {
+      "post": {
+        "description": "Persist an immutable leftover estimate from one completed owner-owned analysis session.",
+        "operationId": "create_leftover_scan_api_meals__meal_id__leftover_scans_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeftoverScanCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeftoverScanResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          },
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Create Leftover Scan",
         "tags": [
           "meals"
         ]
